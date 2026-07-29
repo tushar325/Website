@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Categories</title>
+  <meta name="description" content="Admin category page for managing category products.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-admin-page="category">
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="admin.html">Admin</a>
+      <nav class="nav-links">
+        <a href="index.html">Public site</a>
+        <a href="admin.html">Dashboard</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Category details</h2>
+      </div>
+
+      <div id="admin-panel" class="admin-shell">
+        <aside class="admin-sidebar">
+          <nav class="sidebar-nav" aria-label="Admin navigation">
+            <a href="admin.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>Dashboard</a>
+            <a href="admin-analytics.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>Analytics</a>
+            <a href="admin-product-categories.html" class="sidebar-item active"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>Product categories</a>
+            <a href="admin-orders.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Orders</a>
+            <a href="admin-customers.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>Customers</a>
+            <a href="admin-inventory.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>Inventory</a>
+            <a href="admin-settings.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6m-1.78 7.78l-4.24-4.24m-3.08-3.08l-4.24-4.24"></path></svg>Settings</a>
+          </nav>
+        </aside>
+        <main class="admin-main">
+          <section class="card admin-category-grid-card">
+            <div class="section-head">
+              <div>
+                <h3>Category</h3>
+                <p id="category-page-name" class="muted">Loading category…</p>
+              </div>
+              <button id="logout-btn" class="btn secondary" type="button">Log out</button>
+            </div>
+            <div id="category-page-actions" class="admin-right-actions">
+              <button class="btn" id="show-add-product" type="button">Add product</button>
+            </div>
+          </section>
+
+          <section id="admin-product-panel" class="card">
+            <div class="section-head">
+              <div>
+                <h3>Products in <span id="selected-category-name"></span></h3>
+                <p class="muted">Edit existing items or add a new product under the selected category.</p>
+              </div>
+            </div>
+
+            <div id="product-form-container" class="card hide">
+              <h4 id="product-form-title">Add product</h4>
+              <form id="product-form" class="form-grid admin-form-grid">
+                <input id="editing-id" type="hidden">
+                <label>Product name
+                  <input id="name" required>
+                </label>
+                <label>Price
+                  <input id="price" type="number" step="0.01" required>
+                </label>
+                <label>Category
+                  <select id="category-select"></select>
+                </label>
+                <label>New category
+                  <input id="new-category" placeholder="Create a new category">
+                </label>
+                <label>Image URL
+                  <input id="image-url" placeholder="https://example.com/image.jpg">
+                </label>
+                <label>Description
+                  <textarea id="description" placeholder="Describe the product"></textarea>
+                </label>
+                <label><input id="featured" type="checkbox" checked> Show on public homepage</label>
+                <div class="inline-actions">
+                  <button class="btn" type="submit">Save product</button>
+                  <button class="btn secondary" id="cancel-product" type="button">Cancel</button>
+                </div>
+              </form>
+            </div>
+
+            <div id="product-list" class="list"></div>
+            <p id="status" class="muted">Loading category products...</p>
+          </section>
+        </main>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 Admin Dashboard.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

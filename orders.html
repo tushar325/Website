@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Orders | Bean & Bloom</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .order-card { background:rgba(255,255,255,.96); border:1px solid rgba(223,229,236,.8); border-radius:24px; padding:1.6rem; box-shadow:0 16px 44px rgba(31,40,65,.06); margin-bottom:1.2rem; }
+    .order-header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:.8rem; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid rgba(0,0,0,.07); }
+    .order-id { font-size:.82rem; font-weight:700; color:var(--muted); }
+    .order-date { font-size:.82rem; color:var(--muted); }
+    .order-status { display:inline-block; padding:.3rem .8rem; border-radius:999px; font-size:.78rem; font-weight:800; }
+    .status-confirmed { background:rgba(34,197,94,.12); color:#15803d; }
+    .status-paid { background:rgba(59,130,246,.12); color:#1d4ed8; }
+    .status-pending { background:rgba(234,179,8,.12); color:#a16207; }
+    .status-cancelled { background:rgba(239,68,68,.12); color:#b91c1c; }
+    .order-item-row { display:flex; align-items:center; gap:.8rem; padding:.55rem 0; border-bottom:1px solid rgba(0,0,0,.05); }
+    .order-item-row:last-child { border-bottom:none; }
+    .order-item-row strong { display:block; font-size:.9rem; }
+    .order-item-row span { font-size:.8rem; color:var(--muted); }
+    .order-footer { display:flex; justify-content:space-between; align-items:center; margin-top:1rem; padding-top:1rem; border-top:1px solid rgba(0,0,0,.07); flex-wrap:wrap; gap:.5rem; }
+    .order-total { font-weight:800; color:var(--accent); font-size:1.05rem; }
+    .pay-badge { display:inline-flex; align-items:center; gap:.4rem; font-size:.8rem; font-weight:700; color:var(--muted); }
+    .address-chip { font-size:.8rem; color:var(--muted); margin-top:.25rem; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-nav"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="section-head">
+        <h1>My orders</h1>
+        <p class="muted">Track and review your Bean & Bloom orders.</p>
+      </div>
+      <div id="orders-list"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p id="footer-text"></p></div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = getLoggedInUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      updateCartCount();
+      renderUserNav();
+      renderPublicSiteContent();
+
+      const orders = loadOrders();
+      const container = document.getElementById('orders-list');
+
+      if (!orders.length) {
+        container.innerHTML = `
+          <div class="card" style="text-align:center;padding:3rem 2rem;">
+            <div style="font-size:3rem;margin-bottom:1rem;">📦</div>
+            <h3 style="margin:0 0 .5rem;">No orders yet</h3>
+            <p class="muted" style="margin:0 0 1.5rem;">Your placed orders will appear here.</p>
+            <a href="index.html" class="btn">Start shopping</a>
+          </div>`;
+        return;
+      }
+
+      const payIcons = { cod:'💵', upi:'📱', razorpay:'💳' };
+      const payLabels = { cod:'Cash on Delivery', upi:'UPI', razorpay:'Razorpay' };
+
+      orders.forEach(order => {
+        const card = document.createElement('div');
+        card.className = 'order-card';
+        const statusClass = { Confirmed:'confirmed', Paid:'paid', Pending:'pending', Cancelled:'cancelled' }[order.status] || 'confirmed';
+        const date = new Date(order.date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        const addr = order.address;
+        const addrStr = [addr.line1, addr.city, addr.state, addr.pin].filter(Boolean).join(', ');
+
+        card.innerHTML = `
+          <div class="order-header">
+            <div>
+              <div class="order-id">${escapeHtml(order.id)}</div>
+              <div class="order-date">${date}</div>
+              ${addrStr ? `<div class="address-chip">📍 ${escapeHtml(addrStr)}</div>` : ''}
+            </div>
+            <span class="order-status status-${statusClass}">${escapeHtml(order.status)}</span>
+          </div>
+          <div class="order-items">
+            ${order.items.map(item => `
+              <div class="order-item-row">
+                <div style="flex:1;"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} &nbsp;·&nbsp; $${Number(item.price).toFixed(2)} each</span></div>
+                <div style="font-weight:700;">$${(item.price * item.quantity).toFixed(2)}</div>
+              </div>`).join('')}
+          </div>
+          <div class="order-footer">
+            <span class="pay-badge">${payIcons[order.payMethod] || '💳'} ${escapeHtml(payLabels[order.payMethod] || order.payMethod)}</span>
+            <span class="order-total">Total: $${Number(order.total).toFixed(2)}</span>
+          </div>`;
+        container.appendChild(card);
+      });
+    });
+  </script>
+</body>
+</html>

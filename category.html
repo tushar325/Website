@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shop by Category | Bean & Bloom</title>
+  <meta name="description" content="Browse coffee products by category at Bean & Bloom.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="menu.html">Menu</a>
+        <a href="contact.html">Contact</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-nav"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <h1 id="category-title">Category</h1>
+          <p id="category-description">Browse our handpicked selection for this category.</p>
+        </div>
+        <div id="public-products" class="grid grid-3 product-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 Bean & Bloom. Fresh coffee, calm spaces, and warm welcomes.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const categoryParam = new URLSearchParams(window.location.search).get('category')?.trim();
+      const title = document.getElementById('category-title');
+      
+      if (title && categoryParam) {
+        title.textContent = categoryParam;
+      }
+      
+      // Render products that match the category name exactly
+      const root = document.getElementById('public-products');
+      if (root && categoryParam) {
+        let products = loadProducts();
+        products = products.filter(p => p.category && p.category.toLowerCase() === categoryParam.toLowerCase());
+        
+        root.innerHTML = '';
+        if (!products.length) {
+          root.innerHTML = '<div class="card"><p class="muted">No products in this category yet.</p></div>';
+        } else {
+          products.forEach(product => {
+            const card = document.createElement('article');
+            card.className = 'card product-card';
+            card.dataset.productId = product.id;
+            card.innerHTML = `
+              <img src="${escapeHtml(product.imageUrl || DEFAULT_IMAGE_URL)}" alt="${escapeHtml(product.name)}" class="product-image">
+              ${product.featured ? '<span class="badge featured">Featured</span>' : `<span class="badge">${escapeHtml(product.category)}</span>`}
+              <h3>${escapeHtml(product.name)}</h3>
+              <p class="muted">${escapeHtml(product.description || '')}</p>
+              <div class="product-footer">
+                <span class="price">$${Number(product.price).toFixed(2)}</span>
+                <button class="btn sm" data-add-to-cart="${product.id}">Add to cart</button>
+              </div>
+            `;
+            
+            const addButton = card.querySelector('[data-add-to-cart]');
+            if (addButton) {
+              addButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const added = addToCart(product.id);
+                if (added) alert(`${product.name} has been added to your cart.`);
+              });
+            }
+            
+            card.addEventListener('click', (e) => {
+              if (!e.target.closest('[data-add-to-cart]')) {
+                window.location.href = `product.html?id=${encodeURIComponent(product.id)}`;
+              }
+            });
+            
+            root.appendChild(card);
+          });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

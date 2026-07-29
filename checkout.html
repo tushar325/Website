@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Checkout | Bean & Bloom</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .checkout-grid { display: grid; grid-template-columns: minmax(0,1.6fr) 340px; gap: 2rem; align-items: start; margin-top: 2rem; }
+    @media(max-width:860px){ .checkout-grid{ grid-template-columns:1fr; } }
+    .checkout-card { background:rgba(255,255,255,.96); border:1px solid rgba(223,229,236,.8); border-radius:24px; padding:1.8rem; box-shadow:0 16px 44px rgba(31,40,65,.06); margin-bottom:1.2rem; }
+    .checkout-card h3 { margin:0 0 1.3rem; font-size:1.05rem; display:flex; align-items:center; gap:.6rem; }
+    .checkout-card h3 svg { width:18px; height:18px; color:var(--accent); }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    @media(max-width:520px){ .form-row{ grid-template-columns:1fr; } }
+    .field { display:flex; flex-direction:column; gap:.35rem; margin-bottom:.85rem; }
+    .field label { font-size:.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+    .field input, .field select, .field textarea { padding:.72rem .9rem; border:1.5px solid rgba(0,0,0,.12); border-radius:10px; font:inherit; font-size:.95rem; background:rgba(249,246,242,.95); transition:border-color .2s; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(138,75,47,.1); }
+    .payment-option { display:flex; align-items:center; gap:1rem; padding:1rem 1.1rem; border:2px solid rgba(0,0,0,.1); border-radius:14px; cursor:pointer; margin-bottom:.75rem; transition:border-color .2s, background .2s; }
+    .payment-option:hover { border-color:var(--accent); background:rgba(138,75,47,.04); }
+    .payment-option.selected { border-color:var(--accent); background:rgba(138,75,47,.07); }
+    .payment-option input[type=radio] { accent-color:var(--accent); width:18px; height:18px; flex-shrink:0; }
+    .payment-option .pay-icon { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:1.3rem; flex-shrink:0; }
+    .payment-option .pay-label strong { display:block; font-size:.95rem; }
+    .payment-option .pay-label span { font-size:.82rem; color:var(--muted); }
+    .upi-detail { background:rgba(138,75,47,.06); border:1px dashed rgba(138,75,47,.3); border-radius:12px; padding:1rem 1.1rem; margin-top:.4rem; display:none; }
+    .upi-detail.show { display:block; }
+    .upi-id { font-size:1.1rem; font-weight:800; color:var(--accent); letter-spacing:.02em; }
+    .order-summary-line { display:flex; justify-content:space-between; padding:.6rem 0; border-bottom:1px solid rgba(0,0,0,.06); font-size:.93rem; }
+    .order-summary-line:last-of-type { border-bottom:none; }
+    .summary-total-line { display:flex; justify-content:space-between; padding:.9rem 0 0; font-size:1.1rem; font-weight:800; color:var(--accent); }
+    .step-badge { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:var(--accent); color:#fff; font-size:.75rem; font-weight:800; flex-shrink:0; }
+    .btn-place { width:100%; padding:1rem; font-size:1rem; font-weight:800; margin-top:.8rem; }
+    #order-success { display:none; text-align:center; padding:3rem 2rem; }
+    #order-success .success-icon { font-size:3.5rem; margin-bottom:1rem; }
+    #order-success h2 { margin:0 0 .6rem; }
+    #order-success p { color:var(--muted); margin:0 0 1.5rem; }
+    .order-item-row { display:flex; align-items:center; gap:.8rem; padding:.6rem 0; border-bottom:1px solid rgba(0,0,0,.06); }
+    .order-item-row img { width:48px; height:48px; object-fit:cover; border-radius:8px; flex-shrink:0; }
+    .order-item-row .item-info { flex:1; }
+    .order-item-row .item-info strong { display:block; font-size:.9rem; }
+    .order-item-row .item-info span { font-size:.8rem; color:var(--muted); }
+    .order-item-row .item-price { font-weight:700; font-size:.9rem; }
+    .razorpay-note { font-size:.82rem; color:var(--muted); margin-top:.5rem; text-align:center; }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="cart.html">← Back to cart</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-nav"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main class="section">
+    <div class="container">
+      <div class="section-head">
+        <h1>Checkout</h1>
+        <p class="muted">Complete your delivery details and choose a payment method.</p>
+      </div>
+
+      <div id="order-success" class="card">
+        <div class="success-icon">✅</div>
+        <h2>Order placed successfully!</h2>
+        <p id="success-order-id"></p>
+        <div style="display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;">
+          <a href="orders.html" class="btn">View my orders</a>
+          <a href="index.html" class="btn secondary">Continue shopping</a>
+        </div>
+      </div>
+
+      <form id="checkout-form">
+        <div class="checkout-grid">
+          <div>
+            <!-- Address -->
+            <div class="checkout-card">
+              <h3><span class="step-badge">1</span>Delivery address</h3>
+              <div class="form-row">
+                <div class="field"><label>Full name *</label><input id="addr-name" type="text" placeholder="Your full name" required></div>
+                <div class="field"><label>Mobile number *</label><input id="addr-mobile" type="tel" placeholder="10-digit mobile" pattern="[0-9]{10}" required></div>
+              </div>
+              <div class="field"><label>Address line 1 *</label><input id="addr-line1" type="text" placeholder="House no., building, street" required></div>
+              <div class="field"><label>Address line 2</label><input id="addr-line2" type="text" placeholder="Area, colony (optional)"></div>
+              <div class="form-row">
+                <div class="field"><label>City *</label><input id="addr-city" type="text" placeholder="City" required></div>
+                <div class="field"><label>State *</label><input id="addr-state" type="text" placeholder="State" required></div>
+              </div>
+              <div class="form-row">
+                <div class="field"><label>Pincode *</label><input id="addr-pin" type="text" placeholder="6-digit pincode" pattern="[0-9]{6}" required></div>
+                <div class="field"><label>Landmark</label><input id="addr-landmark" type="text" placeholder="Near (optional)"></div>
+              </div>
+              <label style="display:flex;align-items:center;gap:.6rem;font-size:.88rem;color:var(--muted);cursor:pointer;margin-top:.3rem;">
+                <input type="checkbox" id="save-address" checked style="accent-color:var(--accent);"> Save this address for future orders
+              </label>
+            </div>
+
+            <!-- Payment -->
+            <div class="checkout-card">
+              <h3><span class="step-badge">2</span>Payment method</h3>
+              <div id="payment-options"></div>
+              <div class="upi-detail" id="upi-detail">
+                <p style="margin:0 0 .4rem;font-size:.85rem;font-weight:700;">Pay to UPI ID:</p>
+                <div class="upi-id" id="upi-id-display"></div>
+                <p style="margin:.5rem 0 0;font-size:.82rem;color:var(--muted);">Open your UPI app, send the exact amount to the above ID, then click Place Order.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Order Summary -->
+          <div>
+            <div class="checkout-card" style="position:sticky;top:1.5rem;">
+              <h3><span class="step-badge">3</span>Order summary</h3>
+              <div id="checkout-items"></div>
+              <div id="checkout-totals"></div>
+              <button class="btn btn-place" type="submit" id="place-order-btn">Place order</button>
+              <p class="razorpay-note" id="razorpay-note" style="display:none;">You will be redirected to Razorpay secure payment.</p>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><p id="footer-text"></p></div>
+  </footer>
+
+  <script src="app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = getLoggedInUser();
+      if (!user) { window.location.href = 'login.html'; return; }
+
+      updateCartCount();
+      renderUserNav();
+      renderPublicSiteContent();
+
+      const cart = loadCart();
+      if (!cart.length) { window.location.href = 'cart.html'; return; }
+
+      // Pre-fill saved address
+      const saved = loadSavedAddress();
+      if (saved) {
+        ['name','mobile','line1','line2','city','state','pin','landmark'].forEach(k => {
+          const el = document.getElementById(`addr-${k}`);
+          if (el && saved[k]) el.value = saved[k];
+        });
+      }
+
+      // Render payment options from settings
+      const settings = loadSettings();
+      const pay = settings.payments;
+      const payContainer = document.getElementById('payment-options');
+      let firstPay = null;
+
+      const methods = [
+        pay.codEnabled  && { id:'cod',       icon:'💵', label:'Cash on Delivery', sub:'Pay when your order arrives' },
+        pay.upiEnabled  && { id:'upi',       icon:'📱', label:'UPI',              sub:`Pay via any UPI app` },
+        pay.razorpayEnabled && pay.razorpayKeyId && { id:'razorpay', icon:'💳', label:'Razorpay',         sub:'Credit/Debit card, NetBanking, UPI' }
+      ].filter(Boolean);
+
+      if (!methods.length) {
+        payContainer.innerHTML = '<p class="muted">No payment methods are configured. Please contact support.</p>';
+      } else {
+        methods.forEach((m, i) => {
+          const opt = document.createElement('label');
+          opt.className = 'payment-option' + (i === 0 ? ' selected' : '');
+          opt.innerHTML = `
+            <input type="radio" name="payment" value="${m.id}" ${i===0?'checked':''}>
+            <div class="pay-icon">${m.icon}</div>
+            <div class="pay-label"><strong>${escapeHtml(m.label)}</strong><span>${escapeHtml(m.sub)}</span></div>`;
+          payContainer.appendChild(opt);
+          if (i === 0) firstPay = m.id;
+        });
+        if (firstPay === 'upi') showUpiDetail(pay.upiId);
+      }
+
+      // UPI toggle
+      payContainer.addEventListener('change', (e) => {
+        document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+        e.target.closest('.payment-option')?.classList.add('selected');
+        const razNote = document.getElementById('razorpay-note');
+        if (e.target.value === 'upi') { showUpiDetail(pay.upiId); razNote.style.display = 'none'; }
+        else { document.getElementById('upi-detail').classList.remove('show'); }
+        if (e.target.value === 'razorpay') razNote.style.display = 'block';
+        else if (razNote) razNote.style.display = 'none';
+      });
+
+      // Render cart items in summary
+      const itemsEl = document.getElementById('checkout-items');
+      cart.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'order-item-row';
+        row.innerHTML = `
+          <img src="${escapeHtml(item.imageUrl || DEFAULT_IMAGE_URL)}" alt="${escapeHtml(item.name)}">
+          <div class="item-info"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} · ${escapeHtml(item.category || '')}</span></div>
+          <div class="item-price">$${(item.price * item.quantity).toFixed(2)}</div>`;
+        itemsEl.appendChild(row);
+      });
+
+      const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+      const discount = subtotal * 0.08;
+      const coupon = 5;
+      const total = Math.max(0, subtotal - discount - coupon);
+      document.getElementById('checkout-totals').innerHTML = `
+        <div class="order-summary-line"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+        <div class="order-summary-line"><span>Discount (8%)</span><span style="color:#16a34a;">−$${discount.toFixed(2)}</span></div>
+        <div class="order-summary-line"><span>Coupon</span><span style="color:#16a34a;">−$${coupon.toFixed(2)}</span></div>
+        <div class="summary-total-line"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+
+      // Form submit
+      document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const address = {
+          name:     document.getElementById('addr-name').value.trim(),
+          mobile:   document.getElementById('addr-mobile').value.trim(),
+          line1:    document.getElementById('addr-line1').value.trim(),
+          line2:    document.getElementById('addr-line2').value.trim(),
+          city:     document.getElementById('addr-city').value.trim(),
+          state:    document.getElementById('addr-state').value.trim(),
+          pin:      document.getElementById('addr-pin').value.trim(),
+          landmark: document.getElementById('addr-landmark').value.trim()
+        };
+        if (document.getElementById('save-address').checked) saveAddress(address);
+
+        const payMethod = document.querySelector('[name=payment]:checked')?.value || 'cod';
+
+        if (payMethod === 'razorpay') {
+          await handleRazorpay(address, cart, total, pay.razorpayKeyId, settings.siteName);
+        } else {
+          placeOrder(address, payMethod, cart, total);
+        }
+      });
+    });
+
+    function showUpiDetail(upiId) {
+      const d = document.getElementById('upi-detail');
+      d.classList.add('show');
+      document.getElementById('upi-id-display').textContent = upiId || 'beanbloom@upi';
+    }
+
+    function placeOrder(address, payMethod, cart, total) {
+      const orderId = 'ORD-' + Date.now();
+      const order = {
+        id: orderId,
+        date: new Date().toISOString(),
+        address,
+        payMethod,
+        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, category: i.category })),
+        total,
+        status: payMethod === 'cod' ? 'Confirmed' : 'Paid'
+      };
+      saveOrder(order);
+      clearCart();
+
+      // Show success
+      document.getElementById('checkout-form').style.display = 'none';
+      const suc = document.getElementById('order-success');
+      suc.style.display = 'block';
+      document.getElementById('success-order-id').textContent = `Order ID: ${orderId} · ${address.name} · ${address.city}`;
+    }
+
+    async function handleRazorpay(address, cart, total, keyId, storeName) {
+      if (typeof Razorpay === 'undefined') {
+        alert('Razorpay could not load. Please try another payment method.');
+        return;
+      }
+      const amountPaise = Math.round(total * 100);
+      const options = {
+        key: keyId,
+        amount: amountPaise,
+        currency: 'INR',
+        name: storeName || 'Bean & Bloom',
+        description: `Order for ${address.name}`,
+        prefill: { name: address.name, contact: address.mobile },
+        theme: { color: '#8c6138' },
+        handler: function(response) {
+          placeOrder(address, 'razorpay', cart, total);
+        }
+      };
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', () => alert('Payment failed. Please try again.'));
+      rzp.open();
+    }
+  </script>
+  <!-- Razorpay SDK loaded only if enabled -->
+  <script>
+    (function() {
+      const s = loadSettings();
+      if (s.payments.razorpayEnabled && s.payments.razorpayKeyId) {
+        const tag = document.createElement('script');
+        tag.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        document.head.appendChild(tag);
+      }
+    })();
+  </script>
+</body>
+</html>

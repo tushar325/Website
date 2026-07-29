@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bean & Bloom | Specialty Coffee & Cafe</title>
+  <meta name="description" content="Bean & Bloom is a modern specialty coffee cafe with handcrafted drinks, elegant design, and a polished customer experience.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="about.html">About</a>
+        <a href="menu.html">Menu</a>
+        <a href="contact.html">Contact</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-nav"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero hero-modern">
+      <div class="container hero-modern-grid">
+        <div class="hero-copy premium-copy">
+          <span class="eyebrow" id="hero-eyebrow"></span>
+          <h1 id="hero-headline"></h1>
+          <p id="hero-subtext"></p>
+          <div class="hero-actions">
+            <a class="btn" id="hero-cta1" href="#products"></a>
+            <a class="btn secondary" id="hero-cta2" href="about.html"></a>
+          </div>
+        </div>
+        <div class="hero-image-panel premium-panel">
+          <div class="hero-main-image"></div>
+          <div class="hero-tiles">
+            <article class="hero-tile">
+              <span class="badge" id="tile1-badge"></span>
+              <h3 id="tile1-title"></h3>
+              <p id="tile1-desc"></p>
+            </article>
+            <article class="hero-tile">
+              <span class="badge" id="tile2-badge"></span>
+              <h3 id="tile2-title"></h3>
+              <p id="tile2-desc"></p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt category-block">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="cat-section-title"></h2>
+          <p id="cat-section-sub"></p>
+        </div>
+        <div id="public-category-grid" class="grid grid-4 category-grid"></div>
+      </div>
+    </section>
+
+    <section class="section products-section" id="products">
+      <div class="container">
+        <div class="section-head">
+          <h2 id="featured-section-title"></h2>
+          <p id="featured-section-sub"></p>
+        </div>
+        <div id="public-products" class="grid grid-3 product-grid"></div>
+      </div>
+    </section>
+
+    <section class="section best-deal premium-deal">
+      <div class="container deal-panel">
+        <div class="deal-copy">
+          <span class="eyebrow" id="deal-eyebrow"></span>
+          <h2 id="deal-title"></h2>
+          <p id="deal-desc"></p>
+          <div class="deal-meta">
+            <strong id="deal-price"></strong>
+            <span id="deal-badge"></span>
+          </div>
+          <a class="btn" id="deal-cta" href="#products"></a>
+        </div>
+        <div class="deal-visual" id="deal-image"></div>
+      </div>
+    </section>
+
+    <section class="section testimonials-block">
+      <div class="container">
+        <div class="section-head">
+          <h2>What customers say</h2>
+          <p>Trusted reviews from our premium coffee shoppers.</p>
+        </div>
+        <div class="grid grid-3 testimonials-grid" id="testimonials-grid"></div>
+      </div>
+    </section>
+
+    <section class="section promo-strip compact-promo">
+      <div class="container promo-grid" id="promo-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 Bean & Bloom. Fresh coffee, calm spaces, and warm welcomes.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
