@@ -133,24 +133,9 @@
 
               <div class="settings-card">
                 <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Testimonials</h3>
-                <div class="settings-grid" style="gap:1.2rem;">
-                  <div class="testimonial-block">
-                    <div class="block-label">Testimonial 1</div>
-                    <div class="field" style="margin-bottom:.7rem;"><label>Quote</label><textarea id="s-t0-quote" rows="2"></textarea></div>
-                    <div class="field"><label>Author</label><input id="s-t0-author" type="text" placeholder="Name, Title"></div>
-                  </div>
-                  <div class="testimonial-block">
-                    <div class="block-label">Testimonial 2</div>
-                    <div class="field" style="margin-bottom:.7rem;"><label>Quote</label><textarea id="s-t1-quote" rows="2"></textarea></div>
-                    <div class="field"><label>Author</label><input id="s-t1-author" type="text" placeholder="Name, Title"></div>
-                  </div>
-                  <div class="testimonial-block" style="grid-column:1/-1;">
-                    <div class="block-label">Testimonial 3</div>
-                    <div class="settings-grid">
-                      <div class="field"><label>Quote</label><textarea id="s-t2-quote" rows="2"></textarea></div>
-                      <div class="field"><label>Author</label><input id="s-t2-author" type="text" placeholder="Name, Title"></div>
-                    </div>
-                  </div>
+                <div id="testimonial-items" class="settings-grid" style="gap:1.2rem;"></div>
+                <div class="save-row" style="margin-top:1rem;">
+                  <button class="btn secondary" type="button" id="add-testimonial-btn">Add testimonial</button>
                 </div>
               </div>
 
@@ -235,6 +220,56 @@
 
   <script src="app.js"></script>
   <script>
+    function createTestimonialBlock(index, testimonial = {}) {
+      const block = document.createElement('div');
+      block.className = 'testimonial-block';
+      if ((index + 1) % 3 === 0) block.style.gridColumn = '1 / -1';
+      block.innerHTML = `
+        <div class="block-label">Testimonial ${index + 1}</div>
+        <div class="field" style="margin-bottom:.7rem;"><label>Quote</label><textarea rows="2" data-testimonial-field="quote">${testimonial.quote || ''}</textarea></div>
+        <div class="field" style="margin-bottom:.7rem;"><label>Author</label><input type="text" data-testimonial-field="author" placeholder="Name, Title" value="${testimonial.author || ''}"></div>
+        <div class="field"><label>Avatar image URL</label><input type="url" data-testimonial-field="avatarUrl" placeholder="https://..." value="${testimonial.avatarUrl || ''}"></div>
+        <button class="btn secondary" type="button" data-remove-testimonial style="margin-top:.8rem;">Remove</button>
+      `;
+      block.querySelector('[data-remove-testimonial]')?.addEventListener('click', () => {
+        const parent = document.getElementById('testimonial-items');
+        if (!parent) return;
+        if (parent.children.length <= 1) return;
+        block.remove();
+        renumberTestimonials();
+      });
+      return block;
+    }
+
+    function renumberTestimonials() {
+      const blocks = Array.from(document.querySelectorAll('#testimonial-items .testimonial-block'));
+      blocks.forEach((block, i) => {
+        const label = block.querySelector('.block-label');
+        if (label) label.textContent = `Testimonial ${i + 1}`;
+        block.style.gridColumn = ((i + 1) % 3 === 0) ? '1 / -1' : '';
+      });
+    }
+
+    function renderTestimonialsEditor(testimonials = []) {
+      const container = document.getElementById('testimonial-items');
+      if (!container) return;
+      container.innerHTML = '';
+      const list = Array.isArray(testimonials) && testimonials.length ? testimonials : DEFAULT_SETTINGS.testimonials;
+      list.forEach((item, i) => container.appendChild(createTestimonialBlock(i, item)));
+      renumberTestimonials();
+    }
+
+    function collectTestimonialsFromForm() {
+      const blocks = Array.from(document.querySelectorAll('#testimonial-items .testimonial-block'));
+      const testimonials = blocks.map((block) => {
+        const quote = block.querySelector('[data-testimonial-field="quote"]')?.value?.trim() || '';
+        const author = block.querySelector('[data-testimonial-field="author"]')?.value?.trim() || '';
+        const avatarUrl = block.querySelector('[data-testimonial-field="avatarUrl"]')?.value?.trim() || '';
+        return { quote, author, avatarUrl };
+      }).filter((item) => item.quote || item.author || item.avatarUrl);
+      return testimonials.length ? testimonials : DEFAULT_SETTINGS.testimonials;
+    }
+
     function populateSettingsForm(s) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('s-siteName', s.siteName); set('s-footerText', s.footerText);
@@ -250,7 +285,7 @@
       set('s-deal-desc', s.deal.description); set('s-deal-price', s.deal.price);
       set('s-deal-badge', s.deal.badge); set('s-deal-ctaLabel', s.deal.ctaLabel);
       set('s-deal-ctaUrl', s.deal.ctaUrl); set('s-deal-imageUrl', s.deal.imageUrl);
-      s.testimonials.forEach((t, i) => { set(`s-t${i}-quote`, t.quote); set(`s-t${i}-author`, t.author); });
+      renderTestimonialsEditor(s.testimonials);
       s.promoStrip.forEach((p, i) => { set(`s-p${i}-title`, p.title); set(`s-p${i}-desc`, p.desc); });
       // Payment settings
       const pay = s.payments || {};
@@ -280,7 +315,7 @@
           price: get('s-deal-price'), badge: get('s-deal-badge'),
           ctaLabel: get('s-deal-ctaLabel'), ctaUrl: get('s-deal-ctaUrl'), imageUrl: get('s-deal-imageUrl')
         },
-        testimonials: [0,1,2].map(i => ({ quote: get(`s-t${i}-quote`), author: get(`s-t${i}-author`) })),
+        testimonials: collectTestimonialsFromForm(),
         promoStrip: [0,1,2,3].map(i => ({ title: get(`s-p${i}-title`), desc: get(`s-p${i}-desc`) })),
         payments: {
           codEnabled: document.getElementById('s-cod-enabled')?.checked ?? true,
@@ -302,6 +337,13 @@
         // Also populate immediately if already visible
         if (!panel.classList.contains('hide')) populateSettingsForm(loadSettings());
       }
+
+      document.getElementById('add-testimonial-btn')?.addEventListener('click', () => {
+        const container = document.getElementById('testimonial-items');
+        if (!container) return;
+        container.appendChild(createTestimonialBlock(container.children.length, {}));
+        renumberTestimonials();
+      });
 
       document.getElementById('save-settings-btn')?.addEventListener('click', () => {
         saveSettings(collectSettingsFromForm());
