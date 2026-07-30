@@ -81,6 +81,7 @@ function renderPublicSiteContent() {
 
   // Brand name
   document.querySelectorAll('.brand').forEach(el => { if (el.closest('.site-header')) el.textContent = s.siteName; });
+  document.querySelectorAll('.brand-name').forEach(el => { el.textContent = s.siteName; });
 
   // Hero
   setEl('hero-eyebrow', s.hero.eyebrow);
