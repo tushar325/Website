@@ -24,6 +24,11 @@
     .save-status { font-size: .9rem; font-weight: 600; color: #15803d; display: none; }
     .save-status.show { display: block; }
     .section-divider { border: none; border-top: 1px solid rgba(0,0,0,.07); margin: 1.2rem 0; }
+    .product-content-list { display: grid; gap: 1rem; }
+    .product-content-card { background: rgba(138,75,47,.04); border: 1px solid rgba(138,75,47,.12); border-radius: 18px; padding: 1.1rem; display: grid; gap: .8rem; }
+    .product-content-head { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+    .product-content-head strong { font-size: 1rem; color: var(--text); }
+    .product-chip { display: inline-flex; align-items: center; padding: .3rem .65rem; border-radius: 999px; background: rgba(255,250,242,.96); color: var(--accent); font-size: .74rem; font-weight: 700; }
   </style>
 </head>
 <body data-admin-page="settings">
@@ -201,6 +206,12 @@
                 </div>
               </div>
 
+              <div class="settings-card">
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Product Page Content</h3>
+                <p class="muted" style="margin-top:0;">Edit the short and detailed description shown on each product page. Changes save directly to your product catalog.</p>
+                <div id="product-content-list" class="product-content-list"></div>
+              </div>
+
               <div class="save-row">
                 <button class="btn" type="button" id="save-settings-btn">Save all settings</button>
                 <button class="btn secondary" type="button" id="reset-settings-btn">Reset to defaults</button>
@@ -270,6 +281,53 @@
       return testimonials.length ? testimonials : DEFAULT_SETTINGS.testimonials;
     }
 
+    function renderProductContentEditor() {
+      const root = document.getElementById('product-content-list');
+      if (!root) return;
+      const products = loadProducts();
+      root.innerHTML = '';
+      products.forEach((product) => {
+        const card = document.createElement('article');
+        card.className = 'product-content-card';
+        card.dataset.productId = product.id;
+        card.innerHTML = `
+          <div class="product-content-head">
+            <div>
+              <strong>${escapeHtml(product.name || 'Product')}</strong>
+            </div>
+            <span class="product-chip">${escapeHtml(product.category || 'Coffee')}</span>
+          </div>
+          <div class="field">
+            <label>Short description</label>
+            <textarea rows="2" data-product-field="description">${escapeHtml(product.description || '')}</textarea>
+          </div>
+          <div class="field">
+            <label>Detailed product page description</label>
+            <textarea rows="5" data-product-field="longDescription">${escapeHtml(product.longDescription || '')}</textarea>
+          </div>
+        `;
+        root.appendChild(card);
+      });
+    }
+
+    function saveProductContentFromSettings() {
+      const cards = Array.from(document.querySelectorAll('#product-content-list .product-content-card'));
+      if (!cards.length) return;
+      const products = loadProducts();
+      const nextProducts = products.map((product) => {
+        const card = cards.find((item) => item.dataset.productId === String(product.id));
+        if (!card) return product;
+        const description = card.querySelector('[data-product-field="description"]')?.value?.trim() || '';
+        const longDescription = card.querySelector('[data-product-field="longDescription"]')?.value?.trim() || '';
+        return {
+          ...product,
+          description,
+          longDescription
+        };
+      });
+      saveProducts(nextProducts);
+    }
+
     function populateSettingsForm(s) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('s-siteName', s.siteName); set('s-footerText', s.footerText);
@@ -295,6 +353,7 @@
       set('s-upi-id', pay.upiId);
       chk('s-rzp-enabled', pay.razorpayEnabled);
       set('s-rzp-key', pay.razorpayKeyId);
+      renderProductContentEditor();
     }
 
     function collectSettingsFromForm() {
@@ -346,6 +405,7 @@
       });
 
       document.getElementById('save-settings-btn')?.addEventListener('click', () => {
+        saveProductContentFromSettings();
         saveSettings(collectSettingsFromForm());
         const status = document.getElementById('save-status');
         status.classList.add('show');
@@ -355,6 +415,7 @@
       document.getElementById('reset-settings-btn')?.addEventListener('click', () => {
         if (!confirm('Reset all settings to defaults?')) return;
         localStorage.removeItem(SETTINGS_KEY);
+        saveProducts(loadProducts());
         populateSettingsForm(loadSettings());
         const status = document.getElementById('save-status');
         status.textContent = '✓ Reset to defaults!';
