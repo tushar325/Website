@@ -23,7 +23,7 @@ const DEFAULT_SETTINGS = {
   deal: {
     eyebrow: 'Deal of the day', title: 'Keurig® K15 Classic Series',
     description: 'Compact, convenient, and built for modern kitchens. Elevate your daily coffee ritual with this premium machine.',
-    price: '$99.99', badge: 'Limited time offer', ctaLabel: 'View deal', ctaUrl: '#products', imageUrl: ''
+    price: '$99.99', badge: 'Limited time offer', ctaLabel: 'View deal', ctaUrl: 'deal.html', imageUrl: ''
   },
   testimonials: [
     {
@@ -57,12 +57,20 @@ const DEFAULT_SETTINGS = {
   }
 };
 
+let settingsCache = null;
+let productsCache = null;
+let categoriesCache = null;
+
 function loadSettings() {
+  if (settingsCache) return settingsCache;
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
-    if (!saved) return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    if (!saved) {
+      settingsCache = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+      return settingsCache;
+    }
     // Deep merge to add any new keys from DEFAULT_SETTINGS
-    return {
+    settingsCache = {
       ...DEFAULT_SETTINGS, ...saved,
       hero: { ...DEFAULT_SETTINGS.hero, ...(saved.hero || {}) },
       categorySection: { ...DEFAULT_SETTINGS.categorySection, ...(saved.categorySection || {}) },
@@ -77,10 +85,15 @@ function loadSettings() {
       promoStrip: saved.promoStrip || DEFAULT_SETTINGS.promoStrip,
       payments: { ...DEFAULT_SETTINGS.payments, ...(saved.payments || {}) }
     };
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); }
+    return settingsCache;
+  } catch {
+    settingsCache = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    return settingsCache;
+  }
 }
 
 function saveSettings(settings) {
+  settingsCache = settings;
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
@@ -130,7 +143,10 @@ function renderPublicSiteContent() {
   setEl('deal-price', s.deal.price);
   setEl('deal-badge', s.deal.badge);
   const dealCta = document.getElementById('deal-cta');
-  if (dealCta) { dealCta.textContent = s.deal.ctaLabel; dealCta.href = s.deal.ctaUrl; }
+  if (dealCta) {
+    dealCta.textContent = s.deal.ctaLabel;
+    dealCta.href = s.deal.ctaUrl === '#products' ? 'deal.html' : s.deal.ctaUrl;
+  }
   const dealImg = document.getElementById('deal-image');
   if (dealImg) dealImg.style.backgroundImage = s.deal.imageUrl ? `url('${escapeHtml(s.deal.imageUrl)}')` : '';
 
@@ -141,7 +157,7 @@ function renderPublicSiteContent() {
       <article class="card testimonial-card">
         <p>"${escapeHtml(t.quote)}"</p>
         <div class="testimonial-person">
-          <img class="testimonial-avatar" src="${escapeHtml(t.avatarUrl || DEFAULT_SETTINGS.testimonials[i % DEFAULT_SETTINGS.testimonials.length].avatarUrl)}" alt="${escapeHtml(t.author)}" loading="lazy">
+          <img class="testimonial-avatar" src="${escapeHtml(optimizeImageUrl(t.avatarUrl || DEFAULT_SETTINGS.testimonials[i % DEFAULT_SETTINGS.testimonials.length].avatarUrl, 96, 70))}" alt="${escapeHtml(t.author)}" loading="lazy" decoding="async">
           <strong>— ${escapeHtml(t.author)}</strong>
         </div>
       </article>`).join('');
@@ -159,6 +175,59 @@ function renderPublicSiteContent() {
 
   // Footer
   document.querySelectorAll('.site-footer p').forEach(el => el.textContent = s.footerText);
+}
+
+function renderDealPage() {
+  const root = document.getElementById('deal-page');
+  if (!root) return;
+
+  const settings = loadSettings();
+  const deal = settings.deal;
+  const dealImage = deal.imageUrl ? escapeHtml(optimizeImageUrl(deal.imageUrl, 960, 74)) : escapeHtml(optimizeImageUrl(DEFAULT_IMAGE_URL, 960, 74));
+  const ctaUrl = deal.ctaUrl === '#products' ? 'index.html#products' : deal.ctaUrl;
+
+  root.innerHTML = `
+    <section class="section deal-page-hero">
+      <div class="container deal-page-grid">
+        <div class="deal-page-copy">
+          <span class="eyebrow">${escapeHtml(deal.eyebrow || 'Deal')}</span>
+          <h1>${escapeHtml(deal.title || 'Featured deal')}</h1>
+          <p class="muted">${escapeHtml(deal.description || 'A limited-time featured offer from our curated collection.')}</p>
+          <div class="deal-meta">
+            <strong>${escapeHtml(deal.price || '$0.00')}</strong>
+            <span class="badge">${escapeHtml(deal.badge || 'Limited time')}</span>
+          </div>
+          <div class="hero-actions">
+            <a class="btn" href="${escapeHtml(ctaUrl)}">${escapeHtml(deal.ctaLabel || 'Shop now')}</a>
+            <a class="btn secondary" href="index.html#products">Browse products</a>
+          </div>
+        </div>
+        <div class="deal-page-visual">
+          <img src="${dealImage}" alt="${escapeHtml(deal.title || 'Deal image')}" loading="eager" decoding="async" fetchpriority="high">
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container deal-benefits-grid">
+        <article class="card">
+          <span class="badge">Why it stands out</span>
+          <h3>Curated for daily use</h3>
+          <p class="muted">A practical, premium pick that balances performance, design, and dependable everyday value.</p>
+        </article>
+        <article class="card">
+          <span class="badge">Fast delivery</span>
+          <h3>Ready to ship</h3>
+          <p class="muted">Order with confidence and get a smooth checkout experience, secure payment, and fast delivery support.</p>
+        </article>
+        <article class="card">
+          <span class="badge">Trusted choice</span>
+          <h3>Backed by our store</h3>
+          <p class="muted">Every featured deal is selected from the same catalog quality standards used across the storefront.</p>
+        </article>
+      </div>
+    </section>
+  `;
 }
 
 const defaultCategories = [
@@ -336,6 +405,22 @@ function normalizeProduct(product) {
 
 function normalizeProductList(products) {
   return (Array.isArray(products) ? products : []).map(normalizeProduct);
+}
+
+function optimizeImageUrl(url, width = 640, quality = 72) {
+  const value = String(url || '').trim();
+  if (!value) return value;
+  if (!/images\.unsplash\.com/i.test(value)) return value;
+  try {
+    const parsed = new URL(value);
+    parsed.searchParams.set('auto', 'format');
+    parsed.searchParams.set('fit', 'crop');
+    parsed.searchParams.set('w', String(width));
+    parsed.searchParams.set('q', String(quality));
+    return parsed.toString();
+  } catch {
+    return value;
+  }
 }
 
 function escapeHtml(value) {
@@ -613,6 +698,7 @@ function matchesCategory(productCategory, filter) {
 }
 
 function loadProducts() {
+  if (productsCache) return productsCache;
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -622,21 +708,26 @@ function loadProducts() {
       if (normalized.length !== (Array.isArray(parsed) ? parsed.length : 0)) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
       }
-      return normalized;
+      productsCache = normalized;
+      return productsCache;
     }
   } catch (e) {
     console.warn('Unable to load products', e);
   }
   const normalizedDefaults = normalizeProductList(defaultProducts);
+  productsCache = normalizedDefaults;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedDefaults));
-  return normalizedDefaults;
+  return productsCache;
 }
 
 function saveProducts(products) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeProductList(products)));
+  productsCache = normalizeProductList(products);
+  categoriesCache = null;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(productsCache));
 }
 
 function loadCategories() {
+  if (categoriesCache) return categoriesCache;
   const products = loadProducts();
   const fromProducts = Array.from(new Set(products.map((product) => (product.category || '').trim()).filter(Boolean)));
   try {
@@ -647,18 +738,21 @@ function loadCategories() {
       if (merged.length !== (Array.isArray(parsed) ? parsed.length : 0)) {
         localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(merged));
       }
-      return merged;
+      categoriesCache = merged;
+      return categoriesCache;
     }
   } catch (e) {
     console.warn('Unable to load categories', e);
   }
   const categories = Array.from(new Set([...defaultCategories, ...fromProducts]));
+  categoriesCache = categories;
   localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
-  return categories;
+  return categoriesCache;
 }
 
 function saveCategories(categories) {
-  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+  categoriesCache = Array.isArray(categories) ? categories : [];
+  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(categoriesCache));
 }
 
 function normalizeCategory(name) {
@@ -852,7 +946,7 @@ function renderCart() {
     const row = document.createElement('article');
     row.className = 'cart-item-row';
     row.innerHTML = `
-      <img class="product-image" src="${escapeHtml(item.imageUrl || DEFAULT_IMAGE_URL)}" alt="${escapeHtml(item.name)}">
+      <img class="product-image" src="${escapeHtml(optimizeImageUrl(item.imageUrl || DEFAULT_IMAGE_URL, 260, 72))}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async">
       <div class="cart-item-details">
         <h3>${escapeHtml(item.name)}</h3>
         <p class="muted">${escapeHtml(item.category || 'Coffee')}</p>
@@ -967,40 +1061,29 @@ function renderPublicCategoryGrid() {
   const products = loadProducts();
   root.innerHTML = '';
   
+  const categoryImages = JSON.parse(localStorage.getItem('bean-bloom-category-images') || '{}');
+
   categories.forEach(category => {
+    const categoryIndex = root.children.length;
     const categoryLink = document.createElement('a');
     categoryLink.className = 'category-card';
     categoryLink.href = `category.html?category=${encodeURIComponent(category.toLowerCase())}`;
     categoryLink.dataset.category = category.toLowerCase();
     
-    // Get custom image if it exists
-    const categoryImages = JSON.parse(localStorage.getItem('bean-bloom-category-images') || '{}');
     const customImage = categoryImages[category];
     const categoryProduct = products.find((item) => String(item.category || '').toLowerCase() === category.toLowerCase() && item.imageUrl);
     const mappedFallback = categoryFallbackImages[category];
     const defaultImage = mappedFallback || 'https://images.unsplash.com/photo-1447933601403-0c6688b33a69?auto=format&fit=crop&w=900&q=80';
     const hasValidCustomImage = /^https?:\/\//i.test(String(customImage || '').trim());
     const hasValidProductImage = /^https?:\/\//i.test(String(categoryProduct?.imageUrl || '').trim());
-    
-    // Always set a known fallback first, then upgrade if external image URL actually loads.
-    categoryLink.style.setProperty('--category-image', `url('${escapeHtml(defaultImage)}')`);
-
     const preferredUrl = hasValidCustomImage
       ? String(customImage).trim()
-      : (hasValidProductImage ? String(categoryProduct.imageUrl).trim() : '');
-
-    if (preferredUrl) {
-      const probe = new Image();
-      probe.onload = () => {
-        categoryLink.style.setProperty('--category-image', `url('${escapeHtml(preferredUrl)}')`);
-      };
-      probe.onerror = () => {
-        categoryLink.style.setProperty('--category-image', `url('${escapeHtml(defaultImage)}')`);
-      };
-      probe.src = preferredUrl;
-    }
+      : (hasValidProductImage ? String(categoryProduct.imageUrl).trim() : defaultImage);
+    const optimizedImage = escapeHtml(optimizeImageUrl(preferredUrl || defaultImage, 640, 68));
+    const isAboveFold = categoryIndex < 4;
 
     categoryLink.innerHTML = `
+      <img class="category-card-media" src="${optimizedImage}" alt="${escapeHtml(category)}" ${isAboveFold ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async">
       <div class="category-card-overlay"></div>
       <h3>${escapeHtml(category)}</h3>
     `;
@@ -1029,12 +1112,12 @@ function renderPublicProducts(options = {}) {
 
   const fragment = document.createDocumentFragment();
   products.forEach(product => {
-    const imageSrc = product.imageUrl ? escapeHtml(product.imageUrl) : DEFAULT_IMAGE_URL;
+    const imageSrc = product.imageUrl ? escapeHtml(optimizeImageUrl(product.imageUrl, 520, 70)) : DEFAULT_IMAGE_URL;
     const card = document.createElement('article');
     card.className = 'product-card';
     card.dataset.productId = product.id;
     card.innerHTML = `
-      <img class="product-image" src="${imageSrc}" alt="${escapeHtml(product.name)}">
+      <img class="product-image" src="${imageSrc}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" fetchpriority="low">
       <span class="badge">${escapeHtml(product.category || 'Coffee')}</span>
       <h3>${escapeHtml(product.name)}</h3>
       <p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p>
@@ -1978,6 +2061,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (document.getElementById('product-detail')) {
     renderProductDetail();
   }
+  renderDealPage();
   updateCartCount();
   initContactForm();
   renderAdminInquiries();
