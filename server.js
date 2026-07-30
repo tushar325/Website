@@ -85,6 +85,18 @@ async function initializeDatabase() {
     `);
     console.log('✓ Users table created');
 
+    // Create Inquiries table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS inquiries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        message LONGTEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✓ Inquiries table created');
+
     // Create Orders table
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS orders (
@@ -123,12 +135,14 @@ const categoryRoutes = require('./routes/categories');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const authRoutes = require('./routes/auth');
+const inquiryRoutes = require('./routes/inquiries');
 
 // Use routes
 app.use('/api/categories', categoryRoutes(pool));
 app.use('/api/products', productRoutes(pool));
 app.use('/api/cart', cartRoutes(pool));
 app.use('/api/auth', authRoutes(pool));
+app.use('/api/inquiries', inquiryRoutes(pool));
 
 // Health check
 app.get('/api/health', (req, res) => {

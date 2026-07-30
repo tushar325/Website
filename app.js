@@ -1439,6 +1439,91 @@ function renderUserNav() {
   }
 }
 
+async function initContactForm() {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+
+  const nameInput = document.getElementById('contact-name');
+  const emailInput = document.getElementById('contact-email');
+  const messageInput = document.getElementById('contact-message');
+  const status = document.getElementById('contact-status');
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const name = String(nameInput?.value || '').trim();
+    const email = String(emailInput?.value || '').trim();
+    const message = String(messageInput?.value || '').trim();
+
+    if (!name || !email || !message) {
+      if (status) status.textContent = 'Please fill in name, email, and message.';
+      return;
+    }
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    if (submitButton) submitButton.disabled = true;
+    if (status) status.textContent = 'Sending your enquiry...';
+
+    try {
+      const response = await fetch(`${API_BASE}/inquiries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message })
+      });
+
+      if (!response.ok) {
+        let errorMessage = 'Unable to send enquiry right now.';
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch {}
+        throw new Error(errorMessage);
+      }
+
+      form.reset();
+      if (status) status.textContent = 'Thanks. Your enquiry has been submitted.';
+    } catch (error) {
+      if (status) status.textContent = 'Unable to send enquiry right now. Please ensure backend API is running on localhost:3001.';
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
+  });
+}
+
+async function renderAdminInquiries() {
+  const root = document.getElementById('admin-inquiries-list');
+  if (!root) return;
+
+  root.innerHTML = '<p class="muted">Loading enquiries...</p>';
+  try {
+    const response = await fetch(`${API_BASE}/inquiries`);
+    if (!response.ok) throw new Error('Failed to load enquiries.');
+
+    const inquiries = await response.json();
+    if (!Array.isArray(inquiries) || !inquiries.length) {
+      root.innerHTML = '<p class="muted">No enquiries yet.</p>';
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    inquiries.forEach((inquiry) => {
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <h4 style="margin:.2rem 0 .35rem;">${escapeHtml(inquiry.name || 'Customer')}</h4>
+        <p class="muted" style="margin:0;">${escapeHtml(inquiry.email || '')}</p>
+        <p style="margin:.85rem 0 .6rem;">${escapeHtml(inquiry.message || '')}</p>
+        <p class="muted" style="margin:0;font-size:.85rem;">${new Date(inquiry.created_at).toLocaleString()}</p>
+      `;
+      fragment.appendChild(card);
+    });
+
+    root.innerHTML = '';
+    root.appendChild(fragment);
+  } catch (error) {
+    root.innerHTML = '<p class="muted">Unable to load enquiries. Please ensure backend API is running on localhost:3001.</p>';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderPublicSiteContent();
   renderUserNav();
@@ -1450,5 +1535,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProductDetail();
   }
   updateCartCount();
+  initContactForm();
+  renderAdminInquiries();
   initAdmin();
 });

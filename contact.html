@@ -33,17 +33,18 @@
       </article>
       <article class="card">
         <h3>Send a message</h3>
-        <form class="form-grid">
+        <form class="form-grid" id="contact-form">
           <label>Name
-            <input placeholder="Your name">
+            <input id="contact-name" placeholder="Your name" required>
           </label>
           <label>Email
-            <input type="email" placeholder="you@example.com">
+            <input id="contact-email" type="email" placeholder="you@example.com" required>
           </label>
           <label>Message
-            <textarea placeholder="Tell us how we can help"></textarea>
+            <textarea id="contact-message" placeholder="Tell us how we can help" required></textarea>
           </label>
-          <button class="btn" type="button">Send inquiry</button>
+          <button class="btn" type="submit">Send inquiry</button>
+          <p class="muted" id="contact-status" aria-live="polite"></p>
         </form>
       </article>
     </div>
