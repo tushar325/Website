@@ -26,9 +26,21 @@ const DEFAULT_SETTINGS = {
     price: '$99.99', badge: 'Limited time offer', ctaLabel: 'View deal', ctaUrl: '#products', imageUrl: ''
   },
   testimonials: [
-    { quote: 'The product selection is refined, and the delivery was effortless.', author: 'Maya, Designer' },
-    { quote: 'A beautifully designed storefront with excellent products and support.', author: 'Daniel, Founder' },
-    { quote: 'High-quality gear and premium coffee — exactly what I was looking for.', author: 'Elise, Consultant' }
+    {
+      quote: 'The product selection is refined, and the delivery was effortless.',
+      author: 'Aarav Mehta, Designer',
+      avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg'
+    },
+    {
+      quote: 'A beautifully designed storefront with excellent products and support.',
+      author: 'Ishita Sharma, Founder',
+      avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg'
+    },
+    {
+      quote: 'High-quality gear and premium coffee — exactly what I was looking for.',
+      author: 'Rohan Verma, Consultant',
+      avatarUrl: 'https://randomuser.me/api/portraits/men/42.jpg'
+    }
   ],
   promoStrip: [
     { title: 'Free shipping', desc: 'On orders over $100' },
@@ -56,7 +68,12 @@ function loadSettings() {
       categorySection: { ...DEFAULT_SETTINGS.categorySection, ...(saved.categorySection || {}) },
       featuredSection: { ...DEFAULT_SETTINGS.featuredSection, ...(saved.featuredSection || {}) },
       deal: { ...DEFAULT_SETTINGS.deal, ...(saved.deal || {}) },
-      testimonials: saved.testimonials || DEFAULT_SETTINGS.testimonials,
+      testimonials: Array.isArray(saved.testimonials)
+        ? saved.testimonials.map((item, index) => ({
+            ...DEFAULT_SETTINGS.testimonials[index % DEFAULT_SETTINGS.testimonials.length],
+            ...(item || {})
+          }))
+        : DEFAULT_SETTINGS.testimonials,
       promoStrip: saved.promoStrip || DEFAULT_SETTINGS.promoStrip,
       payments: { ...DEFAULT_SETTINGS.payments, ...(saved.payments || {}) }
     };
@@ -120,10 +137,13 @@ function renderPublicSiteContent() {
   // Testimonials
   const testimonialsGrid = document.getElementById('testimonials-grid');
   if (testimonialsGrid) {
-    testimonialsGrid.innerHTML = s.testimonials.map(t => `
+    testimonialsGrid.innerHTML = s.testimonials.map((t, i) => `
       <article class="card testimonial-card">
         <p>"${escapeHtml(t.quote)}"</p>
-        <strong>— ${escapeHtml(t.author)}</strong>
+        <div class="testimonial-person">
+          <img class="testimonial-avatar" src="${escapeHtml(t.avatarUrl || DEFAULT_SETTINGS.testimonials[i % DEFAULT_SETTINGS.testimonials.length].avatarUrl)}" alt="${escapeHtml(t.author)}" loading="lazy">
+          <strong>— ${escapeHtml(t.author)}</strong>
+        </div>
       </article>`).join('');
   }
 
