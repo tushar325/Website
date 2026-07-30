@@ -19,11 +19,11 @@ const DEFAULT_SETTINGS = {
     tile2Badge: 'Featured', tile2Title: 'Commercial Coffee', tile2Desc: 'Rich and smooth for every morning ritual.'
   },
   categorySection: { title: 'Shop by category', subtext: 'Explore the coffee machines, accessories, and premium beans that define our collection.' },
-  featuredSection: { title: 'Featured products', subtext: 'Highlighted selections from the admin-managed collection.' },
+  featuredSection: { title: 'Featured products', subtext: '' },
   deal: {
     eyebrow: 'Deal of the day', title: 'Keurig® K15 Classic Series',
     description: 'Compact, convenient, and built for modern kitchens. Elevate your daily coffee ritual with this premium machine.',
-    price: '$99.99', badge: 'Limited time offer', ctaLabel: 'View deal', ctaUrl: 'deal.html', imageUrl: ''
+    price: '99.99', badge: 'Limited time offer', ctaLabel: 'View deal', ctaUrl: 'deal.html', imageUrl: ''
   },
   testimonials: [
     {
@@ -43,7 +43,7 @@ const DEFAULT_SETTINGS = {
     }
   ],
   promoStrip: [
-    { title: 'Free shipping', desc: 'On orders over $100' },
+    { title: 'Free shipping', desc: 'On orders over Rs 100' },
     { title: 'Secure checkout', desc: 'Trusted payment every time' },
     { title: 'Premium support', desc: 'Here to help with every order' },
     { title: 'Quality guarantee', desc: 'Expertly curated product range' }
@@ -134,13 +134,13 @@ function renderPublicSiteContent() {
 
   // Featured section headings
   setEl('featured-section-title', s.featuredSection.title);
-  setEl('featured-section-sub', s.featuredSection.subtext);
+  setEl('featured-section-sub', s.featuredSection.subtext === 'Highlighted selections from the admin-managed collection.' ? '' : s.featuredSection.subtext);
 
   // Deal of the day
   setEl('deal-eyebrow', s.deal.eyebrow);
   setEl('deal-title', s.deal.title);
   setEl('deal-desc', s.deal.description);
-  setEl('deal-price', s.deal.price);
+  setEl('deal-price', formatCurrency(s.deal.price));
   setEl('deal-badge', s.deal.badge);
   const dealCta = document.getElementById('deal-cta');
   if (dealCta) {
@@ -194,7 +194,7 @@ function renderDealPage() {
           <h1>${escapeHtml(deal.title || 'Featured deal')}</h1>
           <p class="muted">${escapeHtml(deal.description || 'A limited-time featured offer from our curated collection.')}</p>
           <div class="deal-meta">
-            <strong>${escapeHtml(deal.price || '$0.00')}</strong>
+            <strong>${escapeHtml(formatCurrency(deal.price || 0))}</strong>
             <span class="badge">${escapeHtml(deal.badge || 'Limited time')}</span>
           </div>
           <div class="hero-actions">
@@ -425,6 +425,26 @@ function optimizeImageUrl(url, width = 640, quality = 72) {
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+}
+
+function formatCurrencyAmount(value) {
+  const amount = Number(value || 0);
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2
+  }).format(amount);
+}
+
+function formatCurrency(value) {
+  if (typeof value === 'number') return formatCurrencyAmount(value);
+  const text = String(value ?? '').trim();
+  const numeric = text.replace(/[^\d.-]/g, '');
+  if (numeric && !Number.isNaN(Number(numeric))) {
+    return formatCurrencyAmount(Number(numeric));
+  }
+  return text.replace(/\$/g, 'Rs ').replace(/USD/gi, 'INR');
 }
 
 const CART_KEY = 'bean-bloom-cart'; // per-user key prefix: bean-bloom-cart-{userId}
@@ -815,7 +835,7 @@ function renderCartFromAPI(cartData) {
         </div>
       </div>
       <div class="cart-item-total">
-        <strong>$${(Number(item.price) * Number(item.quantity)).toFixed(2)}</strong>
+        <strong>${formatCurrencyAmount(Number(item.price) * Number(item.quantity))}</strong>
       </div>
     `;
     fragment.appendChild(row);
@@ -834,14 +854,14 @@ function renderCartFromAPI(cartData) {
   cartSummary.innerHTML = `
     <div class="cart-summary-box">
       <h3>Price details</h3>
-      <div class="summary-row"><span>Price (${totalItems} items)</span><span>$${total.toFixed(2)}</span></div>
-      <div class="summary-row"><span>Discount</span><span>− $${discount.toFixed(2)}</span></div>
-      <div class="summary-row"><span>Coupons for you</span><span>− $${coupon.toFixed(2)}</span></div>
-      <div class="summary-row"><span>Platform fee</span><span>$${platformFee.toFixed(2)}</span></div>
-      <div class="summary-total"><span>Total amount</span><span>$${totalAmount.toFixed(2)}</span></div>
+      <div class="summary-row"><span>Price (${totalItems} items)</span><span>${formatCurrencyAmount(total)}</span></div>
+      <div class="summary-row"><span>Discount</span><span>− ${formatCurrencyAmount(discount)}</span></div>
+      <div class="summary-row"><span>Coupons for you</span><span>− ${formatCurrencyAmount(coupon)}</span></div>
+      <div class="summary-row"><span>Platform fee</span><span>${formatCurrencyAmount(platformFee)}</span></div>
+      <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(totalAmount)}</span></div>
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
-      <p class="summary-note">You will save $${(discount + coupon).toFixed(2)} on this order.</p>
+      <p class="summary-note">You will save ${formatCurrencyAmount(discount + coupon)} on this order.</p>
       <p class="summary-subnote">Safe and secure payments. Easy returns. 100% authentic products.</p>
     </div>
   `;
@@ -964,7 +984,7 @@ function renderCart() {
         </div>
       </div>
       <div class="cart-item-total">
-        <strong>$${(Number(item.price) * Number(item.quantity)).toFixed(2)}</strong>
+        <strong>${formatCurrencyAmount(Number(item.price) * Number(item.quantity))}</strong>
       </div>
     `;
     fragment.appendChild(row);
@@ -982,14 +1002,14 @@ function renderCart() {
   cartSummary.innerHTML = `
     <div class="cart-summary-box">
       <h3>Price details</h3>
-      <div class="summary-row"><span>Price (${totalItems} items)</span><span>$${total.toFixed(2)}</span></div>
-      <div class="summary-row"><span>Discount</span><span>− $${discount.toFixed(2)}</span></div>
-      <div class="summary-row"><span>Coupons for you</span><span>− $${coupon.toFixed(2)}</span></div>
-      <div class="summary-row"><span>Platform fee</span><span>$${platformFee.toFixed(2)}</span></div>
-      <div class="summary-total"><span>Total amount</span><span>$${totalAmount.toFixed(2)}</span></div>
+      <div class="summary-row"><span>Price (${totalItems} items)</span><span>${formatCurrencyAmount(total)}</span></div>
+      <div class="summary-row"><span>Discount</span><span>− ${formatCurrencyAmount(discount)}</span></div>
+      <div class="summary-row"><span>Coupons for you</span><span>− ${formatCurrencyAmount(coupon)}</span></div>
+      <div class="summary-row"><span>Platform fee</span><span>${formatCurrencyAmount(platformFee)}</span></div>
+      <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(totalAmount)}</span></div>
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
-      <p class="summary-note">You will save $${(discount + coupon).toFixed(2)} on this order.</p>
+      <p class="summary-note">You will save ${formatCurrencyAmount(discount + coupon)} on this order.</p>
       <p class="summary-subnote">Safe and secure payments. Easy returns. 100% authentic products.</p>
     </div>
   `;
@@ -1122,7 +1142,7 @@ function renderPublicProducts(options = {}) {
       <h3>${escapeHtml(product.name)}</h3>
       <p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p>
       <div class="product-meta">
-        <div class="price">$${Number(product.price).toFixed(2)}</div>
+        <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
         <div class="product-actions">
           <button class="btn secondary add-to-kart" type="button" data-buy="${product.id}">Add to cart</button>
         </div>
@@ -1189,7 +1209,7 @@ async function renderProductDetail() {
             <span class="muted">Loading reviews...</span>
           </div>
           <div class="product-detail-meta">
-            <span class="price">$${Number(product.price).toFixed(2)}</span>
+            <span class="price">${formatCurrencyAmount(Number(product.price))}</span>
             <button class="btn" id="buy-button" type="button">Add to cart</button>
           </div>
           <div class="product-detail-panel">
@@ -1519,9 +1539,10 @@ function initAdmin() {
             <div class="badge">${escapeHtml(product.category || 'Coffee')}</div>
             <h3 style="margin: 0.5rem 0;">${escapeHtml(product.name)}</h3>
             <p class="muted" style="margin: 0.5rem 0; font-size: 0.9rem;">${escapeHtml(product.description || 'Freshly made with care.')}</p>
-            <div class="price" style="margin: 0.8rem 0;">$${Number(product.price).toFixed(2)}</div>
+            <div class="price" style="margin: 0.8rem 0;">${formatCurrencyAmount(Number(product.price))}</div>
             ${product.featured ? '<div class="badge" style="background: var(--accent); color: white;">Featured</div>' : ''}
             <div class="inline-actions" style="margin-top: 0.8rem;">
+              <button class="btn secondary" type="button" data-toggle-featured-product="${product.id}">${product.featured ? 'Remove featured' : 'Add to featured'}</button>
               <button class="btn secondary" type="button" data-edit-product="${product.id}">Edit</button>
               <button class="btn" type="button" data-delete-product="${product.id}">Delete</button>
             </div>
@@ -1643,7 +1664,14 @@ function initAdmin() {
       categoryProductList.addEventListener('click', (event) => {
         const editBtn = event.target.getAttribute('data-edit-product');
         const deleteBtn = event.target.getAttribute('data-delete-product');
+        const toggleFeaturedBtn = event.target.getAttribute('data-toggle-featured-product');
         const products = loadProducts();
+
+        if (toggleFeaturedBtn) {
+          toggleFeaturedStatus(toggleFeaturedBtn);
+          renderCategoryProductsForPage();
+          return;
+        }
 
         if (editBtn) {
           const product = products.find(p => p.id === editBtn);
@@ -1778,8 +1806,20 @@ function initAdmin() {
     if (productsEl) productsEl.textContent = products.length;
     if (featuredEl) featuredEl.textContent = featuredCount;
     if (cartEl) cartEl.textContent = cartItems;
-    if (cartValueEl) cartValueEl.textContent = `$${cartTotal.toFixed(2)}`;
-    if (avgPriceEl) avgPriceEl.textContent = `$${averagePrice.toFixed(2)}`;
+    if (cartValueEl) cartValueEl.textContent = formatCurrencyAmount(cartTotal);
+    if (avgPriceEl) avgPriceEl.textContent = formatCurrencyAmount(averagePrice);
+  }
+
+  function toggleFeaturedStatus(productId) {
+    const products = loadProducts();
+    const product = products.find((item) => item.id === productId);
+    if (!product) return;
+    product.featured = !product.featured;
+    saveProducts(products);
+    renderAdminProducts();
+    renderPublicProducts();
+    renderAdminMetrics();
+    if (statusBox) statusBox.textContent = product.featured ? 'Product added to featured items.' : 'Product removed from featured items.';
   }
 
   function renderAdminProducts() {
@@ -1805,8 +1845,10 @@ function initAdmin() {
         <div class="badge">${escapeHtml(product.category || 'Coffee')}</div>
         <h3>${escapeHtml(product.name)}</h3>
         <p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p>
-        <div class="price">$${Number(product.price).toFixed(2)}</div>
+        <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
+        ${product.featured ? '<div class="badge" style="background: var(--accent); color: white;">Featured</div>' : ''}
         <div class="inline-actions">
+          <button class="btn secondary" type="button" data-toggle-featured="${product.id}">${product.featured ? 'Remove featured' : 'Add to featured'}</button>
           <button class="btn secondary" type="button" data-edit="${product.id}">Edit</button>
           <button class="btn" type="button" data-delete="${product.id}">Delete</button>
         </div>
@@ -1913,7 +1955,12 @@ function initAdmin() {
     productList.addEventListener('click', (event) => {
       const editId = event.target.getAttribute('data-edit');
       const deleteId = event.target.getAttribute('data-delete');
+      const toggleFeaturedId = event.target.getAttribute('data-toggle-featured');
       const products = loadProducts();
+      if (toggleFeaturedId) {
+        toggleFeaturedStatus(toggleFeaturedId);
+        return;
+      }
       if (editId) {
         const product = products.find(item => item.id === editId);
         if (product) {
