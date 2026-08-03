@@ -387,6 +387,13 @@ img { max-width: 100%; display: block; }
   min-height: 200px;
   scroll-snap-align: start;
   touch-action: pan-y;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+.category-card-media,
+.category-card-overlay {
+  pointer-events: none;
 }
 @media (min-width: 720px) {
   .category-rail .category-card {
@@ -422,12 +429,14 @@ img { max-width: 100%; display: block; }
   opacity: 0.82;
   filter: saturate(0.92) brightness(0.82);
   transition: transform 0.5s ease;
+  pointer-events: none;
 }
 .category-card:hover .category-card-media { transform: scale(1.05); }
 .category-card-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(180deg, transparent 18%, rgba(15, 28, 22, 0.82) 100%);
+  pointer-events: none;
 }
 .category-card h3 {
   position: relative;
