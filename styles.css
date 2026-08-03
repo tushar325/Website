@@ -1787,7 +1787,19 @@ textarea { min-height: 100px; resize: vertical; }
   color: inherit;
   flex-shrink: 0;
 }
-.icon-svg { width: 18px; height: 18px; flex-shrink: 0; stroke: currentColor; }
+.icon-svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: currentColor;
+  fill: none;
+  opacity: 0.95;
+  display: block;
+}
+.admin-sidebar .sidebar-item .icon-svg {
+  color: inherit;
+  stroke: currentColor;
+}
 .admin-main { display: grid; gap: 1.25rem; }
 body[data-admin-page] .admin-main > .card {
   border-radius: 18px;
