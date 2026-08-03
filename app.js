@@ -56,7 +56,8 @@ const DEFAULT_SETTINGS = {
   payments: {
     currency: 'INR',
     razorpayEnabled: true,
-    razorpayKeyId: ''
+    razorpayKeyId: '',
+    codEnabled: true
   },
   cafe: {
     addressLine: '88 Market Street, Downtown',
@@ -285,7 +286,7 @@ function toInputDate(date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function setDateRangePreset(fromId, toId, days) {
+function setDateRangePreset(fromId, toId, days, presetRoot = null) {
   const to = new Date();
   const from = new Date();
   const fromEl = document.getElementById(fromId);
@@ -293,11 +294,16 @@ function setDateRangePreset(fromId, toId, days) {
   if (days === 'all') {
     if (fromEl) fromEl.value = '';
     if (toEl) toEl.value = '';
-    return;
+  } else {
+    from.setDate(to.getDate() - (Number(days) || 30) + 1);
+    if (fromEl) fromEl.value = toInputDate(from);
+    if (toEl) toEl.value = toInputDate(to);
   }
-  from.setDate(to.getDate() - (Number(days) || 30) + 1);
-  if (fromEl) fromEl.value = toInputDate(from);
-  if (toEl) toEl.value = toInputDate(to);
+  const root = presetRoot || fromEl?.closest('.date-filter-bar') || document;
+  root.querySelectorAll('[data-range-preset], [data-orders-preset]').forEach((btn) => {
+    const value = btn.getAttribute('data-range-preset') || btn.getAttribute('data-orders-preset');
+    btn.classList.toggle('is-active', String(value) === String(days));
+  });
 }
 
 function buildBarChart(rows, { maxBars = 14 } = {}) {
@@ -387,7 +393,8 @@ function loadLocalInquiries() {
 }
 
 const PAYMENT_METHOD_META = {
-  razorpay: { icon: '⚡', label: 'Razorpay Checkout', short: 'Razorpay' }
+  razorpay: { icon: '⚡', label: 'Razorpay Checkout', short: 'Razorpay' },
+  cod: { icon: '💵', label: 'Cash on Delivery', short: 'COD' }
 };
 
 function getPaymentSettings() {
@@ -395,23 +402,41 @@ function getPaymentSettings() {
 }
 
 function getPaymentMethodLabel(method) {
-  return PAYMENT_METHOD_META[method]?.label || String(method || 'Razorpay');
+  return PAYMENT_METHOD_META[method]?.label || String(method || 'Payment');
 }
 
 function getPaymentMethodIcon(method) {
-  return PAYMENT_METHOD_META[method]?.icon || '⚡';
+  return PAYMENT_METHOD_META[method]?.icon || '💳';
 }
 
 function getEnabledPaymentMethods(pay = getPaymentSettings()) {
-  if (pay.razorpayEnabled === false) return [];
-  return [{
-    id: 'razorpay',
-    icon: PAYMENT_METHOD_META.razorpay.icon,
-    label: PAYMENT_METHOD_META.razorpay.label,
-    sub: pay.razorpayKeyId
-      ? 'Cards, UPI, Net Banking & wallets via Razorpay'
-      : 'Add your Razorpay Key ID in Admin → Settings'
-  }];
+  const methods = [];
+  if (pay.razorpayEnabled !== false) {
+    methods.push({
+      id: 'razorpay',
+      icon: PAYMENT_METHOD_META.razorpay.icon,
+      label: PAYMENT_METHOD_META.razorpay.label,
+      sub: pay.razorpayKeyId
+        ? 'Cards, UPI, Net Banking & wallets via Razorpay'
+        : 'Add your Razorpay Key ID in Admin → Settings'
+    });
+  }
+  if (pay.codEnabled !== false) {
+    methods.push({
+      id: 'cod',
+      icon: PAYMENT_METHOD_META.cod.icon,
+      label: PAYMENT_METHOD_META.cod.label,
+      sub: 'Pay in cash when your order arrives or at cafe pickup'
+    });
+  }
+  return methods;
+}
+
+function getPaymentAvailabilityCopy() {
+  const methods = getEnabledPaymentMethods();
+  if (!methods.length) return 'Checkout unavailable';
+  const bits = methods.map((m) => (m.id === 'cod' ? 'COD' : 'Razorpay'));
+  return `${bits.join(' · ')} · Cafe pickup available`;
 }
 
 function loadDiscounts() {
@@ -1342,14 +1367,14 @@ function buildSeedProductDetails(category, item, index) {
   details.subtitle = item.description || '';
   details.sku = `BB-${toSlug(category).slice(0, 6).toUpperCase()}-${String(index + 1).padStart(2, '0')}`;
   details.badges = index === 0 ? ['Bestseller', 'Staff Pick'] : index === 1 ? ['New'] : [];
-  details.features = ['Cafe-quality finish', 'Ready for home or gift', 'Razorpay + cafe pickup'];
+  details.features = ['Cafe-quality finish', 'Ready for home or gift', 'Razorpay, COD & cafe pickup'];
   details.highlights = [item.description || 'Selected by Bean & Bloom baristas.'];
   details.shipping = {
     estimatedDays: '2–4 days in Faridabad',
     charges: 'Calculated at checkout',
     freeShippingOver: '₹999',
     returnPolicy: '7-day returns on sealed gear and unused bags.',
-    refundPolicy: 'Refunds processed to original Razorpay payment within 5–7 days.'
+    refundPolicy: 'Online refunds via Razorpay in 5–7 days. COD orders can be cancelled before dispatch.'
   };
   details.packaging = {
     size: 'Retail pack',
@@ -1412,8 +1437,9 @@ function buildSeedProductDetails(category, item, index) {
     details.optionTypes = ['Whole bean', 'Ground'];
     details.variants = [
       { id: '250g-wb', label: '250g · Whole bean', size: '250g', weight: '250g', type: 'Whole bean', grind: 'Whole bean', price: item.price, stock: 20 },
-      { id: '250g-gr', label: '250g · Ground', size: '250g', weight: '250g', type: 'Ground', grind: 'Ground', price: Number(item.price) + 0.5, stock: 15 },
-      { id: '500g-wb', label: '500g · Whole bean', size: '500g', weight: '500g', type: 'Whole bean', grind: 'Whole bean', price: Number(item.price) * 1.85, stock: 10 }
+      { id: '250g-gr', label: '250g · Ground', size: '250g', weight: '250g', type: 'Ground', grind: 'Ground', price: Number(item.price) + 20, stock: 15 },
+      { id: '500g-wb', label: '500g · Whole bean', size: '500g', weight: '500g', type: 'Whole bean', grind: 'Whole bean', price: Number((Number(item.price) * 1.85).toFixed(0)), stock: 10 },
+      { id: '500g-gr', label: '500g · Ground', size: '500g', weight: '500g', type: 'Ground', grind: 'Ground', price: Number((Number(item.price) * 1.85 + 20).toFixed(0)), stock: 8 }
     ];
     details.compareAtPrice = Number((Number(item.price) * 1.15).toFixed(2));
   }
@@ -1844,7 +1870,15 @@ function showLoginPrompt() {
   document.getElementById('close-login-modal')?.addEventListener('click', () => modal.remove());
 }
 
-function addToCart(productId, quantity = 1) {
+function getCartLineKey(item) {
+  return `${item.id}::${item.variantId || 'default'}`;
+}
+
+function findCartLine(cart, lineKey) {
+  return cart.find((item) => getCartLineKey(item) === String(lineKey));
+}
+
+function addToCart(productId, quantity = 1, options = {}) {
   const user = getLoggedInUser();
   if (!user) {
     showLoginPrompt();
@@ -1855,12 +1889,29 @@ function addToCart(productId, quantity = 1) {
   const product = products.find((item) => item.id === productId);
   if (!product) return false;
 
+  const variantId = String(options.variantId || '').trim();
+  const variantLabel = String(options.variantLabel || '').trim();
+  const unitPrice = options.price != null && Number.isFinite(Number(options.price))
+    ? Number(options.price)
+    : Number(product.price);
+
   const cart = loadCart();
-  const existing = cart.find((item) => item.id === productId);
+  const existing = cart.find((item) => item.id === productId && String(item.variantId || '') === variantId);
   if (existing) {
     existing.quantity = Number(existing.quantity || 0) + quantity;
+    existing.price = unitPrice;
+    if (variantLabel) existing.variantLabel = variantLabel;
   } else {
-    cart.push({ id: product.id, name: product.name, price: Number(product.price), category: product.category, quantity, imageUrl: product.imageUrl });
+    cart.push({
+      id: product.id,
+      name: product.name,
+      price: unitPrice,
+      category: product.category,
+      quantity,
+      imageUrl: product.imageUrl,
+      variantId,
+      variantLabel
+    });
   }
   saveCart(cart);
   updateCartCount();
@@ -1869,25 +1920,27 @@ function addToCart(productId, quantity = 1) {
   return true;
 }
 
-function removeFromCart(productId) {
+function removeFromCart(lineKey) {
   const user = getLoggedInUser();
   const key = getUserCartKey();
   if (!key) return;
-  const cart = loadCart().filter(item => item.id !== productId);
-  saveCart(cart);
+  const cart = loadCart();
+  const target = findCartLine(cart, lineKey) || cart.find((item) => item.id === lineKey);
+  const next = cart.filter((item) => item !== target);
+  saveCart(next);
   updateCartCount();
-  if (user) syncCartToSQL(user.id, productId, 0, 'remove');
+  if (user && target) syncCartToSQL(user.id, target.id, 0, 'remove');
 }
 
-function updateCartQuantity(productId, quantity) {
+function updateCartQuantity(lineKey, quantity) {
   const user = getLoggedInUser();
   const cart = loadCart();
-  const item = cart.find(i => i.id === productId);
+  const item = findCartLine(cart, lineKey) || cart.find((entry) => entry.id === lineKey);
   if (!item) return;
   item.quantity = quantity;
   saveCart(cart);
   updateCartCount();
-  if (user) syncCartToSQL(user.id, productId, quantity, 'update');
+  if (user) syncCartToSQL(user.id, item.id, quantity, 'update');
 }
 
 function clearCart() {
@@ -2120,7 +2173,7 @@ function renderCartFromAPI(cartData) {
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
       <p class="summary-note">${pricing.discountTotal > 0 ? `You save ${formatCurrencyAmount(pricing.discountTotal)} with active cafe discounts.` : 'Add discounts in Admin → Discounts to offer savings at checkout.'}</p>
-      <p class="summary-subnote">Pay with Razorpay · Cafe pickup available · Fresh bakery same-day locally.</p>
+      <p class="summary-subnote">${escapeHtml(getPaymentAvailabilityCopy())} · Fresh bakery same-day locally.</p>
     </div>
   `;
 
@@ -2221,24 +2274,25 @@ function renderCart() {
 
   const fragment = document.createDocumentFragment();
   cart.forEach((item) => {
+    const lineKey = getCartLineKey(item);
     const row = document.createElement('article');
     row.className = 'cart-item-row';
     row.innerHTML = `
       <img class="product-image" src="${escapeHtml(optimizeImageUrl(item.imageUrl || DEFAULT_IMAGE_URL, 260, 72))}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async">
       <div class="cart-item-details">
         <h3>${escapeHtml(item.name)}</h3>
-        <p class="muted">${escapeHtml(item.category || 'Coffee')}</p>
+        <p class="muted">${escapeHtml(item.variantLabel || item.category || 'Coffee')}${item.variantLabel && item.category ? ` · ${escapeHtml(item.category)}` : ''}</p>
         <div class="cart-item-meta">
-          <span>Bean & Bloom cafe & shop</span>
+          <span>${formatCurrencyAmount(Number(item.price))} each</span>
           <span>Pickup or delivery</span>
         </div>
         <div class="cart-item-controls">
           <div class="quantity-control">
-            <button type="button" data-decrease="${item.id}">−</button>
-            <input type="number" min="1" value="${Number(item.quantity)}" data-quantity="${item.id}">
-            <button type="button" data-increase="${item.id}">+</button>
+            <button type="button" data-decrease="${escapeHtml(lineKey)}">−</button>
+            <input type="number" min="1" value="${Number(item.quantity)}" data-quantity="${escapeHtml(lineKey)}">
+            <button type="button" data-increase="${escapeHtml(lineKey)}">+</button>
           </div>
-          <button class="btn secondary" type="button" data-remove="${item.id}">Remove</button>
+          <button class="btn secondary" type="button" data-remove="${escapeHtml(lineKey)}">Remove</button>
         </div>
       </div>
       <div class="cart-item-total">
@@ -2262,25 +2316,25 @@ function renderCart() {
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
       <p class="summary-note">${pricing.discountTotal > 0 ? `You save ${formatCurrencyAmount(pricing.discountTotal)} with active cafe discounts.` : 'Add discounts in Admin → Discounts to offer savings at checkout.'}</p>
-      <p class="summary-subnote">Pay with Razorpay · Cafe pickup available · Fresh bakery same-day locally.</p>
+      <p class="summary-subnote">${escapeHtml(getPaymentAvailabilityCopy())} · Fresh bakery same-day locally.</p>
     </div>
   `;
 
   document.querySelectorAll('[data-remove]').forEach((button) => {
     button.addEventListener('click', (event) => {
-      const productId = event.target.getAttribute('data-remove');
-      removeFromCart(productId);
+      const lineKey = event.target.getAttribute('data-remove');
+      removeFromCart(lineKey);
       renderCart();
     });
   });
 
   document.querySelectorAll('[data-increase]').forEach((button) => {
     button.addEventListener('click', (event) => {
-      const productId = event.target.getAttribute('data-increase');
+      const lineKey = event.target.getAttribute('data-increase');
       const cart = loadCart();
-      const item = cart.find((entry) => entry.id === productId);
+      const item = findCartLine(cart, lineKey);
       if (item) {
-        updateCartQuantity(productId, Number(item.quantity || 1) + 1);
+        updateCartQuantity(lineKey, Number(item.quantity || 1) + 1);
         renderCart();
       }
     });
@@ -2288,11 +2342,11 @@ function renderCart() {
 
   document.querySelectorAll('[data-decrease]').forEach((button) => {
     button.addEventListener('click', (event) => {
-      const productId = event.target.getAttribute('data-decrease');
+      const lineKey = event.target.getAttribute('data-decrease');
       const cart = loadCart();
-      const item = cart.find((entry) => entry.id === productId);
+      const item = findCartLine(cart, lineKey);
       if (item && Number(item.quantity || 1) > 1) {
-        updateCartQuantity(productId, Number(item.quantity || 1) - 1);
+        updateCartQuantity(lineKey, Number(item.quantity || 1) - 1);
         renderCart();
       }
     });
@@ -2300,10 +2354,10 @@ function renderCart() {
 
   document.querySelectorAll('[data-quantity]').forEach((input) => {
     input.addEventListener('change', (event) => {
-      const productId = event.target.getAttribute('data-quantity');
+      const lineKey = event.target.getAttribute('data-quantity');
       const value = Number(event.target.value);
       if (value >= 1) {
-        updateCartQuantity(productId, value);
+        updateCartQuantity(lineKey, value);
         renderCart();
       }
     });
@@ -2660,7 +2714,7 @@ async function renderProductDetail() {
             ${compareAt && compareAt > basePrice ? `<span class="pp-compare">${formatCurrencyAmount(compareAt)}</span><span class="pp-discount">${discountPct}% off</span>` : ''}
           </div>
           ${details.sku ? `<p class="muted pp-sku">SKU: ${escapeHtml(details.sku || product.sku)}</p>` : ''}
-          <p class="muted pp-stock" id="pp-stock">${Number(product.stock) > 0 ? `${product.stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock'}</p>
+          <p class="muted pp-stock" id="pp-stock">${Number(product.stock) > 0 ? `${product.stock} in stock · ${escapeHtml(getPaymentAvailabilityCopy())}` : 'Currently out of stock'}</p>
           ${page.variants !== false && details.variants.length ? `
             <div class="pp-variants" id="pp-variants">
               ${(details.optionSizes || []).length ? `
@@ -2700,7 +2754,8 @@ async function renderProductDetail() {
             <button class="btn ghost" id="share-product-btn" type="button">Share</button>
           </div>
           <div class="pp-trust-row">
-            <span>Secure Razorpay</span>
+            <span>${getEnabledPaymentMethods().some((m) => m.id === 'razorpay') ? 'Secure Razorpay' : 'Secure checkout'}</span>
+            ${getEnabledPaymentMethods().some((m) => m.id === 'cod') ? '<span>Cash on Delivery</span>' : ''}
             <span>Cafe pickup</span>
             <span>${escapeHtml(details.shipping.estimatedDays || 'Fast local delivery')}</span>
           </div>
@@ -2854,7 +2909,7 @@ async function renderProductDetail() {
       <div class="container pp-footer-cta-inner">
         <div>
           <h2>${escapeHtml(details.footerCtaMessage || `Ready for ${product.name}?`)}</h2>
-          <p class="muted">Secure Razorpay checkout or cafe pickup in Faridabad.</p>
+          <p class="muted">Razorpay, Cash on Delivery, or cafe pickup in Faridabad.</p>
         </div>
         <div class="pp-footer-cta-actions">
           <button class="btn" type="button" id="footer-add-cart" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
@@ -2898,7 +2953,7 @@ async function renderProductDetail() {
     if (stickyPrice) stickyPrice.textContent = formatCurrencyAmount(price);
     if (stickyVariant) stickyVariant.textContent = selectedVariant ? selectedVariant.label : 'Standard';
     if (selectedLabel && selectedVariant) selectedLabel.textContent = `${selectedVariant.label} · ${formatCurrencyAmount(selectedVariant.price)}`;
-    if (stockEl) stockEl.textContent = stock > 0 ? `${stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock';
+    if (stockEl) stockEl.textContent = stock > 0 ? `${stock} in stock · ${getPaymentAvailabilityCopy()}` : 'Currently out of stock';
     ['buy-button', 'buy-now-button', 'footer-add-cart', 'footer-buy-now', 'sticky-add-cart'].forEach((id) => {
       const btn = document.getElementById(id);
       if (btn) btn.disabled = stock <= 0;
@@ -2907,9 +2962,14 @@ async function renderProductDetail() {
 
   const addProduct = (goCheckout = false) => {
     const qty = getQty();
-    const added = addToCart(product.id, qty);
+    const added = addToCart(product.id, qty, selectedVariant ? {
+      variantId: selectedVariant.id,
+      variantLabel: selectedVariant.label,
+      price: Number(selectedVariant.price)
+    } : {});
     if (!added) return;
-    showToast(`${product.name} added to cart.`, 'success');
+    const label = selectedVariant?.label ? ` (${selectedVariant.label})` : '';
+    showToast(`${product.name}${label} added to cart.`, 'success');
     if (goCheckout) window.location.href = 'checkout.html';
   };
 
@@ -3916,6 +3976,15 @@ function renderAdminOrdersPage() {
     const items = (order.items || []).map((item) => `${escapeHtml(item.name)} × ${item.quantity}`).join(', ');
     const paymentId = meta.razorpayPaymentId || meta.razorpay_payment_id || '—';
     const verified = !!order.paymentVerified;
+    const method = order.payMethod || 'razorpay';
+    const methodLabel = getPaymentMethodLabel(method);
+    const methodIcon = getPaymentMethodIcon(method);
+    const paymentLine = method === 'cod'
+      ? `${methodIcon} Cash on Delivery · Collect on delivery / pickup`
+      : `${methodIcon} Razorpay · Payment ID: <code>${escapeHtml(paymentId)}</code>`;
+    const verifyLabel = method === 'cod'
+      ? (verified ? 'Mark COD unpaid' : 'Mark COD collected')
+      : (verified ? 'Mark unverified' : 'Verify Razorpay payment');
     return `
       <article class="card" style="margin-bottom:1rem;" data-order-id="${escapeHtml(order.id)}">
         <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:start;">
@@ -3923,8 +3992,8 @@ function renderAdminOrdersPage() {
             <h3 style="margin:0 0 .35rem;font-family:var(--font-display,inherit);">${escapeHtml(order.id)}</h3>
             <p class="muted" style="margin:0;">${new Date(order.date).toLocaleString('en-IN')} · ${escapeHtml(addr.name || 'Customer')} · ${escapeHtml(addr.city || '')}</p>
             <p style="margin:.7rem 0 0;font-size:.92rem;">${items || 'No items'}</p>
-            <p class="muted" style="margin:.45rem 0 0;font-size:.85rem;">⚡ Razorpay · Payment ID: <code>${escapeHtml(paymentId)}</code></p>
-            <p class="muted" style="margin:.35rem 0 0;font-size:.85rem;">Payment status: <strong style="color:${verified ? '#166534' : '#92400e'};">${verified ? 'Verified' : 'Awaiting verification'}</strong>${order.paymentVerifiedAt ? ` · ${new Date(order.paymentVerifiedAt).toLocaleString('en-IN')}` : ''}</p>
+            <p class="muted" style="margin:.45rem 0 0;font-size:.85rem;">${paymentLine}</p>
+            <p class="muted" style="margin:.35rem 0 0;font-size:.85rem;">Payment status: <strong style="color:${verified ? '#166534' : '#92400e'};">${verified ? (method === 'cod' ? 'Collected' : 'Verified') : (method === 'cod' ? 'Awaiting collection' : 'Awaiting verification')}</strong>${order.paymentVerifiedAt ? ` · ${new Date(order.paymentVerifiedAt).toLocaleString('en-IN')}` : ''}</p>
           </div>
           <div style="text-align:right;display:grid;gap:.55rem;justify-items:end;">
             <strong>${formatCurrencyAmount(order.total)}</strong>
@@ -3934,7 +4003,7 @@ function renderAdminOrdersPage() {
               `).join('')}
             </select>
             <button class="btn ${verified ? 'secondary' : ''}" type="button" data-verify-payment="${escapeHtml(order.id)}" style="margin:0;">
-              ${verified ? 'Mark unverified' : 'Verify Razorpay payment'}
+              ${verifyLabel}
             </button>
           </div>
         </div>
@@ -4270,7 +4339,8 @@ function renderAdminAnalyticsPage() {
       </article>
       <article class="card">
         <h3 style="margin-top:0;">Payment health</h3>
-        <div class="summary-row"><span>Razorpay orders</span><strong>${orders.filter((o) => o.payMethod === 'razorpay').length}</strong></div>
+        <div class="summary-row"><span>Razorpay orders</span><strong>${orders.filter((o) => o.payMethod === 'razorpay' || !o.payMethod).length}</strong></div>
+        <div class="summary-row"><span>COD orders</span><strong>${orders.filter((o) => o.payMethod === 'cod').length}</strong></div>
         <div class="summary-row"><span>Verified</span><strong>${verified}</strong></div>
         <div class="summary-row"><span>Awaiting verification</span><strong>${orders.length - verified}</strong></div>
         <div class="summary-row"><span>Verify rate</span><strong>${verifyRate}%</strong></div>
