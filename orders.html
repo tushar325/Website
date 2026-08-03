@@ -91,8 +91,8 @@
         const metaBits = [
           !isCod && paymentId && `Payment ID ${paymentId}`,
           isCod
-            ? (order.paymentVerified ? 'Cash collected' : 'Pay on delivery / pickup')
-            : (order.paymentVerified ? 'Verified by cafe' : 'Awaiting verification')
+            ? (order.paymentVerified ? 'Cash collected' : 'Pay on delivery')
+            : (order.paymentVerified ? 'Verified by store' : 'Awaiting verification')
         ].filter(Boolean).join(' · ');
 
         card.innerHTML = `
