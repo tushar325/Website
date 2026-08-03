@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Create Account | Bean & Bloom</title>
   <meta name="description" content="Create a Bean & Bloom account to shop premium coffee, track orders, and enjoy member benefits.">
+    <script>
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
+        var theme = (saved && saved.theme) || 'forest-brass';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css">
   <style>
     .auth-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; }

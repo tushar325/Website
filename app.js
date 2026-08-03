@@ -375,6 +375,7 @@ function syncDynamicContentInBackground() {
   if (!window.BeanbBloomAPI?.probeApiHealth) return;
   const softRefresh = () => {
     try {
+      applySiteTheme(getThemeId());
       if (document.getElementById('hero-headline') || document.getElementById('footer-text')) {
         renderPublicSiteContent();
       }

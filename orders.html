@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>My Orders | Bean & Bloom</title>
+    <script>
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
+        var theme = (saved && saved.theme) || 'forest-brass';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css">
   <style>
     .order-card { background:rgba(255,255,255,.96); border:1px solid rgba(223,229,236,.8); border-radius:24px; padding:1.6rem; box-shadow:0 16px 44px rgba(31,40,65,.06); margin-bottom:1.2rem; }
