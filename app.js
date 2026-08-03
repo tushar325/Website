@@ -698,22 +698,178 @@ function buildWhatsAppUrl(extraMessage = '') {
   return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
 }
 
+const WA_CHAT_SESSION_KEY = 'bean-bloom-wa-chat-session';
+let recentlyViewedExpanded = false;
+
+function loadWaChatSession() {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(WA_CHAT_SESSION_KEY) || 'null');
+    if (raw && Array.isArray(raw.messages)) return raw;
+  } catch (_) {}
+  return { messages: [] };
+}
+
+function saveWaChatSession(data) {
+  sessionStorage.setItem(WA_CHAT_SESSION_KEY, JSON.stringify({
+    messages: Array.isArray(data?.messages) ? data.messages : []
+  }));
+}
+
+function waChatReplyFor(text) {
+  const q = String(text || '').toLowerCase();
+  if (/order|track|shipping|delivery|cod/.test(q)) {
+    return 'Thanks for reaching out. Share your order ID if you have one, and we can help with shipping or COD status. You can also check My orders on the site.';
+  }
+  if (/grind|brew|pour|espresso|recipe/.test(q)) {
+    return 'Happy to help with brew advice. Tell us your method (pour-over, espresso, French press) and we will suggest grind and ratio tips.';
+  }
+  if (/price|discount|offer|deal|brunch/.test(q)) {
+    return 'Our current weekend specials are on the homepage Deal section. Ask about a product name and we will point you to the right bag or set.';
+  }
+  if (/hello|hi|hey|namaste/.test(q)) {
+    return 'Hi from Bean & Bloom 👋 How can we help with beans, gear, or an order today?';
+  }
+  return 'Thanks for your message. A teammate typically replies within one business day. Meanwhile, browse the shop or continue this chat here — it stays for this browser session only.';
+}
+
+function ensureWhatsAppChatPanel() {
+  let panel = document.getElementById('wa-chat-panel');
+  if (panel) return panel;
+  panel = document.createElement('div');
+  panel.id = 'wa-chat-panel';
+  panel.className = 'wa-chat-panel';
+  panel.hidden = true;
+  panel.innerHTML = `
+    <div class="wa-chat-card" role="dialog" aria-modal="true" aria-labelledby="wa-chat-title">
+      <header class="wa-chat-header">
+        <div>
+          <strong id="wa-chat-title">Bean & Bloom</strong>
+          <span class="wa-chat-status">WhatsApp chat · session only</span>
+        </div>
+        <button type="button" class="wa-chat-close" id="wa-chat-close" aria-label="Close chat">×</button>
+      </header>
+      <div class="wa-chat-thread" id="wa-chat-thread" aria-live="polite"></div>
+      <form class="wa-chat-compose" id="wa-chat-form">
+        <input id="wa-chat-input" type="text" maxlength="500" placeholder="Type a message…" autocomplete="off" required>
+        <button class="btn" type="submit">Send</button>
+      </form>
+      <div class="wa-chat-footer">
+        <a class="wa-chat-external" id="wa-chat-external" href="#" target="_blank" rel="noopener noreferrer">Open in WhatsApp</a>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(panel);
+
+  panel.addEventListener('click', (event) => {
+    if (event.target === panel) closeWhatsAppChat();
+  });
+  panel.querySelector('#wa-chat-close')?.addEventListener('click', closeWhatsAppChat);
+  panel.querySelector('#wa-chat-form')?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const input = document.getElementById('wa-chat-input');
+    const text = String(input?.value || '').trim();
+    if (!text) return;
+    appendWaChatMessage('user', text);
+    if (input) input.value = '';
+    window.setTimeout(() => appendWaChatMessage('agent', waChatReplyFor(text)), 450);
+  });
+  return panel;
+}
+
+function appendWaChatMessage(role, text, { persist = true } = {}) {
+  const session = loadWaChatSession();
+  const message = {
+    id: `wa-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    role: role === 'user' ? 'user' : 'agent',
+    text: String(text || '').trim(),
+    at: new Date().toISOString()
+  };
+  if (!message.text) return;
+  if (persist) {
+    session.messages.push(message);
+    saveWaChatSession(session);
+  }
+  const thread = document.getElementById('wa-chat-thread');
+  if (!thread) return;
+  const bubble = document.createElement('div');
+  bubble.className = `wa-chat-bubble wa-chat-${message.role}`;
+  bubble.innerHTML = `<p>${escapeHtml(message.text)}</p><time>${escapeHtml(new Date(message.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</time>`;
+  thread.appendChild(bubble);
+  thread.scrollTop = thread.scrollHeight;
+  syncWhatsAppExternalLink();
+}
+
+function renderWaChatThread() {
+  const thread = document.getElementById('wa-chat-thread');
+  if (!thread) return;
+  const session = loadWaChatSession();
+  thread.innerHTML = '';
+  if (!session.messages.length) {
+    appendWaChatMessage(
+      'agent',
+      'Hi! Chat with Bean & Bloom here. Messages stay in this browser session only — refresh or close the tab and they clear.',
+      { persist: true }
+    );
+    return;
+  }
+  session.messages.forEach((msg) => {
+    const bubble = document.createElement('div');
+    bubble.className = `wa-chat-bubble wa-chat-${msg.role === 'user' ? 'user' : 'agent'}`;
+    bubble.innerHTML = `<p>${escapeHtml(msg.text)}</p><time>${escapeHtml(new Date(msg.at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))}</time>`;
+    thread.appendChild(bubble);
+  });
+  thread.scrollTop = thread.scrollHeight;
+  syncWhatsAppExternalLink();
+}
+
+function syncWhatsAppExternalLink() {
+  const link = document.getElementById('wa-chat-external');
+  if (!link) return;
+  const session = loadWaChatSession();
+  const latestUser = [...session.messages].reverse().find((m) => m.role === 'user');
+  const href = buildWhatsAppUrl(latestUser?.text || '');
+  if (!href) {
+    link.hidden = true;
+    return;
+  }
+  link.hidden = false;
+  link.href = href;
+}
+
+function openWhatsAppChat() {
+  if (document.body?.dataset?.adminPage) return;
+  const wa = getWhatsAppSettings();
+  if (wa.enabled === false) return;
+  const panel = ensureWhatsAppChatPanel();
+  renderWaChatThread();
+  panel.hidden = false;
+  document.body.classList.add('wa-chat-open');
+  window.setTimeout(() => document.getElementById('wa-chat-input')?.focus(), 50);
+}
+
+function closeWhatsAppChat() {
+  const panel = document.getElementById('wa-chat-panel');
+  if (panel) panel.hidden = true;
+  document.body.classList.remove('wa-chat-open');
+}
+
 function renderWhatsAppWidget() {
   document.getElementById('whatsapp-float')?.remove();
   if (document.body?.dataset?.adminPage) return;
   const wa = getWhatsAppSettings();
   if (wa.enabled === false || wa.floatButton === false) return;
-  const href = buildWhatsAppUrl();
-  if (!href) return;
-  const link = document.createElement('a');
-  link.id = 'whatsapp-float';
-  link.className = 'whatsapp-float';
-  link.href = href;
-  link.target = '_blank';
-  link.rel = 'noopener noreferrer';
-  link.setAttribute('aria-label', 'Chat on WhatsApp');
-  link.innerHTML = '<span aria-hidden="true">💬</span><span>WhatsApp</span>';
-  document.body.appendChild(link);
+  ensureWhatsAppChatPanel();
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'whatsapp-float';
+  btn.className = 'whatsapp-float';
+  btn.setAttribute('aria-label', 'Open WhatsApp chat');
+  btn.innerHTML = '<span aria-hidden="true">💬</span><span>WhatsApp</span>';
+  btn.addEventListener('click', (event) => {
+    event.preventDefault();
+    openWhatsAppChat();
+  });
+  document.body.appendChild(btn);
 }
 
 function readCheckedOptionValues(containerId) {
@@ -1381,10 +1537,16 @@ function renderPublicSiteContent() {
   }
   const waLink = document.getElementById('contact-whatsapp');
   if (waLink) {
-    const href = buildWhatsAppUrl();
-    if (href && getWhatsAppSettings().enabled !== false) {
-      waLink.href = href;
+    if (getWhatsAppSettings().enabled !== false) {
       waLink.hidden = false;
+      waLink.href = '#';
+      if (!waLink.dataset.chatBound) {
+        waLink.dataset.chatBound = 'true';
+        waLink.addEventListener('click', (event) => {
+          event.preventDefault();
+          openWhatsAppChat();
+        });
+      }
     } else {
       waLink.hidden = true;
     }
@@ -3014,26 +3176,64 @@ function renderPublicCategoryGrid() {
 }
 
 
-function renderRecentlyViewedRail() {
+function getRecentlyViewedRowSize() {
+  const width = window.innerWidth || 1200;
+  if (width <= 520) return 1;
+  if (width <= 720) return 2;
+  if (width <= 980) return 3;
+  if (width <= 1279) return 4;
+  return 5;
+}
+
+function renderRecentlyViewedRail({ expanded } = {}) {
   const root = document.getElementById('recently-viewed-rail');
   if (!root) return;
   const section = document.getElementById('recently-viewed-section') || root.closest('section');
+  const moreWrap = document.getElementById('recently-viewed-more-wrap');
+  const moreBtn = document.getElementById('recently-viewed-more');
   const products = loadRecentlyViewed()
     .map((id) => loadProducts().find((p) => String(p.id) === id))
     .filter(Boolean)
-    .slice(0, 8);
+    .slice(0, 12);
+
   if (!products.length) {
     root.innerHTML = '';
     if (section) section.hidden = true;
+    if (moreWrap) moreWrap.hidden = true;
     return;
   }
+
+  if (typeof expanded === 'boolean') recentlyViewedExpanded = expanded;
+
   if (section) {
     section.hidden = false;
     section.classList.add('is-visible');
   }
+
+  const rowSize = getRecentlyViewedRowSize();
+  const canExpand = products.length > rowSize;
+  const visible = recentlyViewedExpanded || !canExpand
+    ? products
+    : products.slice(0, rowSize);
+
   root.classList.add('grid', 'product-grid', 'product-grid-dense');
-  root.innerHTML = products.map((product) => renderProductCardHtml(product)).join('');
+  root.innerHTML = visible.map((product) => renderProductCardHtml(product)).join('');
   bindProductCardActions(root);
+
+  if (moreWrap && moreBtn) {
+    if (!canExpand) {
+      moreWrap.hidden = true;
+    } else {
+      moreWrap.hidden = false;
+      moreBtn.textContent = recentlyViewedExpanded ? 'Show less' : 'Show more products';
+      if (!moreBtn.dataset.bound) {
+        moreBtn.dataset.bound = 'true';
+        moreBtn.addEventListener('click', () => {
+          renderRecentlyViewedRail({ expanded: !recentlyViewedExpanded });
+        });
+      }
+    }
+  }
 }
 
 function renderFeaturedProducts() {
@@ -5368,6 +5568,17 @@ document.addEventListener('DOMContentLoaded', () => {
   run('offers', renderOfferStrip);
   run('featured', renderFeaturedProducts);
   run('recently viewed', renderRecentlyViewedRail);
+  run('recently viewed resize', () => {
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        if (!document.getElementById('recently-viewed-rail')) return;
+        if (recentlyViewedExpanded) return;
+        renderRecentlyViewedRail();
+      }, 160);
+    });
+  });
   run('compare bar', renderCompareBar);
   if (document.getElementById('public-products')) {
     run('products', () => renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' }));
