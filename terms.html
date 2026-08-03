@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terms of Service | Bean & Bloom</title>
+  <meta name="description" content="Terms of Service for shopping with Bean & Bloom specialty coffee online.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
+        var theme = (saved && saved.theme) || 'forest-brass';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
+        <a href="index.html">Home</a>
+        <a href="index.html#products">Shop</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="legal-hero">
+      <div class="container">
+        <span class="eyebrow">Legal</span>
+        <h1>Terms of Service</h1>
+        <p>These terms explain how you may use the Bean & Bloom online shop, place orders, and receive support.</p>
+        <div class="legal-meta">
+          <span>Effective: 1 August 2026</span>
+          <span>Applies to beanandbloom.com storefront</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="legal-body">
+      <div class="container legal-layout">
+        <aside class="legal-toc">
+          <strong>On this page</strong>
+          <nav>
+            <a href="#agreement">Agreement</a>
+            <a href="#accounts">Accounts</a>
+            <a href="#orders">Orders & pricing</a>
+            <a href="#payments">Payments</a>
+            <a href="#shipping">Shipping</a>
+            <a href="#returns">Returns</a>
+            <a href="#conduct">Acceptable use</a>
+            <a href="#contact">Contact</a>
+          </nav>
+        </aside>
+
+        <div class="legal-content">
+          <article class="legal-section" id="agreement">
+            <h2>1. Agreement</h2>
+            <p>By browsing, creating an account, or placing an order with Bean & Bloom, you agree to these Terms of Service and our <a href="privacy.html">Privacy Policy</a>. If you do not agree, please do not use the shop.</p>
+          </article>
+
+          <article class="legal-section" id="accounts">
+            <h2>2. Accounts</h2>
+            <p>You are responsible for keeping your login details secure and for activity under your account. Provide accurate contact and delivery information so we can fulfill orders and reach you about support.</p>
+            <ul>
+              <li>One person should control each customer account.</li>
+              <li>Notify us promptly if you suspect unauthorized access.</li>
+              <li>We may suspend accounts that misuse the storefront or payment flows.</li>
+            </ul>
+          </article>
+
+          <article class="legal-section" id="orders">
+            <h2>3. Orders & pricing</h2>
+            <p>Product details, availability, and prices may change. An order is accepted when we confirm it after checkout. We may cancel or refuse an order if an item is out of stock, priced in error, or payment cannot be completed.</p>
+          </article>
+
+          <article class="legal-section" id="payments">
+            <h2>4. Payments</h2>
+            <p>We accept Razorpay Checkout and Cash on Delivery where enabled. Card details are processed by Razorpay — Bean & Bloom does not store card numbers, CVV, or full payment credentials on our servers.</p>
+          </article>
+
+          <article class="legal-section" id="shipping">
+            <h2>5. Shipping & delivery</h2>
+            <p>Delivery estimates are guidance, not guarantees. Risk of loss passes to you when the order is delivered to the address provided at checkout. Please ensure someone can receive perishable or time-sensitive coffee shipments.</p>
+          </article>
+
+          <article class="legal-section" id="returns">
+            <h2>6. Returns & issues</h2>
+            <p>If a shipment arrives damaged, incomplete, or incorrect, contact us within a reasonable time with your order ID and photos where helpful. Fresh coffee and opened food items may have limited return options for safety and quality reasons.</p>
+          </article>
+
+          <article class="legal-section" id="conduct">
+            <h2>7. Acceptable use</h2>
+            <p>Do not misuse the site, attempt to disrupt checkout, scrape content aggressively, or submit fraudulent orders. We may update these terms; continued use after changes means you accept the revised terms.</p>
+          </article>
+
+          <article class="legal-section" id="contact">
+            <h2>8. Contact</h2>
+            <p>Questions about these terms? Reach us via the <a href="contact.html">Contact</a> page or WhatsApp support listed in store settings.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="index.html">Bean & Bloom</a>
+        <p data-footer-text>© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.</p>
+      </div>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="register.html">Create account</a>
+        <a href="contact.html">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="api-client.js" defer></script>
+  <script src="blogs-seed.js"></script>
+  <script src="app.js" defer></script>
+</body>
+</html>

@@ -5,7 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sign In | Bean & Bloom</title>
   <meta name="description" content="Sign in to your Bean & Bloom account to track orders and manage your cart.">
-    <script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
     (function () {
       try {
         var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
@@ -15,88 +18,80 @@
     })();
   </script>
   <link rel="stylesheet" href="styles.css">
-  <style>
-    .auth-page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 3rem 1rem; }
-    .auth-card { width: min(460px, 100%); background: rgba(255,255,255,.98); border: 2.5px solid var(--accent); border-radius: 32px; padding: 2.8rem 2.4rem; box-shadow: 0 40px 100px rgba(43,45,98,.14); }
-    .auth-brand { text-align: center; margin-bottom: 2rem; }
-    .auth-brand .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
-    .auth-brand p { color: var(--muted); margin: .4rem 0 0; font-size: .95rem; }
-    .auth-card h2 { margin: 0 0 1.6rem; font-size: 1.6rem; letter-spacing: -.02em; }
-    .auth-divider { display: flex; align-items: center; gap: 1rem; margin: 1.4rem 0; color: var(--muted); font-size: .85rem; }
-    .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: rgba(0,0,0,.1); }
-    .auth-footer { margin-top: 1.4rem; text-align: center; color: var(--muted); font-size: .92rem; }
-    .auth-footer a { color: var(--accent); font-weight: 700; }
-    .auth-footer a:hover { text-decoration: underline; }
-    .form-input-group { position: relative; margin-bottom: 1rem; }
-    .form-input-group input { width: 100%; padding: .85rem .9rem .85rem 2.5rem; border: 1.5px solid rgba(0,0,0,.12); border-radius: 12px; font: inherit; font-size: 1rem; background: rgba(249,246,242,.95); transition: border-color .2s, box-shadow .2s; }
-    .form-input-group input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(138,75,47,.1); }
-    .form-icon { position: absolute; left: .9rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--accent); pointer-events: none; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .btn-full { width: 100%; padding: .9rem; font-size: 1rem; font-weight: 800; margin-top: .4rem; }
-    .status-msg { padding: .7rem 1rem; border-radius: 10px; font-size: .9rem; font-weight: 600; margin-bottom: 1rem; display: none; }
-    .status-msg.success { background: rgba(34,197,94,.1); color: #15803d; border: 1px solid rgba(34,197,94,.3); display: block; }
-    .status-msg.error { background: rgba(239,68,68,.1); color: #b91c1c; border: 1px solid rgba(239,68,68,.3); display: block; }
-    .remember-row { display: flex; justify-content: space-between; align-items: center; margin: .2rem 0 1rem; font-size: .88rem; }
-    .remember-row label { display: flex; align-items: center; gap: .4rem; color: var(--muted); cursor: pointer; }
-    .remember-row a { color: var(--accent); font-weight: 600; }
-    .user-avatar { width: 56px; height: 56px; border-radius: 50%; background: rgba(138,75,47,.12); display: grid; place-items: center; margin: 0 auto 1.2rem; }
-  </style>
 </head>
 <body>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">Bean & Bloom</a>
-      <nav class="nav-links">
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
-        <a href="about.html">About</a>
         <a href="index.html#products">Shop</a>
+        <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
-        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
       </nav>
     </div>
   </header>
 
-  <main class="auth-page">
-    <div class="auth-card">
-      <div class="auth-brand">
-        <div class="user-avatar">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#8c6138" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-        </div>
-        <div class="brand-name">Bean & Bloom</div>
-        <p>Sign in to your account</p>
+  <main class="auth-shell">
+    <section class="auth-visual" aria-label="Bean & Bloom welcome">
+      <div class="auth-visual-media" role="img" aria-label="Fresh coffee cups on a cafe table"></div>
+      <div class="auth-visual-veil"></div>
+      <div class="auth-visual-copy">
+        <p class="brand-mark">Bean & Bloom</p>
+        <span class="eyebrow">Welcome back</span>
+        <h1>Your next bag is waiting.</h1>
+        <p>Sign in to track orders, reorder favorites, and keep your brew ritual effortless.</p>
+        <ul class="auth-visual-points">
+          <li>Order history in one place</li>
+          <li>Saved cart across devices</li>
+          <li>Early notes on seasonal lots</li>
+        </ul>
       </div>
+    </section>
 
-      <div id="status-msg" class="status-msg"></div>
-
-      <form id="login-form">
-        <div class="form-input-group">
-          <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-          <input id="login-email" type="email" placeholder="Email address" required>
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-card-head">
+          <span class="eyebrow">Account</span>
+          <h2>Sign in</h2>
+          <p>Use the email and password for your Bean & Bloom account.</p>
         </div>
-        <div class="form-input-group">
-          <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          <input id="login-password" type="password" placeholder="Password" required>
-        </div>
-        <div class="remember-row">
-          <label><input type="checkbox" id="remember-me"> Remember me</label>
-          <a href="#">Forgot password?</a>
-        </div>
-        <button class="btn btn-full" type="submit">Sign in</button>
-      </form>
 
-      <div class="auth-divider">or</div>
+        <div id="status-msg" class="auth-status" role="status"></div>
 
-      <div class="auth-footer">
-        Don't have an account? <a href="register.html">Create one</a>
+        <form id="login-form" class="auth-form">
+          <div class="form-input-group">
+            <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <label class="visually-hidden" for="login-email">Email address</label>
+            <input id="login-email" type="email" placeholder="Email address" required autocomplete="email">
+          </div>
+          <div class="form-input-group">
+            <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            <label class="visually-hidden" for="login-password">Password</label>
+            <input id="login-password" type="password" placeholder="Password" required autocomplete="current-password">
+          </div>
+          <div class="auth-remember">
+            <label><input type="checkbox" id="remember-me"> Remember me</label>
+            <a href="contact.html">Need help?</a>
+          </div>
+          <button class="btn btn-full" type="submit">Sign in</button>
+        </form>
+
+        <div class="auth-divider">or</div>
+        <p class="auth-footer-note">Don’t have an account? <a href="register.html">Create one</a></p>
       </div>
-    </div>
+    </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 Bean & Bloom. Fresh coffee, calm spaces, and warm welcomes.</p>
-    </div>
-  </footer>
+  <div class="auth-mini-footer">
+    <a href="terms.html">Terms of Service</a>
+    <a href="privacy.html">Privacy Policy</a>
+    <a href="contact.html">Contact</a>
+  </div>
 
   <script src="api-client.js" defer></script>
   <script src="blogs-seed.js"></script>
@@ -118,10 +113,9 @@
     function showStatus(msg, type) {
       const el = document.getElementById('status-msg');
       el.textContent = msg;
-      el.className = `status-msg ${type}`;
+      el.className = `auth-status ${type}`;
     }
 
-    // Redirect if already logged in
     const existingSession = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
     if (existingSession) {
       window.location.href = 'index.html';
@@ -138,7 +132,6 @@
       const user = customers.find((c) => {
         if (c.email !== email) return false;
         if (c.passwordHash) return c.passwordHash === passwordHash;
-        // Legacy plaintext accounts (migrated away on next register)
         return c.password === password;
       });
 
@@ -148,17 +141,17 @@
       }
 
       const session = JSON.stringify({ id: user.id, name: user.name, email: user.email });
-      if (rememberMe) {
-        localStorage.setItem(SESSION_KEY, session);
-      } else {
-        sessionStorage.setItem(SESSION_KEY, session);
-      }
+      if (rememberMe) localStorage.setItem(SESSION_KEY, session);
+      else sessionStorage.setItem(SESSION_KEY, session);
 
       showStatus('Signed in successfully! Redirecting...', 'success');
       setTimeout(() => { window.location.href = 'index.html'; }, 900);
     });
 
-    document.addEventListener('DOMContentLoaded', () => updateCartCount());
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof updateCartCount === 'function') updateCartCount();
+      if (typeof initMobileNav === 'function') initMobileNav();
+    });
   </script>
 </body>
 </html>
