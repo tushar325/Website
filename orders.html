@@ -75,8 +75,21 @@
         return;
       }
 
-      const payIcons = { cod:'💵', upi:'📱', razorpay:'💳' };
-      const payLabels = { cod:'Cash on Delivery', upi:'UPI', razorpay:'Razorpay' };
+      const payIcons = {
+        cod: '💵', upi: '📱', cards: '💳', netbanking: '🏦', wallets: '👛',
+        emi: '📅', paytm: '🅿️', phonepe: '📲', razorpay: '⚡'
+      };
+      const payLabels = {
+        cod: 'Cash on Delivery',
+        upi: 'UPI',
+        cards: 'Credit / Debit Card',
+        netbanking: 'Net Banking',
+        wallets: 'Wallet',
+        emi: 'EMI',
+        paytm: 'Paytm',
+        phonepe: 'PhonePe',
+        razorpay: 'Razorpay'
+      };
 
       orders.forEach(order => {
         const card = document.createElement('div');
@@ -85,6 +98,15 @@
         const date = new Date(order.date).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
         const addr = order.address;
         const addrStr = [addr.line1, addr.city, addr.state, addr.pin].filter(Boolean).join(', ');
+        const meta = order.paymentMeta || {};
+        const metaBits = [
+          meta.upiRef && `UTR ${meta.upiRef}`,
+          meta.cardLast4 && `${meta.cardBrand || 'Card'} •••• ${meta.cardLast4}`,
+          meta.bank,
+          meta.wallet && String(meta.wallet).replace(/^\w/, (c) => c.toUpperCase()),
+          meta.emiTenure && `EMI ${meta.emiTenure}`,
+          meta.merchantId && `MID ${meta.merchantId}`
+        ].filter(Boolean).join(' · ');
 
         card.innerHTML = `
           <div class="order-header">
@@ -98,13 +120,13 @@
           <div class="order-items">
             ${order.items.map(item => `
               <div class="order-item-row">
-                <div style="flex:1;"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} &nbsp;·&nbsp; $${Number(item.price).toFixed(2)} each</span></div>
-                <div style="font-weight:700;">$${(item.price * item.quantity).toFixed(2)}</div>
+                <div style="flex:1;"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} &nbsp;·&nbsp; ${formatCurrencyAmount(Number(item.price))} each</span></div>
+                <div style="font-weight:700;">${formatCurrencyAmount(item.price * item.quantity)}</div>
               </div>`).join('')}
           </div>
           <div class="order-footer">
-            <span class="pay-badge">${payIcons[order.payMethod] || '💳'} ${escapeHtml(payLabels[order.payMethod] || order.payMethod)}</span>
-            <span class="order-total">Total: $${Number(order.total).toFixed(2)}</span>
+            <span class="pay-badge">${payIcons[order.payMethod] || '💳'} ${escapeHtml(payLabels[order.payMethod] || getPaymentMethodLabel(order.payMethod))}${metaBits ? ` · ${escapeHtml(metaBits)}` : ''}</span>
+            <span class="order-total">Total: ${formatCurrencyAmount(Number(order.total))}</span>
           </div>`;
         container.appendChild(card);
       });
