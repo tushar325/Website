@@ -104,24 +104,24 @@ const DEFAULT_SETTINGS = {
   productPage: {
     hero: true,
     overview: true,
-    ingredients: false,
-    coffeeInfo: false,
-    flavorProfile: false,
-    brewingGuide: false,
+    ingredients: true,
+    coffeeInfo: true,
+    flavorProfile: true,
+    brewingGuide: true,
     variants: true,
-    nutrition: false,
-    certifications: false,
-    packaging: false,
+    nutrition: true,
+    certifications: true,
+    packaging: true,
     shipping: true,
     reviews: true,
     related: true,
-    faq: false,
+    faq: true,
     mediaGallery: true,
     labels: true,
     stickyBar: true,
-    footerCta: false
+    footerCta: true
   },
-  productPageVersion: 2
+  productPageVersion: 3
 };
 
 let settingsCache = null;
@@ -156,10 +156,10 @@ function loadSettings() {
       about: { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
       newsletter: { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
       seo: { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}) },
-      productPage: saved.productPageVersion >= 2
+      productPage: saved.productPageVersion >= 3
         ? { ...DEFAULT_SETTINGS.productPage, ...(saved.productPage || {}) }
         : { ...DEFAULT_SETTINGS.productPage },
-      productPageVersion: saved.productPageVersion >= 2 ? saved.productPageVersion : DEFAULT_SETTINGS.productPageVersion,
+      productPageVersion: saved.productPageVersion >= 3 ? saved.productPageVersion : DEFAULT_SETTINGS.productPageVersion,
       menuCategories: Array.isArray(saved.menuCategories) && saved.menuCategories.length
         ? saved.menuCategories
         : DEFAULT_SETTINGS.menuCategories
@@ -353,22 +353,11 @@ function toggleCompare(productId) {
   return list;
 }
 function renderCompareBar() {
-  let bar = document.getElementById('compare-bar');
-  const ids = loadCompareList();
-  if (!ids.length) { if (bar) bar.remove(); return; }
-  const products = loadProducts().filter((p) => ids.includes(String(p.id)));
-  if (!bar) { bar = document.createElement('div'); bar.id = 'compare-bar'; bar.className = 'compare-bar'; document.body.appendChild(bar); }
-  bar.innerHTML = `<div class="compare-bar-inner"><strong>Compare (${products.length}/3)</strong><div class="compare-bar-items">${products.map((p) => `<span>${escapeHtml(p.name)}</span>`).join('')}</div><div class="compare-bar-actions"><button class="btn" type="button" id="compare-open-btn" ${products.length < 2 ? 'disabled' : ''}>Compare</button><button class="btn secondary" type="button" id="compare-clear-btn">Clear</button></div></div>`;
-  document.getElementById('compare-clear-btn')?.addEventListener('click', () => { localStorage.setItem(COMPARE_KEY, '[]'); renderCompareBar(); renderPublicProducts(); });
-  document.getElementById('compare-open-btn')?.addEventListener('click', () => openCompareModal(products));
+  document.getElementById('compare-bar')?.remove();
+  document.getElementById('compare-modal')?.remove();
 }
-function openCompareModal(products) {
-  let modal = document.getElementById('compare-modal');
-  if (!modal) { modal = document.createElement('div'); modal.id = 'compare-modal'; modal.className = 'compare-modal'; document.body.appendChild(modal); }
-  modal.innerHTML = `<div class="compare-modal-card"><div class="section-head"><h3 style="margin:0;">Compare products</h3><button class="btn secondary" type="button" id="compare-close-btn" style="margin:0;">Close</button></div><div class="compare-table">${['Name','Category','Price','Stock','Description'].map((label, idx) => `<div class="compare-row"><strong>${label}</strong>${products.map((p) => { const values=[p.name,p.category||'—',formatCurrencyAmount(Number(p.price)),Number(p.stock)>0?`${p.stock} left`:'Out of stock',p.description||'—']; return `<span>${escapeHtml(values[idx])}</span>`; }).join('')}</div>`).join('')}</div></div>`;
-  modal.classList.add('show');
-  document.getElementById('compare-close-btn')?.addEventListener('click', () => modal.classList.remove('show'));
-  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
+function openCompareModal() {
+  // Compare feature removed from storefront.
 }
 
 function updateStoredOrder(orderId, updater) {
@@ -2445,7 +2434,6 @@ function renderOfferStrip() {
 
 function renderProductCardHtml(product, options = {}) {
   const wished = loadWishlist().includes(String(product.id));
-  const compared = loadCompareList().includes(String(product.id));
   const stock = Number(product.stock);
   const images = (Array.isArray(product.imageUrls) && product.imageUrls.length
     ? product.imageUrls
@@ -2454,7 +2442,7 @@ function renderProductCardHtml(product, options = {}) {
   const description = escapeHtml(product.description || 'Freshly made with care.');
   const category = escapeHtml(product.category || 'Coffee');
   const slides = images.map((src, index) => `
-    <img class="product-image" src="${escapeHtml(optimizeImageUrl(src, 640, 72))}" alt="${name}${images.length > 1 ? ` ${index + 1}` : ''}" loading="${index === 0 ? 'lazy' : 'lazy'}" decoding="async">
+    <img class="product-image" src="${escapeHtml(optimizeImageUrl(src, 640, 72))}" alt="${name}${images.length > 1 ? ` ${index + 1}` : ''}" loading="lazy" decoding="async">
   `).join('');
   const dots = images.length > 1
     ? `<div class="product-card-dots" aria-hidden="true">${images.map((_, index) => `<span${index === 0 ? ' class="is-active"' : ''}></span>`).join('')}</div>`
@@ -2471,10 +2459,7 @@ function renderProductCardHtml(product, options = {}) {
       <h3>${name}</h3>
       <p class="muted">${description}</p>
       <div class="product-meta">
-        <div>
-          <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
-          <label class="compare-check"><input type="checkbox" data-compare="${escapeHtml(product.id)}" ${compared ? 'checked' : ''}> Compare</label>
-        </div>
+        <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
         <div class="product-actions">
           <button class="btn secondary add-to-kart" type="button" data-buy="${escapeHtml(product.id)}" ${stock <= 0 ? 'disabled' : ''}>Add to cart</button>
         </div>
@@ -2489,11 +2474,6 @@ function bindProductCardActions(root = document) {
   root.querySelectorAll('[data-wishlist]').forEach((btn) => {
     if (btn.dataset.bound) return; btn.dataset.bound = 'true';
     btn.addEventListener('click', (event) => { event.stopPropagation(); const on = toggleWishlist(btn.getAttribute('data-wishlist')); btn.classList.toggle('is-active', on); btn.textContent = on ? '♥' : '♡'; showToast(on ? 'Saved to wishlist.' : 'Removed from wishlist.', 'success'); });
-  });
-  root.querySelectorAll('[data-compare]').forEach((input) => {
-    if (input.dataset.bound) return; input.dataset.bound = 'true';
-    input.addEventListener('click', (event) => event.stopPropagation());
-    input.addEventListener('change', () => { const id = input.getAttribute('data-compare'); const list = toggleCompare(id); input.checked = list.includes(id); });
   });
   root.querySelectorAll('[data-card-slider]').forEach((slider) => {
     if (slider.dataset.bound) return;
@@ -2580,7 +2560,6 @@ function renderPublicProducts(options = {}) {
   }
   root.innerHTML = visibleProducts.map((product) => renderProductCardHtml(product)).join('');
   bindProductCardActions(root);
-  renderCompareBar();
 }
 
 async function renderProductDetail() {
