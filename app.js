@@ -2759,18 +2759,22 @@ function enableHorizontalDragScroll(root) {
   let startX = 0;
   let startScroll = 0;
   let moved = false;
+  let captured = false;
   let pointerId = null;
+  const DRAG_THRESHOLD = 8;
 
   const endDrag = (event) => {
     if (!isDown) return;
+    const didDrag = moved && captured;
     isDown = false;
     root.classList.remove('is-dragging');
-    if (pointerId != null && root.hasPointerCapture?.(pointerId)) {
+    if (captured && pointerId != null && root.hasPointerCapture?.(pointerId)) {
       try { root.releasePointerCapture(pointerId); } catch { /* ignore */ }
     }
     pointerId = null;
-    if (moved && event?.type === 'pointerup') {
-      // Prevent accidental click after drag
+    captured = false;
+    // Only suppress the click when the user actually dragged the rail
+    if (didDrag && event?.type === 'pointerup') {
       const blocker = (clickEvent) => {
         clickEvent.preventDefault();
         clickEvent.stopPropagation();
@@ -2785,25 +2789,39 @@ function enableHorizontalDragScroll(root) {
   root.addEventListener('pointerdown', (event) => {
     if (event.pointerType === 'touch') return; // native touch scroll
     if (event.button != null && event.button !== 0) return;
+    // Do NOT setPointerCapture yet — that steals clicks from category <a> cards
     isDown = true;
     moved = false;
+    captured = false;
     pointerId = event.pointerId;
     startX = event.clientX;
     startScroll = root.scrollLeft;
-    root.classList.add('is-dragging');
-    try { root.setPointerCapture(pointerId); } catch { /* ignore */ }
   });
 
   root.addEventListener('pointermove', (event) => {
     if (!isDown) return;
     const dx = event.clientX - startX;
-    if (Math.abs(dx) > 4) moved = true;
+    if (!captured && Math.abs(dx) > DRAG_THRESHOLD) {
+      captured = true;
+      moved = true;
+      root.classList.add('is-dragging');
+      try { root.setPointerCapture(pointerId); } catch { /* ignore */ }
+    }
+    if (!captured) return;
     root.scrollLeft = startScroll - dx;
   });
 
   root.addEventListener('pointerup', endDrag);
   root.addEventListener('pointercancel', endDrag);
-  root.addEventListener('pointerleave', endDrag);
+  root.addEventListener('lostpointercapture', () => {
+    if (isDown) {
+      isDown = false;
+      captured = false;
+      moved = false;
+      root.classList.remove('is-dragging');
+      pointerId = null;
+    }
+  });
 }
 
 function enableCategoryRailControls(root) {
