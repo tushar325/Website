@@ -4648,6 +4648,8 @@ function renderAdminAnalyticsPage() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.documentElement.classList.add('js');
+
   // Apply a global fallback for any broken image URL.
   document.addEventListener('error', (event) => {
     const target = event.target;
@@ -4657,26 +4659,31 @@ document.addEventListener('DOMContentLoaded', () => {
     target.src = DEFAULT_IMAGE_URL;
   }, true);
 
-  initMobileNav();
-  renderPublicSiteContent();
-  renderUserNav();
-  renderPublicCategoryGrid();
-  initShopControls();
-  renderOfferStrip();
-  renderFeaturedProducts();
-  renderRecentlyViewedRail();
-  renderCompareBar();
+  const run = (label, fn) => {
+    try { fn(); }
+    catch (err) { console.error(`[Bean & Bloom] ${label} failed:`, err); }
+  };
+
+  run('mobile nav', initMobileNav);
+  run('site content', renderPublicSiteContent);
+  run('user nav', renderUserNav);
+  run('categories', renderPublicCategoryGrid);
+  run('shop controls', initShopControls);
+  run('offers', renderOfferStrip);
+  run('featured', renderFeaturedProducts);
+  run('recently viewed', renderRecentlyViewedRail);
+  run('compare bar', renderCompareBar);
   if (document.getElementById('public-products')) {
-    renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' });
+    run('products', () => renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' }));
   }
   if (document.getElementById('product-detail')) {
-    renderProductDetail();
+    run('product detail', renderProductDetail);
   }
-  initCafeMenuFilters();
-  renderDealPage();
-  updateCartCount();
-  initContactForm();
-  initNewsletterForm();
-  initRevealAnimations();
-  initAdmin();
+  run('cafe menu', initCafeMenuFilters);
+  run('deal page', renderDealPage);
+  run('cart count', updateCartCount);
+  run('contact form', initContactForm);
+  run('newsletter', initNewsletterForm);
+  run('reveal animations', initRevealAnimations);
+  run('admin', initAdmin);
 });
