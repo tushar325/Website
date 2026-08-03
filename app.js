@@ -1114,7 +1114,7 @@ const defaultProducts = Object.entries(seedCatalog).flatMap(([category, items]) 
     price: item.price,
     category,
     description: item.description,
-    featured: index === 0,
+    featured: index < 2,
     imageUrl: item.imageUrl
   }));
 });
