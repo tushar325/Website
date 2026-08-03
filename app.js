@@ -788,10 +788,26 @@ function initMobileNav() {
   const toggle = document.querySelector('.nav-toggle');
   const nav = document.getElementById('site-nav') || document.querySelector('.nav-links');
   if (!toggle || !nav) return;
-  toggle.addEventListener('click', () => {
-    const open = nav.classList.toggle('is-open');
+  if (toggle.dataset.bound === 'true') return;
+  toggle.dataset.bound = 'true';
+
+  const setOpen = (open) => {
+    nav.classList.toggle('is-open', open);
     toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+
+  toggle.addEventListener('click', () => setOpen(!nav.classList.contains('is-open')));
+  nav.addEventListener('click', (event) => {
+    if (event.target.closest('a')) setOpen(false);
+  });
+  document.addEventListener('click', (event) => {
+    if (!nav.classList.contains('is-open')) return;
+    if (event.target.closest('.nav-wrap')) return;
+    setOpen(false);
+  });
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 840) setOpen(false);
   });
 }
 
@@ -2593,6 +2609,60 @@ function renderCart() {
   }
 }
 
+function enableHorizontalDragScroll(root) {
+  if (!root || root.dataset.dragScrollBound === 'true') return;
+  root.dataset.dragScrollBound = 'true';
+  let isDown = false;
+  let startX = 0;
+  let startScroll = 0;
+  let moved = false;
+  let pointerId = null;
+
+  const endDrag = (event) => {
+    if (!isDown) return;
+    isDown = false;
+    root.classList.remove('is-dragging');
+    if (pointerId != null && root.hasPointerCapture?.(pointerId)) {
+      try { root.releasePointerCapture(pointerId); } catch { /* ignore */ }
+    }
+    pointerId = null;
+    if (moved && event?.type === 'pointerup') {
+      // Prevent accidental click after drag
+      const blocker = (clickEvent) => {
+        clickEvent.preventDefault();
+        clickEvent.stopPropagation();
+        root.removeEventListener('click', blocker, true);
+      };
+      root.addEventListener('click', blocker, true);
+      setTimeout(() => root.removeEventListener('click', blocker, true), 0);
+    }
+    moved = false;
+  };
+
+  root.addEventListener('pointerdown', (event) => {
+    if (event.pointerType === 'touch') return; // native touch scroll
+    if (event.button != null && event.button !== 0) return;
+    isDown = true;
+    moved = false;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startScroll = root.scrollLeft;
+    root.classList.add('is-dragging');
+    try { root.setPointerCapture(pointerId); } catch { /* ignore */ }
+  });
+
+  root.addEventListener('pointermove', (event) => {
+    if (!isDown) return;
+    const dx = event.clientX - startX;
+    if (Math.abs(dx) > 4) moved = true;
+    root.scrollLeft = startScroll - dx;
+  });
+
+  root.addEventListener('pointerup', endDrag);
+  root.addEventListener('pointercancel', endDrag);
+  root.addEventListener('pointerleave', endDrag);
+}
+
 function renderPublicCategoryGrid() {
   const root = document.getElementById('public-category-grid');
   if (!root) return;
@@ -2600,6 +2670,7 @@ function renderPublicCategoryGrid() {
   const categories = loadCategories();
   const products = loadProducts();
   root.innerHTML = '';
+  root.classList.add('category-rail');
   
   const categoryImages = JSON.parse(localStorage.getItem('bean-bloom-category-images') || '{}');
 
@@ -2609,6 +2680,7 @@ function renderPublicCategoryGrid() {
     categoryLink.className = 'category-card';
     categoryLink.href = `category.html?category=${encodeURIComponent(category.toLowerCase())}`;
     categoryLink.dataset.category = category.toLowerCase();
+    categoryLink.draggable = false;
     
     const customImage = categoryImages[category];
     const categoryProduct = products.find((item) => String(item.category || '').toLowerCase() === category.toLowerCase() && item.imageUrl);
@@ -2623,12 +2695,14 @@ function renderPublicCategoryGrid() {
     const isAboveFold = categoryIndex < 4;
 
     categoryLink.innerHTML = `
-      <img class="category-card-media" src="${optimizedImage}" alt="${escapeHtml(category)}" ${isAboveFold ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async">
+      <img class="category-card-media" src="${optimizedImage}" alt="${escapeHtml(category)}" ${isAboveFold ? 'fetchpriority="high" loading="eager"' : 'loading="lazy"'} decoding="async" draggable="false">
       <div class="category-card-overlay"></div>
       <h3>${escapeHtml(category)}</h3>
     `;
     root.appendChild(categoryLink);
   });
+
+  enableHorizontalDragScroll(root);
 }
 
 
