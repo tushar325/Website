@@ -13,8 +13,8 @@
   --border: rgba(27, 36, 32, 0.1);
   --shadow: 0 24px 60px rgba(27, 36, 32, 0.1);
   --radius: 18px;
-  --font-display: "Fraunces", Georgia, serif;
-  --font-body: "Outfit", "Segoe UI", sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "Outfit", system-ui, sans-serif;
   --container-max: 1440px;
   --container-shop: 1600px;
 }
