@@ -181,10 +181,85 @@ const AuthAPI = {
   }
 };
 
+// ==================== ORDERS (MySQL + Razorpay meta) ====================
+const OrdersAPI = {
+  async getAll() {
+    const response = await fetch(`${_API_BASE}/orders`);
+    return handleResponse(response);
+  },
+
+  async getById(id) {
+    const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}`);
+    return handleResponse(response);
+  },
+
+  async create(order) {
+    const response = await fetch(`${_API_BASE}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+    return handleResponse(response);
+  },
+
+  async verifyPayment(id, verified = true) {
+    const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}/verify`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ verified })
+    });
+    return handleResponse(response);
+  },
+
+  async updateStatus(id, status) {
+    const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    return handleResponse(response);
+  }
+};
+
+// ==================== DISCOUNTS ====================
+const DiscountsAPI = {
+  async getAll() {
+    const response = await fetch(`${_API_BASE}/discounts`);
+    return handleResponse(response);
+  },
+
+  async create(data) {
+    const response = await fetch(`${_API_BASE}/discounts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  async update(id, data) {
+    const response = await fetch(`${_API_BASE}/discounts/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+
+  async remove(id) {
+    const response = await fetch(`${_API_BASE}/discounts/${encodeURIComponent(id)}`, {
+      method: 'DELETE'
+    });
+    return handleResponse(response);
+  }
+};
+
 // Export all APIs
 window.BeanbBloomAPI = {
   Categories: CategoriesAPI,
   Products: ProductsAPI,
   Cart: CartAPI,
-  Auth: AuthAPI
+  Auth: AuthAPI,
+  Orders: OrdersAPI,
+  Discounts: DiscountsAPI
 };

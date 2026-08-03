@@ -44,7 +44,7 @@ npm install
 
 ### 4. Configure Environment (.env)
 
-Update `.env` file in the Website directory with your MySQL credentials:
+Copy `.env.example` and update MySQL + Razorpay values. Full walkthrough: **[MYSQL_CONNECTION.md](./MYSQL_CONNECTION.md)**.
 
 ```env
 DB_HOST=localhost
@@ -54,6 +54,14 @@ DB_NAME=bean_bloom
 DB_PORT=3306
 PORT=3001
 NODE_ENV=development
+RAZORPAY_KEY_ID=rzp_test_xxxxxxxx
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+```
+
+Import the schema (recommended for a clean install):
+
+```bash
+mysql -u root -p bean_bloom < schema.sql
 ```
 
 ### 5. Start the Backend Server

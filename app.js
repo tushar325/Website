@@ -5,6 +5,7 @@ const USER_SESSION_KEY = 'bean-bloom-user-session';
 const SETTINGS_KEY = 'bean-bloom-site-settings';
 const ORDERS_KEY = 'bean-bloom-orders'; // per-user: bean-bloom-orders-{userId}
 const ADDRESS_KEY = 'bean-bloom-address'; // per-user: bean-bloom-address-{userId}
+const DISCOUNTS_KEY = 'bean-bloom-discounts-v1';
 
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
@@ -49,25 +50,8 @@ const DEFAULT_SETTINGS = {
     { title: 'Barista help', desc: 'Grind & brew advice anytime' }
   ],
   payments: {
-    codEnabled: true,
-    codNote: 'Pay in cash when your order arrives.',
-    upiEnabled: true,
-    upiId: 'beanbloom@upi',
-    upiMerchantName: 'Bean & Bloom',
-    upiQrEnabled: true,
-    cardsEnabled: true,
-    netbankingEnabled: true,
-    walletsEnabled: true,
-    walletPaytm: true,
-    walletPhonepe: true,
-    walletAmazonpay: true,
-    walletMobikwik: true,
-    emiEnabled: false,
-    paytmGatewayEnabled: false,
-    paytmMerchantId: '',
-    phonepeGatewayEnabled: false,
-    phonepeMerchantId: '',
-    razorpayEnabled: false,
+    currency: 'INR',
+    razorpayEnabled: true,
     razorpayKeyId: ''
   },
   cafe: {
@@ -268,14 +252,6 @@ function loadLocalInquiries() {
 }
 
 const PAYMENT_METHOD_META = {
-  cod: { icon: '💵', label: 'Cash on Delivery', short: 'COD' },
-  upi: { icon: '📱', label: 'UPI', short: 'UPI' },
-  cards: { icon: '💳', label: 'Credit / Debit Card', short: 'Card' },
-  netbanking: { icon: '🏦', label: 'Net Banking', short: 'Net Banking' },
-  wallets: { icon: '👛', label: 'Wallets', short: 'Wallet' },
-  emi: { icon: '📅', label: 'EMI', short: 'EMI' },
-  paytm: { icon: '🅿️', label: 'Paytm', short: 'Paytm' },
-  phonepe: { icon: '📲', label: 'PhonePe', short: 'PhonePe' },
   razorpay: { icon: '⚡', label: 'Razorpay Checkout', short: 'Razorpay' }
 };
 
@@ -284,112 +260,140 @@ function getPaymentSettings() {
 }
 
 function getPaymentMethodLabel(method) {
-  return PAYMENT_METHOD_META[method]?.label || String(method || 'Payment');
+  return PAYMENT_METHOD_META[method]?.label || String(method || 'Razorpay');
 }
 
 function getPaymentMethodIcon(method) {
-  return PAYMENT_METHOD_META[method]?.icon || '💳';
+  return PAYMENT_METHOD_META[method]?.icon || '⚡';
 }
 
 function getEnabledPaymentMethods(pay = getPaymentSettings()) {
-  const methods = [];
-  if (pay.codEnabled) {
-    methods.push({
-      id: 'cod',
-      icon: PAYMENT_METHOD_META.cod.icon,
-      label: PAYMENT_METHOD_META.cod.label,
-      sub: pay.codNote || 'Pay when your order arrives'
-    });
+  if (pay.razorpayEnabled === false) return [];
+  return [{
+    id: 'razorpay',
+    icon: PAYMENT_METHOD_META.razorpay.icon,
+    label: PAYMENT_METHOD_META.razorpay.label,
+    sub: pay.razorpayKeyId
+      ? 'Cards, UPI, Net Banking & wallets via Razorpay'
+      : 'Add your Razorpay Key ID in Admin → Settings'
+  }];
+}
+
+function loadDiscounts() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DISCOUNTS_KEY) || '[]');
+    return Array.isArray(saved) ? saved.map(normalizeDiscount).filter(Boolean) : [];
+  } catch {
+    return [];
   }
-  if (pay.upiEnabled && pay.upiId) {
-    methods.push({
-      id: 'upi',
-      icon: PAYMENT_METHOD_META.upi.icon,
-      label: PAYMENT_METHOD_META.upi.label,
-      sub: 'GPay, PhonePe, Paytm, BHIM & more'
-    });
-  }
-  if (pay.cardsEnabled) {
-    methods.push({
-      id: 'cards',
-      icon: PAYMENT_METHOD_META.cards.icon,
-      label: PAYMENT_METHOD_META.cards.label,
-      sub: 'Visa, Mastercard, RuPay, Amex'
-    });
-  }
-  if (pay.netbankingEnabled) {
-    methods.push({
-      id: 'netbanking',
-      icon: PAYMENT_METHOD_META.netbanking.icon,
-      label: PAYMENT_METHOD_META.netbanking.label,
-      sub: 'All major Indian banks'
-    });
-  }
-  if (pay.walletsEnabled) {
-    const walletNames = [];
-    if (pay.walletPaytm !== false) walletNames.push('Paytm');
-    if (pay.walletPhonepe !== false) walletNames.push('PhonePe');
-    if (pay.walletAmazonpay !== false) walletNames.push('Amazon Pay');
-    if (pay.walletMobikwik !== false) walletNames.push('Mobikwik');
-    if (walletNames.length) {
-      methods.push({
-        id: 'wallets',
-        icon: PAYMENT_METHOD_META.wallets.icon,
-        label: PAYMENT_METHOD_META.wallets.label,
-        sub: walletNames.join(' · ')
-      });
+}
+
+function saveDiscounts(discounts) {
+  const list = (Array.isArray(discounts) ? discounts : []).map(normalizeDiscount).filter(Boolean);
+  localStorage.setItem(DISCOUNTS_KEY, JSON.stringify(list));
+  return list;
+}
+
+function normalizeDiscount(discount) {
+  if (!discount || typeof discount !== 'object') return null;
+  const type = ['store', 'category', 'product'].includes(discount.type) ? discount.type : 'store';
+  const valueType = discount.valueType === 'fixed' ? 'fixed' : 'percent';
+  const value = Math.max(0, Number(discount.value) || 0);
+  if (!value) return null;
+  return {
+    id: discount.id || `disc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    name: String(discount.name || 'Discount').trim() || 'Discount',
+    type,
+    valueType,
+    value,
+    category: String(discount.category || '').trim(),
+    productId: String(discount.productId || '').trim(),
+    code: String(discount.code || '').trim().toUpperCase(),
+    active: discount.active !== false,
+    startsAt: discount.startsAt || '',
+    endsAt: discount.endsAt || '',
+    createdAt: discount.createdAt || new Date().toISOString()
+  };
+}
+
+function isDiscountActive(discount, now = new Date()) {
+  if (!discount || discount.active === false) return false;
+  if (discount.startsAt && new Date(discount.startsAt) > now) return false;
+  if (discount.endsAt && new Date(discount.endsAt) < now) return false;
+  return true;
+}
+
+function getActiveDiscounts() {
+  return loadDiscounts().filter((d) => isDiscountActive(d));
+}
+
+/**
+ * Apply best-matching discounts to a cart.
+ * Priority: product > category > store-wide. Only one discount per line + one store discount.
+ */
+function calculateCartPricing(cartItems = []) {
+  const items = Array.isArray(cartItems) ? cartItems : [];
+  const discounts = getActiveDiscounts();
+  const productDiscounts = discounts.filter((d) => d.type === 'product');
+  const categoryDiscounts = discounts.filter((d) => d.type === 'category');
+  const storeDiscounts = discounts.filter((d) => d.type === 'store');
+
+  const lineDetails = items.map((item) => {
+    const lineSubtotal = Number(item.price || 0) * Number(item.quantity || 0);
+    const productMatch = productDiscounts.find((d) => d.productId && d.productId === String(item.id));
+    const categoryMatch = categoryDiscounts.find((d) => d.category && d.category.toLowerCase() === String(item.category || '').toLowerCase());
+    const applied = productMatch || categoryMatch || null;
+    let lineDiscount = 0;
+    if (applied) {
+      lineDiscount = applied.valueType === 'fixed'
+        ? Math.min(lineSubtotal, applied.value * Number(item.quantity || 0))
+        : lineSubtotal * (applied.value / 100);
     }
-  }
-  if (pay.emiEnabled) {
-    methods.push({
-      id: 'emi',
-      icon: PAYMENT_METHOD_META.emi.icon,
-      label: PAYMENT_METHOD_META.emi.label,
-      sub: 'No-cost & standard EMI options'
-    });
-  }
-  if (pay.paytmGatewayEnabled && pay.paytmMerchantId) {
-    methods.push({
-      id: 'paytm',
-      icon: PAYMENT_METHOD_META.paytm.icon,
-      label: PAYMENT_METHOD_META.paytm.label,
-      sub: 'Paytm Payment Gateway'
-    });
-  }
-  if (pay.phonepeGatewayEnabled && pay.phonepeMerchantId) {
-    methods.push({
-      id: 'phonepe',
-      icon: PAYMENT_METHOD_META.phonepe.icon,
-      label: PAYMENT_METHOD_META.phonepe.label,
-      sub: 'PhonePe Payment Gateway'
-    });
-  }
-  if (pay.razorpayEnabled && pay.razorpayKeyId) {
-    methods.push({
-      id: 'razorpay',
-      icon: PAYMENT_METHOD_META.razorpay.icon,
-      label: PAYMENT_METHOD_META.razorpay.label,
-      sub: 'Cards, UPI, Net Banking & wallets via Razorpay'
-    });
-  }
-  return methods;
-}
-
-function buildUpiIntent({ upiId, merchantName, amount, note }) {
-  const params = new URLSearchParams({
-    pa: String(upiId || '').trim(),
-    pn: String(merchantName || 'Bean & Bloom').trim(),
-    cu: 'INR'
+    return {
+      ...item,
+      lineSubtotal,
+      lineDiscount,
+      appliedDiscount: applied
+    };
   });
-  if (amount != null && !Number.isNaN(Number(amount))) {
-    params.set('am', Number(amount).toFixed(2));
-  }
-  if (note) params.set('tn', String(note).slice(0, 50));
-  return `upi://pay?${params.toString()}`;
-}
 
-function buildUpiQrUrl(upiIntent) {
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiIntent)}`;
+  const subtotal = lineDetails.reduce((sum, row) => sum + row.lineSubtotal, 0);
+  const itemDiscountTotal = lineDetails.reduce((sum, row) => sum + row.lineDiscount, 0);
+  const afterItemDiscounts = Math.max(0, subtotal - itemDiscountTotal);
+
+  let storeDiscount = null;
+  let storeDiscountAmount = 0;
+  if (storeDiscounts.length && afterItemDiscounts > 0) {
+    storeDiscount = storeDiscounts.reduce((best, current) => {
+      const bestAmt = best.valueType === 'fixed' ? best.value : afterItemDiscounts * (best.value / 100);
+      const curAmt = current.valueType === 'fixed' ? current.value : afterItemDiscounts * (current.value / 100);
+      return curAmt > bestAmt ? current : best;
+    });
+    storeDiscountAmount = storeDiscount.valueType === 'fixed'
+      ? Math.min(afterItemDiscounts, storeDiscount.value)
+      : afterItemDiscounts * (storeDiscount.value / 100);
+  }
+
+  const discountTotal = itemDiscountTotal + storeDiscountAmount;
+  const total = Math.max(0, subtotal - discountTotal);
+  return {
+    items: lineDetails,
+    subtotal,
+    itemDiscountTotal,
+    storeDiscount,
+    storeDiscountAmount,
+    discountTotal,
+    total,
+    applied: [
+      ...lineDetails.filter((row) => row.appliedDiscount).map((row) => ({
+        scope: row.appliedDiscount.type,
+        name: row.appliedDiscount.name,
+        amount: row.lineDiscount,
+        productId: row.id
+      })),
+      ...(storeDiscount ? [{ scope: 'store', name: storeDiscount.name, amount: storeDiscountAmount }] : [])
+    ]
+  };
 }
 
 // Sets text/href/src of element by id if it exists
@@ -1355,26 +1359,27 @@ function renderCartFromAPI(cartData) {
 
   cartItemsRoot.appendChild(fragment);
 
-  // ✨ Using totalValue from database instead of calculating locally
-  const total = cartData.totalValue;
+  // ✨ Using totalValue from database; discounts from admin portal
+  const apiItems = (cartData.items || []).map((item) => ({
+    id: item.product_id,
+    name: item.name,
+    price: Number(item.price),
+    quantity: Number(item.quantity),
+    category: item.category_name || ''
+  }));
+  const pricing = calculateCartPricing(apiItems);
   const totalItems = cartData.itemCount;
-  const discount = total * 0.08;
-  const coupon = 5;
-  const platformFee = 0;
-  const totalAmount = total - discount - coupon + platformFee;
 
   cartSummary.innerHTML = `
     <div class="cart-summary-box">
       <h3>Price details</h3>
-      <div class="summary-row"><span>Price (${totalItems} items)</span><span>${formatCurrencyAmount(total)}</span></div>
-      <div class="summary-row"><span>Discount</span><span>− ${formatCurrencyAmount(discount)}</span></div>
-      <div class="summary-row"><span>Coupons for you</span><span>− ${formatCurrencyAmount(coupon)}</span></div>
-      <div class="summary-row"><span>Platform fee</span><span>${formatCurrencyAmount(platformFee)}</span></div>
-      <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(totalAmount)}</span></div>
+      <div class="summary-row"><span>Price (${totalItems} items)</span><span>${formatCurrencyAmount(pricing.subtotal)}</span></div>
+      <div class="summary-row"><span>Discounts</span><span>− ${formatCurrencyAmount(pricing.discountTotal)}</span></div>
+      <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(pricing.total)}</span></div>
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
-      <p class="summary-note">You save ${formatCurrencyAmount(discount + coupon)} with cafe member pricing.</p>
-      <p class="summary-subnote">Secure checkout · Cafe pickup available · Fresh bakery same-day locally.</p>
+      <p class="summary-note">${pricing.discountTotal > 0 ? `You save ${formatCurrencyAmount(pricing.discountTotal)} with active cafe discounts.` : 'Add discounts in Admin → Discounts to offer savings at checkout.'}</p>
+      <p class="summary-subnote">Pay with Razorpay · Cafe pickup available · Fresh bakery same-day locally.</p>
     </div>
   `;
 
@@ -1504,25 +1509,19 @@ function renderCart() {
 
   cartItemsRoot.appendChild(fragment);
 
-  const total = cart.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
+  const pricing = calculateCartPricing(cart);
   const totalItems = cart.reduce((sum, item) => sum + Number(item.quantity), 0);
-  const discount = total * 0.08;
-  const coupon = 5;
-  const platformFee = 0;
-  const totalAmount = total - discount - coupon + platformFee;
 
   cartSummary.innerHTML = `
     <div class="cart-summary-box">
       <h3>Price details</h3>
-      <div class="summary-row"><span>Price (${totalItems} items)</span><span>${formatCurrencyAmount(total)}</span></div>
-      <div class="summary-row"><span>Discount</span><span>− ${formatCurrencyAmount(discount)}</span></div>
-      <div class="summary-row"><span>Coupons for you</span><span>− ${formatCurrencyAmount(coupon)}</span></div>
-      <div class="summary-row"><span>Platform fee</span><span>${formatCurrencyAmount(platformFee)}</span></div>
-      <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(totalAmount)}</span></div>
+      <div class="summary-row"><span>Price (${totalItems} items)</span><span>${formatCurrencyAmount(pricing.subtotal)}</span></div>
+      <div class="summary-row"><span>Discounts</span><span>− ${formatCurrencyAmount(pricing.discountTotal)}</span></div>
+      <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(pricing.total)}</span></div>
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
-      <p class="summary-note">You save ${formatCurrencyAmount(discount + coupon)} with cafe member pricing.</p>
-      <p class="summary-subnote">Secure checkout · Cafe pickup available · Fresh bakery same-day locally.</p>
+      <p class="summary-note">${pricing.discountTotal > 0 ? `You save ${formatCurrencyAmount(pricing.discountTotal)} with active cafe discounts.` : 'Add discounts in Admin → Discounts to offer savings at checkout.'}</p>
+      <p class="summary-subnote">Pay with Razorpay · Cafe pickup available · Fresh bakery same-day locally.</p>
     </div>
   `;
 
@@ -2682,6 +2681,7 @@ function initAdminFeaturePages(pageType) {
   if (pageType === 'customers') renderAdminCustomersPage();
   if (pageType === 'inventory') renderAdminInventoryPage();
   if (pageType === 'analytics') renderAdminAnalyticsPage();
+  if (pageType === 'discounts') renderAdminDiscountsPage();
 }
 
 function renderAdminOrdersPage() {
@@ -2690,14 +2690,14 @@ function renderAdminOrdersPage() {
   const orders = loadAllOrders();
   const summary = document.getElementById('admin-orders-summary');
   if (summary) {
-    const paid = orders.filter((o) => o.status === 'Paid').length;
-    const confirmed = orders.filter((o) => o.status === 'Confirmed').length;
+    const paid = orders.filter((o) => o.status === 'Paid' || o.paymentVerified).length;
+    const verified = orders.filter((o) => o.paymentVerified).length;
     const revenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
     summary.innerHTML = `
       <div class="stats-grid">
         <article class="stat-card"><p class="stat-label">Orders</p><strong>${orders.length}</strong></article>
-        <article class="stat-card"><p class="stat-label">Paid</p><strong>${paid}</strong></article>
-        <article class="stat-card"><p class="stat-label">Confirmed</p><strong>${confirmed}</strong></article>
+        <article class="stat-card"><p class="stat-label">Paid / pending verify</p><strong>${paid}</strong></article>
+        <article class="stat-card"><p class="stat-label">Payment verified</p><strong>${verified}</strong></article>
         <article class="stat-card"><p class="stat-label">Revenue</p><strong>${formatCurrencyAmount(revenue)}</strong></article>
       </div>`;
   }
@@ -2709,7 +2709,10 @@ function renderAdminOrdersPage() {
 
   root.innerHTML = orders.map((order) => {
     const addr = order.address || {};
+    const meta = order.paymentMeta || {};
     const items = (order.items || []).map((item) => `${escapeHtml(item.name)} × ${item.quantity}`).join(', ');
+    const paymentId = meta.razorpayPaymentId || meta.razorpay_payment_id || '—';
+    const verified = !!order.paymentVerified;
     return `
       <article class="card" style="margin-bottom:1rem;" data-order-id="${escapeHtml(order.id)}">
         <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:start;">
@@ -2717,7 +2720,8 @@ function renderAdminOrdersPage() {
             <h3 style="margin:0 0 .35rem;font-family:var(--font-display,inherit);">${escapeHtml(order.id)}</h3>
             <p class="muted" style="margin:0;">${new Date(order.date).toLocaleString('en-IN')} · ${escapeHtml(addr.name || 'Customer')} · ${escapeHtml(addr.city || '')}</p>
             <p style="margin:.7rem 0 0;font-size:.92rem;">${items || 'No items'}</p>
-            <p class="muted" style="margin:.45rem 0 0;font-size:.85rem;">${getPaymentMethodIcon(order.payMethod)} ${escapeHtml(getPaymentMethodLabel(order.payMethod))}</p>
+            <p class="muted" style="margin:.45rem 0 0;font-size:.85rem;">⚡ Razorpay · Payment ID: <code>${escapeHtml(paymentId)}</code></p>
+            <p class="muted" style="margin:.35rem 0 0;font-size:.85rem;">Payment status: <strong style="color:${verified ? '#166534' : '#92400e'};">${verified ? 'Verified' : 'Awaiting verification'}</strong>${order.paymentVerifiedAt ? ` · ${new Date(order.paymentVerifiedAt).toLocaleString('en-IN')}` : ''}</p>
           </div>
           <div style="text-align:right;display:grid;gap:.55rem;justify-items:end;">
             <strong>${formatCurrencyAmount(order.total)}</strong>
@@ -2726,6 +2730,9 @@ function renderAdminOrdersPage() {
                 <option value="${status}"${order.status === status ? ' selected' : ''}>${status}</option>
               `).join('')}
             </select>
+            <button class="btn ${verified ? 'secondary' : ''}" type="button" data-verify-payment="${escapeHtml(order.id)}" style="margin:0;">
+              ${verified ? 'Mark unverified' : 'Verify Razorpay payment'}
+            </button>
           </div>
         </div>
       </article>`;
@@ -2739,6 +2746,131 @@ function renderAdminOrdersPage() {
       renderAdminOrdersPage();
     });
   });
+
+  root.querySelectorAll('[data-verify-payment]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-verify-payment');
+      const updated = updateStoredOrder(id, (order) => {
+        const nextVerified = !order.paymentVerified;
+        return {
+          ...order,
+          paymentVerified: nextVerified,
+          paymentVerifiedAt: nextVerified ? new Date().toISOString() : null,
+          status: nextVerified ? (order.status === 'Confirmed' ? 'Paid' : order.status) : order.status
+        };
+      });
+      if (updated && window.BeanbBloomAPI?.Orders?.verifyPayment) {
+        window.BeanbBloomAPI.Orders.verifyPayment(id, !!updated.paymentVerified).catch(() => {});
+      }
+      showToast(`Payment for ${id} updated.`, 'success');
+      renderAdminOrdersPage();
+    });
+  });
+}
+
+function renderAdminDiscountsPage() {
+  const listRoot = document.getElementById('admin-discounts-list');
+  const form = document.getElementById('discount-form');
+  if (!listRoot || !form) return;
+
+  const typeSelect = document.getElementById('discount-type');
+  const categoryField = document.getElementById('discount-category-wrap');
+  const productField = document.getElementById('discount-product-wrap');
+  const categorySelect = document.getElementById('discount-category');
+  const productSelect = document.getElementById('discount-product');
+
+  const categories = loadCategories();
+  const products = loadProducts();
+  if (categorySelect) {
+    categorySelect.innerHTML = '<option value="">Select category</option>' + categories.map((c) =>
+      `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  }
+  if (productSelect) {
+    productSelect.innerHTML = '<option value="">Select product</option>' + products.map((p) =>
+      `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} (${escapeHtml(p.category || '')})</option>`).join('');
+  }
+
+  const syncScopeFields = () => {
+    const type = typeSelect?.value || 'store';
+    if (categoryField) categoryField.style.display = type === 'category' ? '' : 'none';
+    if (productField) productField.style.display = type === 'product' ? '' : 'none';
+  };
+  if (typeSelect && !typeSelect.dataset.bound) {
+    typeSelect.dataset.bound = 'true';
+    typeSelect.addEventListener('change', syncScopeFields);
+  }
+  syncScopeFields();
+
+  const discounts = loadDiscounts();
+  listRoot.innerHTML = discounts.length ? discounts.map((d) => `
+    <article class="card" style="margin-bottom:.8rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:center;">
+      <div>
+        <strong>${escapeHtml(d.name)}</strong>
+        <p class="muted" style="margin:.3rem 0 0;font-size:.88rem;">
+          ${escapeHtml(d.type)} · ${d.valueType === 'fixed' ? formatCurrencyAmount(d.value) : `${d.value}%`}
+          ${d.type === 'category' ? ` · ${escapeHtml(d.category)}` : ''}
+          ${d.type === 'product' ? ` · ${escapeHtml(products.find((p) => p.id === d.productId)?.name || d.productId)}` : ''}
+          · ${d.active ? 'Active' : 'Inactive'}
+        </p>
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn secondary" type="button" data-toggle-discount="${escapeHtml(d.id)}" style="margin:0;">${d.active ? 'Disable' : 'Enable'}</button>
+        <button class="btn secondary" type="button" data-delete-discount="${escapeHtml(d.id)}" style="margin:0;">Delete</button>
+      </div>
+    </article>
+  `).join('') : '<p class="muted">No discounts yet. Add a store-wide, category, or product discount above.</p>';
+
+  listRoot.querySelectorAll('[data-toggle-discount]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-toggle-discount');
+      const next = loadDiscounts().map((d) => d.id === id ? { ...d, active: !d.active } : d);
+      saveDiscounts(next);
+      renderAdminDiscountsPage();
+    });
+  });
+  listRoot.querySelectorAll('[data-delete-discount]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-delete-discount');
+      saveDiscounts(loadDiscounts().filter((d) => d.id !== id));
+      showToast('Discount removed.', 'success');
+      renderAdminDiscountsPage();
+    });
+  });
+
+  if (!form.dataset.bound) {
+    form.dataset.bound = 'true';
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const type = document.getElementById('discount-type')?.value || 'store';
+      const discount = normalizeDiscount({
+        name: document.getElementById('discount-name')?.value,
+        type,
+        valueType: document.getElementById('discount-value-type')?.value || 'percent',
+        value: document.getElementById('discount-value')?.value,
+        category: document.getElementById('discount-category')?.value,
+        productId: document.getElementById('discount-product')?.value,
+        code: document.getElementById('discount-code')?.value,
+        active: true
+      });
+      if (!discount) {
+        showToast('Enter a valid discount value.', 'error');
+        return;
+      }
+      if (type === 'category' && !discount.category) {
+        showToast('Select a category for this discount.', 'error');
+        return;
+      }
+      if (type === 'product' && !discount.productId) {
+        showToast('Select a product for this discount.', 'error');
+        return;
+      }
+      saveDiscounts([discount, ...loadDiscounts()]);
+      form.reset();
+      syncScopeFields();
+      showToast('Discount saved.', 'success');
+      renderAdminDiscountsPage();
+    });
+  }
 }
 
 function renderAdminCustomersPage() {
