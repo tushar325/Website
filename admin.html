@@ -51,8 +51,8 @@
           <section class="card admin-dashboard-stats">
             <div class="section-head">
               <div>
-                <h3>Analytics</h3>
-                <p class="muted">Live product and category performance metrics from the storefront data.</p>
+                <h3>Overview</h3>
+                <p class="muted">Live catalog metrics from storefront data.</p>
               </div>
             </div>
             <div class="stats-grid">
@@ -74,13 +74,23 @@
               </article>
               <article class="stat-card">
                 <p class="stat-label">Cart value</p>
-                <strong id="metric-cart-value">$0.00</strong>
+                <strong id="metric-cart-value">₹0.00</strong>
               </article>
               <article class="stat-card">
                 <p class="stat-label">Average price</p>
-                <strong id="metric-average-price">$0.00</strong>
+                <strong id="metric-average-price">₹0.00</strong>
               </article>
             </div>
+          </section>
+
+          <section class="card admin-category-grid-card">
+            <div class="section-head">
+              <div>
+                <h3>Categories</h3>
+                <p class="muted">Open a category to manage products, or add a new one.</p>
+              </div>
+            </div>
+            <div id="admin-category-grid" class="admin-category-grid"></div>
           </section>
 
           <section id="admin-product-panel" class="card hide">

@@ -171,6 +171,53 @@
               </div>
 
               <div class="settings-card">
+                <h3>Cafe location & hours</h3>
+                <p class="muted" style="margin:0 0 1rem;">Controls the homepage visit strip and the Visit/Contact page.</p>
+                <div class="settings-grid">
+                  <div class="field"><label>Address line</label><input id="s-cafe-address" type="text"></div>
+                  <div class="field"><label>City</label><input id="s-cafe-city" type="text"></div>
+                  <div class="field"><label>State</label><input id="s-cafe-state" type="text"></div>
+                  <div class="field"><label>Pincode</label><input id="s-cafe-pincode" type="text"></div>
+                  <div class="field"><label>Phone</label><input id="s-cafe-phone" type="text"></div>
+                  <div class="field"><label>Email</label><input id="s-cafe-email" type="email"></div>
+                  <div class="field"><label>Weekday hours</label><input id="s-cafe-hours-weekday" type="text"></div>
+                  <div class="field"><label>Saturday hours</label><input id="s-cafe-hours-sat" type="text"></div>
+                  <div class="field"><label>Sunday hours</label><input id="s-cafe-hours-sun" type="text"></div>
+                  <div class="field"><label>Map search query</label><input id="s-cafe-map" type="text" placeholder="Faridabad Market"></div>
+                  <div class="field"><label>Visit eyebrow</label><input id="s-cafe-visit-eyebrow" type="text"></div>
+                  <div class="field"><label>Visit headline</label><input id="s-cafe-visit-headline" type="text"></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Visit subtext</label><textarea id="s-cafe-visit-subtext" rows="2"></textarea></div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>About page</h3>
+                <div class="settings-grid">
+                  <div class="field"><label>Eyebrow</label><input id="s-about-eyebrow" type="text"></div>
+                  <div class="field"><label>Headline</label><input id="s-about-headline" type="text"></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Intro</label><textarea id="s-about-intro" rows="2"></textarea></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Body paragraph 1</label><textarea id="s-about-body1" rows="3"></textarea></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Body paragraph 2</label><textarea id="s-about-body2" rows="3"></textarea></div>
+                  <div class="field"><label>Value 1 title</label><input id="s-about-v1-title" type="text"></div>
+                  <div class="field"><label>Value 1 description</label><input id="s-about-v1-desc" type="text"></div>
+                  <div class="field"><label>Value 2 title</label><input id="s-about-v2-title" type="text"></div>
+                  <div class="field"><label>Value 2 description</label><input id="s-about-v2-desc" type="text"></div>
+                  <div class="field"><label>Value 3 title</label><input id="s-about-v3-title" type="text"></div>
+                  <div class="field"><label>Value 3 description</label><input id="s-about-v3-desc" type="text"></div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>Menu & newsletter</h3>
+                <div class="settings-grid">
+                  <div class="field" style="grid-column:1/-1;"><label>Cafe menu categories (comma-separated)</label><input id="s-menu-categories" type="text" placeholder="Espresso, Bakery & Snacks, Tea & Infusions, Cold Brew"></div>
+                  <div class="field"><label>Newsletter eyebrow</label><input id="s-news-eyebrow" type="text"></div>
+                  <div class="field"><label>Newsletter headline</label><input id="s-news-headline" type="text"></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Newsletter subtext</label><textarea id="s-news-subtext" rows="2"></textarea></div>
+                </div>
+              </div>
+
+              <div class="settings-card">
                 <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Indian payment methods</h3>
                 <p class="muted" style="margin:0 0 1rem;">Toggle each method for checkout. Customers only see methods you enable here.</p>
                 <div class="settings-grid" style="gap:1.2rem;">
@@ -446,6 +493,41 @@
       set('s-phonepe-mid', pay.phonepeMerchantId);
       chk('s-rzp-enabled', !!pay.razorpayEnabled);
       set('s-rzp-key', pay.razorpayKeyId);
+
+      const cafe = s.cafe || {};
+      set('s-cafe-address', cafe.addressLine);
+      set('s-cafe-city', cafe.city);
+      set('s-cafe-state', cafe.state);
+      set('s-cafe-pincode', cafe.pincode);
+      set('s-cafe-phone', cafe.phone);
+      set('s-cafe-email', cafe.email);
+      set('s-cafe-hours-weekday', cafe.hoursWeekday);
+      set('s-cafe-hours-sat', cafe.hoursSaturday);
+      set('s-cafe-hours-sun', cafe.hoursSunday);
+      set('s-cafe-map', cafe.mapQuery);
+      set('s-cafe-visit-eyebrow', cafe.visitEyebrow);
+      set('s-cafe-visit-headline', cafe.visitHeadline);
+      set('s-cafe-visit-subtext', cafe.visitSubtext);
+
+      const about = s.about || {};
+      set('s-about-eyebrow', about.eyebrow);
+      set('s-about-headline', about.headline);
+      set('s-about-intro', about.intro);
+      set('s-about-body1', about.body1);
+      set('s-about-body2', about.body2);
+      set('s-about-v1-title', about.value1Title);
+      set('s-about-v1-desc', about.value1Desc);
+      set('s-about-v2-title', about.value2Title);
+      set('s-about-v2-desc', about.value2Desc);
+      set('s-about-v3-title', about.value3Title);
+      set('s-about-v3-desc', about.value3Desc);
+
+      const newsletter = s.newsletter || {};
+      set('s-news-eyebrow', newsletter.eyebrow);
+      set('s-news-headline', newsletter.headline);
+      set('s-news-subtext', newsletter.subtext);
+      set('s-menu-categories', (s.menuCategories || []).join(', '));
+
       renderProductContentEditor();
     }
 
@@ -470,6 +552,40 @@
         },
         testimonials: collectTestimonialsFromForm(),
         promoStrip: [0,1,2,3].map(i => ({ title: get(`s-p${i}-title`), desc: get(`s-p${i}-desc`) })),
+        cafe: {
+          addressLine: get('s-cafe-address'),
+          city: get('s-cafe-city'),
+          state: get('s-cafe-state'),
+          pincode: get('s-cafe-pincode'),
+          phone: get('s-cafe-phone'),
+          email: get('s-cafe-email'),
+          hoursWeekday: get('s-cafe-hours-weekday'),
+          hoursSaturday: get('s-cafe-hours-sat'),
+          hoursSunday: get('s-cafe-hours-sun'),
+          mapQuery: get('s-cafe-map'),
+          visitEyebrow: get('s-cafe-visit-eyebrow'),
+          visitHeadline: get('s-cafe-visit-headline'),
+          visitSubtext: get('s-cafe-visit-subtext')
+        },
+        about: {
+          eyebrow: get('s-about-eyebrow'),
+          headline: get('s-about-headline'),
+          intro: get('s-about-intro'),
+          body1: get('s-about-body1'),
+          body2: get('s-about-body2'),
+          value1Title: get('s-about-v1-title'),
+          value1Desc: get('s-about-v1-desc'),
+          value2Title: get('s-about-v2-title'),
+          value2Desc: get('s-about-v2-desc'),
+          value3Title: get('s-about-v3-title'),
+          value3Desc: get('s-about-v3-desc')
+        },
+        newsletter: {
+          eyebrow: get('s-news-eyebrow'),
+          headline: get('s-news-headline'),
+          subtext: get('s-news-subtext')
+        },
+        menuCategories: get('s-menu-categories').split(',').map((item) => item.trim()).filter(Boolean),
         payments: {
           codEnabled: checked('s-cod-enabled'),
           codNote: get('s-cod-note') || 'Pay in cash when your order arrives.',
@@ -523,9 +639,7 @@
 
       document.getElementById('reset-settings-btn')?.addEventListener('click', () => {
         if (!confirm('Reset all settings to defaults?')) return;
-        localStorage.removeItem(SETTINGS_KEY);
-        saveProducts(loadProducts());
-        populateSettingsForm(loadSettings());
+        populateSettingsForm(resetSettingsToDefaults());
         const status = document.getElementById('save-status');
         status.textContent = '✓ Reset to defaults!';
         status.classList.add('show');
