@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>
+  <script>
     (function () {
       try {
         var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
@@ -29,6 +29,7 @@
       <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
         <a href="index.html#products">Shop</a>
+        <a href="blog.html">Blog</a>
         <a href="about.html" class="is-active">About</a>
         <a href="contact.html">Contact</a>
         <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
@@ -37,37 +38,69 @@
     </div>
   </header>
 
-  <main>
-    <section class="page-hero">
-      <div class="container">
+  <main class="about-page">
+    <section class="about-hero" aria-label="About Bean & Bloom">
+      <div class="about-hero-media" role="img" aria-label="Freshly roasted specialty coffee beans"></div>
+      <div class="about-hero-veil"></div>
+      <div class="container about-hero-copy">
+        <p class="about-hero-brand">Bean & Bloom</p>
         <span class="eyebrow" id="about-eyebrow">Our story</span>
         <h1 id="about-headline">Roasted with care. Shipped with care.</h1>
         <p id="about-intro">Bean & Bloom is an online specialty coffee shop for people who want better coffee at home — beans, bakery favorites, and brew gear in one store.</p>
       </div>
     </section>
 
-    <section class="section reveal">
-      <div class="container story-grid">
-        <article class="card">
+    <section class="section about-story reveal">
+      <div class="container about-story-grid">
+        <div class="about-story-copy">
           <h2>Crafted for daily ritual</h2>
           <p id="about-body-1">We source seasonal lots, roast in small batches, and pack orders for delivery with the same attention we give every cup. The goal is simple: coffee that feels intentional from checkout to first brew.</p>
           <p id="about-body-2">Shop espresso blends, single origins, gift boxes, and brewing tools — with clear product details, size and type options, and secure online payment.</p>
-        </article>
-        <div class="story-visual" role="img" aria-label="Freshly roasted coffee beans ready to ship"></div>
+          <a class="btn" href="index.html#products">Shop the collection</a>
+        </div>
+        <div class="about-story-visual" role="img" aria-label="Pour-over brewing at home"></div>
       </div>
-      <div class="container values-grid">
-        <article class="card value-item">
-          <h3 id="about-value1-title">Thoughtful sourcing</h3>
-          <p class="muted" id="about-value1-desc">We work with importers who share farm details, processing notes, and roast-ready profiles we can stand behind.</p>
-        </article>
-        <article class="card value-item">
-          <h3 id="about-value2-title">Helpful support</h3>
-          <p class="muted" id="about-value2-desc">Message us on WhatsApp or email for grind advice, order help, or product recommendations.</p>
-        </article>
-        <article class="card value-item">
-          <h3 id="about-value3-title">Built for home</h3>
-          <p class="muted" id="about-value3-desc">Every listing is written for home brewing — so you know what to buy, how to brew, and what to expect.</p>
-        </article>
+    </section>
+
+    <section class="section about-values reveal">
+      <div class="container">
+        <div class="section-head about-values-head">
+          <div>
+            <span class="eyebrow">What we stand for</span>
+            <h2>Three promises in every bag</h2>
+          </div>
+        </div>
+        <div class="about-values-rail">
+          <article class="about-value">
+            <span class="about-value-index">01</span>
+            <h3 id="about-value1-title">Thoughtful sourcing</h3>
+            <p class="muted" id="about-value1-desc">We work with importers who share farm details, processing notes, and roast-ready profiles we can stand behind.</p>
+          </article>
+          <article class="about-value">
+            <span class="about-value-index">02</span>
+            <h3 id="about-value2-title">Helpful support</h3>
+            <p class="muted" id="about-value2-desc">Message us on WhatsApp or email for grind advice, order help, or product recommendations.</p>
+          </article>
+          <article class="about-value">
+            <span class="about-value-index">03</span>
+            <h3 id="about-value3-title">Built for home</h3>
+            <p class="muted" id="about-value3-desc">Every listing is written for home brewing — so you know what to buy, how to brew, and what to expect.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section about-cta reveal">
+      <div class="container about-cta-panel">
+        <div>
+          <span class="eyebrow">Taste the difference</span>
+          <h2>Start with a bag that matches your morning.</h2>
+          <p class="muted">From weekend brunch blends to espresso dial-ins — curated online, delivered to your door.</p>
+        </div>
+        <div class="about-cta-actions">
+          <a class="btn" href="index.html#products">Browse shop</a>
+          <a class="btn secondary" href="contact.html">Talk to us</a>
+        </div>
       </div>
     </section>
   </main>
@@ -76,7 +109,7 @@
     <div class="container footer-grid">
       <div>
         <a class="brand" href="index.html">Bean & Bloom</a>
-        <p>© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.</p>
+        <p data-footer-text>© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.</p>
       </div>
       <div class="footer-links">
         <a href="index.html#products">Shop</a>
@@ -88,6 +121,7 @@
     </div>
   </footer>
 
+  <script src="blogs-seed.js"></script>
   <script src="api-client.js" defer></script>
   <script src="app.js" defer></script>
 </body>

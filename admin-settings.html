@@ -215,7 +215,12 @@
                 </div>
                 <div class="settings-grid cols-1" style="margin-top:1rem;">
                   <div class="field"><label>Description</label><textarea id="s-deal-desc" rows="2"></textarea></div>
-                  <div class="field"><label>Deal image URL (optional)</label><input id="s-deal-imageUrl" type="url" placeholder="https://..."></div>
+                  <div class="field"><label>Deal image URL</label><input id="s-deal-imageUrl" type="url" placeholder="https://..."></div>
+                  <div class="field">
+                    <label>Offer products (shown on deal page)</label>
+                    <p class="muted" style="margin:0 0 .65rem;font-size:.85rem;">Select the products that belong to this weekend offer. Customers see them when they click “View special”.</p>
+                    <div id="s-deal-products" class="deal-product-picker"></div>
+                  </div>
                 </div>
               </div>
 
@@ -387,6 +392,7 @@
   </footer>
 
   <script src="api-client.js" defer></script>
+  <script src="blogs-seed.js"></script>
   <script src="app.js" defer></script>
   <script>
     function createTestimonialBlock(index, testimonial = {}) {
@@ -426,6 +432,31 @@
       const list = Array.isArray(testimonials) && testimonials.length ? testimonials : DEFAULT_SETTINGS.testimonials;
       list.forEach((item, i) => container.appendChild(createTestimonialBlock(i, item)));
       renumberTestimonials();
+    }
+
+    function renderDealProductPicker(selectedIds = []) {
+      const root = document.getElementById('s-deal-products');
+      if (!root) return;
+      const selected = new Set((Array.isArray(selectedIds) ? selectedIds : []).map(String));
+      const products = (typeof loadProducts === 'function' ? loadProducts() : [])
+        .slice()
+        .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+      if (!products.length) {
+        root.innerHTML = '<p class="muted" style="margin:0;">No products found. Add products in Admin first.</p>';
+        return;
+      }
+      root.innerHTML = products.map((product) => `
+        <label class="compare-check deal-product-option">
+          <input type="checkbox" value="${escapeHtml(product.id)}" ${selected.has(String(product.id)) ? 'checked' : ''}>
+          <span>${escapeHtml(product.name || 'Product')} <small class="muted">· ${escapeHtml(product.category || '')}</small></span>
+        </label>
+      `).join('');
+    }
+
+    function collectDealProductIds() {
+      return Array.from(document.querySelectorAll('#s-deal-products input[type="checkbox"]:checked'))
+        .map((input) => input.value)
+        .filter(Boolean);
     }
 
     function collectTestimonialsFromForm() {
@@ -502,6 +533,7 @@
       set('s-deal-desc', s.deal.description); set('s-deal-price', s.deal.price);
       set('s-deal-badge', s.deal.badge); set('s-deal-ctaLabel', s.deal.ctaLabel);
       set('s-deal-ctaUrl', s.deal.ctaUrl); set('s-deal-imageUrl', s.deal.imageUrl);
+      renderDealProductPicker(s.deal.productIds || []);
       renderTestimonialsEditor(s.testimonials);
       s.promoStrip.forEach((p, i) => { set(`s-p${i}-title`, p.title); set(`s-p${i}-desc`, p.desc); });
       const pay = s.payments || {};
@@ -606,7 +638,8 @@
         deal: {
           eyebrow: get('s-deal-eyebrow'), title: get('s-deal-title'), description: get('s-deal-desc'),
           price: get('s-deal-price'), badge: get('s-deal-badge'),
-          ctaLabel: get('s-deal-ctaLabel'), ctaUrl: get('s-deal-ctaUrl'), imageUrl: get('s-deal-imageUrl')
+          ctaLabel: get('s-deal-ctaLabel'), ctaUrl: get('s-deal-ctaUrl'), imageUrl: get('s-deal-imageUrl'),
+          productIds: collectDealProductIds()
         },
         testimonials: collectTestimonialsFromForm(),
         promoStrip: [0,1,2,3].map(i => ({ title: get(`s-p${i}-title`), desc: get(`s-p${i}-desc`) })),
