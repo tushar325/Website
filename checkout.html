@@ -13,7 +13,10 @@
     .step-badge { width:28px; height:28px; border-radius:50%; background:var(--accent); color:#fff; display:grid; place-items:center; font-size:.8rem; font-weight:700; flex-shrink:0; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
     @media (max-width:640px) { .form-row { grid-template-columns:1fr; } }
-    .payment-option { display:flex; align-items:center; gap:1rem; padding:1rem 1.1rem; border:2px solid var(--accent); border-radius:14px; background:var(--accent-soft,rgba(47,93,74,.08)); margin-bottom:.75rem; }
+    .payment-option { display:flex; align-items:flex-start; gap:1rem; padding:1rem 1.1rem; border:2px solid var(--border); border-radius:14px; background:#fff; margin-bottom:.75rem; cursor:pointer; transition:border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+    .payment-option:has(input:checked),
+    .payment-option.is-selected { border-color:var(--accent); background:var(--accent-soft,rgba(47,93,74,.08)); box-shadow:0 0 0 3px rgba(47,93,74,.1); }
+    .payment-option input { margin-top:.35rem; accent-color:var(--accent); }
     .payment-option .pay-icon { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:1.25rem; flex-shrink:0; background:rgba(0,0,0,.04); }
     .payment-option .pay-label strong { display:block; font-size:.95rem; }
     .payment-option .pay-label span { font-size:.82rem; color:var(--muted); }
@@ -26,7 +29,7 @@
     .summary-total-line { border-top:1px solid rgba(0,0,0,.08); margin-top:.5rem; padding-top:.8rem; font-weight:700; font-size:1.05rem; }
     .btn-place { width:100%; margin-top:1rem; }
     .pay-error { display:none; color:#b91c1c; font-size:.88rem; margin:.8rem 0 0; }
-    .gateway-note { display:none; font-size:.82rem; color:var(--muted); margin:.8rem 0 0; text-align:center; }
+    .gateway-note { font-size:.82rem; color:var(--muted); margin:.8rem 0 0; text-align:center; }
     #order-success { display:none; text-align:center; padding:2.5rem 1.5rem; }
     .success-icon { font-size:2.5rem; margin-bottom:.5rem; }
   </style>
@@ -48,7 +51,7 @@
     <div class="container">
       <div class="section-head">
         <h1>Checkout</h1>
-        <p class="muted">Enter delivery details and pay securely with Razorpay. Payment is verified on the Orders page.</p>
+        <p class="muted">Enter delivery details and pay with Razorpay or Cash on Delivery.</p>
       </div>
 
       <div id="order-success" class="card">
@@ -97,8 +100,8 @@
               <h3><span class="step-badge">3</span>Order summary</h3>
               <div id="checkout-items"></div>
               <div id="checkout-totals"></div>
-              <button class="btn btn-place" type="submit" id="place-order-btn">Pay with Razorpay</button>
-              <p class="gateway-note" id="gateway-note" style="display:block;">You will complete payment in Razorpay Checkout (cards, UPI, net banking, wallets).</p>
+              <button class="btn btn-place" type="submit" id="place-order-btn">Place order</button>
+              <p class="gateway-note" id="gateway-note">Choose a payment method to continue.</p>
             </div>
           </div>
         </div>
@@ -138,26 +141,55 @@
       const payContainer = document.getElementById('payment-options');
       const methods = getEnabledPaymentMethods(pay);
       const pricing = calculateCartPricing(cart);
+      const placeBtn = document.getElementById('place-order-btn');
+      const gatewayNote = document.getElementById('gateway-note');
 
-      if (!methods.length || !pay.razorpayKeyId) {
-        payContainer.innerHTML = '<p class="muted">Razorpay is not configured. Ask the cafe admin to add a Key ID in Settings.</p>';
-        document.getElementById('place-order-btn').disabled = true;
+      const razorpayReady = pay.razorpayEnabled !== false && !!pay.razorpayKeyId;
+      const usableMethods = methods.filter((m) => m.id !== 'razorpay' || razorpayReady);
+
+      if (!usableMethods.length) {
+        payContainer.innerHTML = '<p class="muted">No payment methods are enabled. Ask the cafe admin to turn on Razorpay and/or Cash on Delivery in Settings.</p>';
+        placeBtn.disabled = true;
       } else {
-        const m = methods[0];
-        payContainer.innerHTML = `
-          <div class="payment-option">
+        payContainer.innerHTML = usableMethods.map((m, index) => `
+          <label class="payment-option${index === 0 ? ' is-selected' : ''}">
+            <input type="radio" name="pay-method" value="${escapeHtml(m.id)}" ${index === 0 ? 'checked' : ''}>
             <div class="pay-icon">${m.icon}</div>
             <div class="pay-label"><strong>${escapeHtml(m.label)}</strong><span>${escapeHtml(m.sub)}</span></div>
-          </div>`;
+          </label>`).join('');
+        if (methods.some((m) => m.id === 'razorpay') && !razorpayReady) {
+          payContainer.insertAdjacentHTML('beforeend', '<p class="muted" style="margin:.35rem 0 0;font-size:.82rem;">Razorpay is enabled but needs a Key ID in Admin → Settings.</p>');
+        }
+        syncCheckoutPaymentUi();
+        payContainer.addEventListener('change', syncCheckoutPaymentUi);
+      }
+
+      function selectedPayMethod() {
+        return document.querySelector('input[name="pay-method"]:checked')?.value || usableMethods[0]?.id || '';
+      }
+
+      function syncCheckoutPaymentUi() {
+        const method = selectedPayMethod();
+        payContainer.querySelectorAll('.payment-option').forEach((el) => {
+          el.classList.toggle('is-selected', el.querySelector('input')?.checked);
+        });
+        if (method === 'cod') {
+          placeBtn.textContent = 'Place COD order';
+          gatewayNote.textContent = 'Pay in cash when your order is delivered or when you pick up at the cafe.';
+        } else {
+          placeBtn.textContent = 'Pay with Razorpay';
+          gatewayNote.textContent = 'You will complete payment in Razorpay Checkout (cards, UPI, net banking, wallets).';
+        }
       }
 
       const itemsEl = document.getElementById('checkout-items');
       cart.forEach((item) => {
         const row = document.createElement('div');
         row.className = 'order-item-row';
+        const variantBit = item.variantLabel ? ` · ${item.variantLabel}` : '';
         row.innerHTML = `
           <img src="${escapeHtml(item.imageUrl || DEFAULT_IMAGE_URL)}" alt="${escapeHtml(item.name)}">
-          <div class="item-info"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} · ${escapeHtml(item.category || '')}</span></div>
+          <div class="item-info"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity}${escapeHtml(variantBit)} · ${escapeHtml(item.category || '')}</span></div>
           <div class="item-price">${formatCurrencyAmount(item.price * item.quantity)}</div>`;
         itemsEl.appendChild(row);
       });
@@ -173,8 +205,9 @@
       document.getElementById('checkout-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         clearPayError();
-        if (!pay.razorpayEnabled || !pay.razorpayKeyId) {
-          showPayError('Razorpay Key ID is missing in admin settings.');
+        const method = selectedPayMethod();
+        if (!method) {
+          showPayError('Choose a payment method.');
           return;
         }
         const address = {
@@ -188,6 +221,16 @@
           landmark: document.getElementById('addr-landmark').value.trim()
         };
         if (document.getElementById('save-address').checked) saveAddress(address);
+
+        if (method === 'cod') {
+          placeOrder(address, cart, pricing, 'cod', {});
+          return;
+        }
+
+        if (!pay.razorpayEnabled || !pay.razorpayKeyId) {
+          showPayError('Razorpay Key ID is missing in admin settings.');
+          return;
+        }
         await handleRazorpay(address, cart, pricing, pay.razorpayKeyId, settings.siteName);
       });
     });
@@ -214,21 +257,30 @@
       }
     }
 
-    function placeOrder(address, cart, pricing, paymentMeta = {}) {
+    function placeOrder(address, cart, pricing, payMethod = 'razorpay', paymentMeta = {}) {
       const orderId = 'ORD-' + Date.now();
+      const isCod = payMethod === 'cod';
       const order = {
         id: orderId,
         date: new Date().toISOString(),
         address,
-        payMethod: 'razorpay',
+        payMethod,
         paymentMeta,
         paymentVerified: false,
-        items: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, category: i.category })),
+        items: cart.map((i) => ({
+          id: i.id,
+          name: i.name,
+          price: i.price,
+          quantity: i.quantity,
+          category: i.category,
+          variantId: i.variantId || '',
+          variantLabel: i.variantLabel || ''
+        })),
         subtotal: pricing.subtotal,
         discountTotal: pricing.discountTotal,
         discountsApplied: pricing.applied,
         total: pricing.total,
-        status: 'Paid'
+        status: isCod ? 'Confirmed' : 'Paid'
       };
       saveOrder(order);
       persistOrderToApi(order);
@@ -237,9 +289,14 @@
       document.getElementById('checkout-form').style.display = 'none';
       const suc = document.getElementById('order-success');
       suc.style.display = 'block';
-      document.getElementById('success-order-id').textContent =
-        `Order ID: ${orderId} · Razorpay · Payment ID: ${paymentMeta.razorpayPaymentId || 'pending'} · ${address.name} · ${address.city}`;
-      if (typeof showToast === 'function') showToast('Order placed. Admin will verify the Razorpay payment.', 'success');
+      document.getElementById('success-order-id').textContent = isCod
+        ? `Order ID: ${orderId} · Cash on Delivery · ${address.name} · ${address.city}`
+        : `Order ID: ${orderId} · Razorpay · Payment ID: ${paymentMeta.razorpayPaymentId || 'pending'} · ${address.name} · ${address.city}`;
+      if (typeof showToast === 'function') {
+        showToast(isCod
+          ? 'COD order placed. Pay when your order arrives or at pickup.'
+          : 'Order placed. Admin will verify the Razorpay payment.', 'success');
+      }
     }
 
     async function handleRazorpay(address, cart, pricing, keyId, storeName) {
@@ -261,7 +318,7 @@
         prefill: { name: address.name, contact: address.mobile },
         theme: { color: '#2f5d4a' },
         handler: function (response) {
-          placeOrder(address, cart, pricing, {
+          placeOrder(address, cart, pricing, 'razorpay', {
             razorpayPaymentId: response.razorpay_payment_id || '',
             razorpayOrderId: response.razorpay_order_id || '',
             razorpaySignature: response.razorpay_signature || ''

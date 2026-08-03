@@ -75,8 +75,8 @@
         return;
       }
 
-      const payIcons = { razorpay: '⚡' };
-      const payLabels = { razorpay: 'Razorpay' };
+      const payIcons = { razorpay: '⚡', cod: '💵' };
+      const payLabels = { razorpay: 'Razorpay', cod: 'Cash on Delivery' };
 
       orders.forEach(order => {
         const card = document.createElement('div');
@@ -87,9 +87,12 @@
         const addrStr = [addr.line1, addr.city, addr.state, addr.pin].filter(Boolean).join(', ');
         const meta = order.paymentMeta || {};
         const paymentId = meta.razorpayPaymentId || meta.razorpay_payment_id || '';
+        const isCod = order.payMethod === 'cod';
         const metaBits = [
-          paymentId && `Payment ID ${paymentId}`,
-          order.paymentVerified ? 'Verified by cafe' : 'Awaiting verification'
+          !isCod && paymentId && `Payment ID ${paymentId}`,
+          isCod
+            ? (order.paymentVerified ? 'Cash collected' : 'Pay on delivery / pickup')
+            : (order.paymentVerified ? 'Verified by cafe' : 'Awaiting verification')
         ].filter(Boolean).join(' · ');
 
         card.innerHTML = `
@@ -104,12 +107,12 @@
           <div class="order-items">
             ${order.items.map(item => `
               <div class="order-item-row">
-                <div style="flex:1;"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} &nbsp;·&nbsp; ${formatCurrencyAmount(Number(item.price))} each</span></div>
+                <div style="flex:1;"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity}${item.variantLabel ? ` · ${escapeHtml(item.variantLabel)}` : ''} &nbsp;·&nbsp; ${formatCurrencyAmount(Number(item.price))} each</span></div>
                 <div style="font-weight:700;">${formatCurrencyAmount(item.price * item.quantity)}</div>
               </div>`).join('')}
           </div>
           <div class="order-footer">
-            <span class="pay-badge">${payIcons[order.payMethod] || '⚡'} ${escapeHtml(payLabels[order.payMethod] || getPaymentMethodLabel(order.payMethod))}${metaBits ? ` · ${escapeHtml(metaBits)}` : ''}</span>
+            <span class="pay-badge">${payIcons[order.payMethod] || '💳'} ${escapeHtml(payLabels[order.payMethod] || getPaymentMethodLabel(order.payMethod))}${metaBits ? ` · ${escapeHtml(metaBits)}` : ''}</span>
             <span class="order-total">Total: ${formatCurrencyAmount(Number(order.total))}</span>
           </div>`;
         container.appendChild(card);

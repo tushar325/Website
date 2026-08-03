@@ -52,7 +52,7 @@
       <div id="admin-panel" class="hide">
         <div class="section-head">
           <h2>Orders</h2>
-          <p class="muted">All customer orders from Razorpay checkout. Verify payment IDs and update fulfillment status.</p>
+          <p class="muted">Customer orders from Razorpay and Cash on Delivery. Verify online payments and update fulfillment status.</p>
         </div>
         <div class="admin-shell">
           <aside class="admin-sidebar">
@@ -68,28 +68,27 @@
             </nav>
           </aside>
           <main class="admin-main">
-          <div class="card date-filter-bar" style="margin-bottom:1.2rem;">
-            <div class="section-head" style="margin-bottom:.8rem;">
-              <div>
-                <h3 style="margin:0;">Date range</h3>
-                <p class="muted" style="margin:.25rem 0 0;">Filter orders by order date.</p>
-              </div>
-              <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
-                <button class="btn secondary" type="button" data-orders-preset="7" style="margin:0;">7 days</button>
-                <button class="btn secondary" type="button" data-orders-preset="30" style="margin:0;">30 days</button>
-                <button class="btn secondary" type="button" data-orders-preset="all" style="margin:0;">All time</button>
-              </div>
+          <div class="card date-filter-bar">
+            <div class="date-filter-copy">
+              <h2>Date range</h2>
+              <p>Filter orders by order date.</p>
             </div>
-            <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;align-items:end;">
-              <div class="field" style="margin:0;">
+            <div class="date-filter-controls">
+              <div class="date-filter-presets" role="group" aria-label="Quick ranges">
+                <button class="btn secondary" type="button" data-orders-preset="7">7 days</button>
+                <button class="btn secondary is-active" type="button" data-orders-preset="30">30 days</button>
+                <button class="btn secondary" type="button" data-orders-preset="90">90 days</button>
+                <button class="btn secondary" type="button" data-orders-preset="all">All time</button>
+              </div>
+              <div class="date-filter-field">
                 <label for="orders-date-from">From</label>
                 <input id="orders-date-from" type="date">
               </div>
-              <div class="field" style="margin:0;">
+              <div class="date-filter-field">
                 <label for="orders-date-to">To</label>
                 <input id="orders-date-to" type="date">
               </div>
-              <button class="btn" type="button" id="orders-apply-range" style="margin:0;">Apply</button>
+              <button class="btn" type="button" id="orders-apply-range">Apply</button>
             </div>
           </div>
           <div id="admin-orders-summary"></div>

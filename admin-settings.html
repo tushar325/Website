@@ -281,14 +281,21 @@
               </div>
 
               <div class="settings-card">
-                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Razorpay payments</h3>
-                <p class="muted" style="margin:0 0 1rem;">Checkout uses Razorpay only. Cards, UPI, net banking, and wallets are offered inside Razorpay Checkout. Payment IDs are saved on each order for admin verification.</p>
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Payments</h3>
+                <p class="muted" style="margin:0 0 1rem;">Offer Razorpay for online pay and/or Cash on Delivery. Customers pick a method at checkout.</p>
                 <div class="settings-grid">
                   <div class="field" style="grid-column:1/-1;">
                     <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;">
                       <input id="s-rzp-enabled" type="checkbox" checked style="width:auto;margin:0;accent-color:var(--accent);">
                       Enable Razorpay Checkout
                     </label>
+                  </div>
+                  <div class="field" style="grid-column:1/-1;">
+                    <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;">
+                      <input id="s-cod-enabled" type="checkbox" checked style="width:auto;margin:0;accent-color:var(--accent);">
+                      Enable Cash on Delivery (COD)
+                    </label>
+                    <p style="font-size:.82rem;color:var(--muted);margin:.45rem 0 0;">Customer pays in cash on delivery or at cafe pickup. Order stays Confirmed until you mark it Paid/Delivered.</p>
                   </div>
                   <div class="field">
                     <label for="s-rzp-key">Razorpay Key ID (public)</label>
@@ -300,7 +307,7 @@
                     <p style="font-size:.82rem;color:var(--muted);margin:.45rem 0 0;">Never store the secret in the browser. Put it in the API <code>.env</code> so order payment signatures can be verified against MySQL.</p>
                   </div>
                 </div>
-                <p style="font-size:.82rem;color:var(--muted);margin:.85rem 0 0;">Get keys from <strong>Razorpay Dashboard → Settings → API Keys</strong>. Use <code>rzp_test_</code> for test mode. Mark payments verified on the Orders page after checkout.</p>
+                <p style="font-size:.82rem;color:var(--muted);margin:.85rem 0 0;">Get Razorpay keys from <strong>Dashboard → Settings → API Keys</strong>. Use <code>rzp_test_</code> for test mode. Mark online payments verified on the Orders page after checkout.</p>
               </div>
 
               <div class="save-row">
@@ -398,10 +405,10 @@
       set('s-deal-ctaUrl', s.deal.ctaUrl); set('s-deal-imageUrl', s.deal.imageUrl);
       renderTestimonialsEditor(s.testimonials);
       s.promoStrip.forEach((p, i) => { set(`s-p${i}-title`, p.title); set(`s-p${i}-desc`, p.desc); });
-      // Razorpay only
       const pay = s.payments || {};
       const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
       chk('s-rzp-enabled', pay.razorpayEnabled !== false);
+      chk('s-cod-enabled', pay.codEnabled !== false);
       set('s-rzp-key', pay.razorpayKeyId);
 
       const cafe = s.cafe || {};
@@ -556,7 +563,8 @@
         payments: {
           currency: 'INR',
           razorpayEnabled: checked('s-rzp-enabled'),
-          razorpayKeyId: get('s-rzp-key')
+          razorpayKeyId: get('s-rzp-key'),
+          codEnabled: checked('s-cod-enabled')
         }
       };
     }

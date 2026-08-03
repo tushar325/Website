@@ -218,7 +218,8 @@
                     <div><label for="product-brew-grind" style="display:block;font-weight:700;margin-bottom:.4rem;">Grind size</label><input id="product-brew-grind" type="text"></div>
                     <div style="grid-column:1/-1;"><label for="product-brew-tips" style="display:block;font-weight:700;margin-bottom:.4rem;">Tips</label><textarea id="product-brew-tips" rows="2"></textarea></div>
                   </div>
-                  <h5>Options (size & type)</h5>
+                  <h5>Options (size & type) — where prices come from</h5>
+                  <p class="muted" style="margin:0 0 .75rem;font-size:.88rem;">List the sizes and types shoppers can pick. Then set each combination’s price and stock below. The product page price updates from the matching row (not the base product price).</p>
                   <div>
                     <label for="product-option-sizes" style="display:block;font-weight:700;margin-bottom:.4rem;">Sizes (comma or new line)</label>
                     <input id="product-option-sizes" type="text" placeholder="250g, 500g">
@@ -228,8 +229,9 @@
                     <input id="product-option-types" type="text" placeholder="Whole bean, Ground">
                   </div>
                   <div>
-                    <label for="product-variants" style="display:block;font-weight:700;margin-bottom:.4rem;">Combinations (one per line: size | type | price | stock)</label>
-                    <textarea id="product-variants" rows="4" placeholder="250g | Whole bean | 18 | 20"></textarea>
+                    <label for="product-variants" style="display:block;font-weight:700;margin-bottom:.4rem;">Price matrix — one row per size × type: <code>size | type | price | stock</code></label>
+                    <textarea id="product-variants" rows="5" placeholder="250g | Whole bean | 450 | 20&#10;250g | Ground | 470 | 15&#10;500g | Whole bean | 820 | 10&#10;500g | Ground | 840 | 8"></textarea>
+                    <p class="muted" style="margin:.45rem 0 0;font-size:.82rem;">Example: choosing Size <strong>500g</strong> + Type <strong>Ground</strong> uses the row that starts with <code>500g | Ground | …</code>. Cart and checkout use that row’s price.</p>
                   </div>
                   <h5>Nutrition</h5>
                   <div class="grid grid-2" style="gap:.8rem;">
