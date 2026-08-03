@@ -1,6 +1,7 @@
 module.exports = function ordersRouter(pool) {
   const express = require('express');
   const { requireAdmin, scrubSensitiveFields } = require('../middleware/auth');
+  const { publishLivePurchase } = require('./live-purchases');
   const router = express.Router();
   let ordersTableCache = null;
 
@@ -134,6 +135,22 @@ module.exports = function ordersRouter(pool) {
       }
 
       await connection.commit();
+
+      try {
+        const buyerName = address.name || body.customer_name || body.username || 'A customer';
+        const buyerId = body.userId || body.buyerId || '';
+        (items.length ? items.slice(0, 6) : [{ name: 'a product' }]).forEach((item) => {
+          publishLivePurchase({
+            username: buyerName,
+            buyerId,
+            orderId,
+            productName: item.name || 'a product',
+            productId: item.id || item.product_id || '',
+            productImage: item.imageUrl || ''
+          });
+        });
+      } catch (_) {}
+
       res.status(201).json({ id: orderId, message: 'Order saved' });
     } catch (error) {
       await connection.rollback();

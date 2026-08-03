@@ -208,6 +208,19 @@ const BlogsAPI = {
   remove: (id) => apiFetch(`/blogs/${encodeURIComponent(id)}`, { method: 'DELETE', headers: adminAuthHeaders() })
 };
 
+// ==================== LIVE PURCHASES ====================
+const LivePurchasesAPI = {
+  list: (since = 0) => whenOnline(() => apiFetch(`/live-purchases?since=${encodeURIComponent(Number(since) || 0)}`, {
+    timeout: 1200
+  })),
+  publish: (payload) => apiFetch('/live-purchases', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    timeout: 2000
+  })
+};
+
 window.BeanbBloomAPI = {
   Categories: CategoriesAPI,
   Products: ProductsAPI,
@@ -217,6 +230,7 @@ window.BeanbBloomAPI = {
   Discounts: DiscountsAPI,
   Settings: SettingsAPI,
   Blogs: BlogsAPI,
+  LivePurchases: LivePurchasesAPI,
   adminAuthHeaders,
   probeApiHealth,
   isLikelyOnline: () => _apiOnline === true,

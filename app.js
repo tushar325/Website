@@ -1142,6 +1142,238 @@ function showToast(message, type = 'info') {
   }, 2600);
 }
 
+const LIVE_PURCHASE_BUS_KEY = 'bean-bloom-live-purchase-bus';
+const LIVE_PURCHASE_SEEN_KEY = 'bean-bloom-live-purchase-seen';
+const LIVE_PURCHASE_CLIENT_ID = (() => {
+  try {
+    const existing = sessionStorage.getItem('bean-bloom-live-client-id');
+    if (existing) return existing;
+    const id = `client-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    sessionStorage.setItem('bean-bloom-live-client-id', id);
+    return id;
+  } catch {
+    return `client-${Date.now()}`;
+  }
+})();
+let livePurchaseSince = Date.now();
+let livePurchaseTimer = 0;
+let livePurchaseQueue = [];
+let livePurchaseShowing = false;
+const livePurchaseSeen = new Set();
+
+function getBuyerDisplayName(fallback = '') {
+  const user = getLoggedInUser();
+  if (user?.username) return String(user.username).trim();
+  if (user?.name) return String(user.name).trim();
+  if (user?.email) return String(user.email).split('@')[0];
+  return String(fallback || 'A customer').trim() || 'A customer';
+}
+
+function normalizeLivePurchaseEvent(raw = {}) {
+  return {
+    id: String(raw.id || `lp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`),
+    username: String(raw.username || raw.buyerName || raw.name || 'A customer').trim() || 'A customer',
+    productName: String(raw.productName || raw.product || 'a product').trim() || 'a product',
+    productImage: String(raw.productImage || raw.imageUrl || '').trim(),
+    productId: String(raw.productId || '').trim(),
+    buyerId: String(raw.buyerId || raw.userId || '').trim(),
+    orderId: String(raw.orderId || '').trim(),
+    clientId: String(raw.clientId || '').trim(),
+    at: Number(raw.at) || Date.now()
+  };
+}
+
+function markLivePurchaseSeen(id) {
+  if (!id) return;
+  livePurchaseSeen.add(String(id));
+  try {
+    const list = Array.from(livePurchaseSeen).slice(-80);
+    sessionStorage.setItem(LIVE_PURCHASE_SEEN_KEY, JSON.stringify(list));
+  } catch (_) {}
+}
+
+function loadSeenLivePurchases() {
+  try {
+    const list = JSON.parse(sessionStorage.getItem(LIVE_PURCHASE_SEEN_KEY) || '[]');
+    if (Array.isArray(list)) list.forEach((id) => livePurchaseSeen.add(String(id)));
+  } catch (_) {}
+}
+
+function publishLivePurchaseLocal(event) {
+  const payload = normalizeLivePurchaseEvent({ ...event, clientId: LIVE_PURCHASE_CLIENT_ID });
+  try {
+    localStorage.setItem(LIVE_PURCHASE_BUS_KEY, JSON.stringify({ ...payload, busAt: Date.now() }));
+  } catch (_) {}
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      if (!window.__beanLivePurchaseChannel) {
+        window.__beanLivePurchaseChannel = new BroadcastChannel('bean-bloom-live-purchases');
+      }
+      window.__beanLivePurchaseChannel.postMessage(payload);
+    }
+  } catch (_) {}
+  return payload;
+}
+
+async function publishLivePurchase(orderOrEvent) {
+  const user = getLoggedInUser();
+  const buyerName = getBuyerDisplayName(
+    orderOrEvent?.address?.name || orderOrEvent?.username || orderOrEvent?.buyerName || ''
+  );
+  const buyerId = String(user?.id || orderOrEvent?.userId || orderOrEvent?.buyerId || '');
+  const items = Array.isArray(orderOrEvent?.items)
+    ? orderOrEvent.items
+    : (orderOrEvent?.productName ? [orderOrEvent] : []);
+
+  const events = (items.length ? items : [{ name: 'a product' }]).slice(0, 6).map((item) => {
+    const product = item.id ? loadProducts().find((p) => String(p.id) === String(item.id)) : null;
+    return normalizeLivePurchaseEvent({
+      username: buyerName,
+      buyerId,
+      orderId: orderOrEvent?.id || orderOrEvent?.orderId || '',
+      productName: item.name || item.productName || 'a product',
+      productId: item.id || item.productId || '',
+      productImage: item.imageUrl || product?.imageUrl || '',
+      clientId: LIVE_PURCHASE_CLIENT_ID,
+      at: Date.now()
+    });
+  });
+
+  events.forEach((event) => {
+    markLivePurchaseSeen(event.id);
+    publishLivePurchaseLocal(event);
+  });
+
+  try {
+    if (window.BeanbBloomAPI?.LivePurchases?.publish) {
+      await window.BeanbBloomAPI.LivePurchases.publish({
+        username: buyerName,
+        buyerId,
+        orderId: orderOrEvent?.id || '',
+        items: events.map((event) => ({
+          id: event.productId,
+          name: event.productName,
+          imageUrl: event.productImage
+        }))
+      });
+    }
+  } catch (_) {}
+
+  return events;
+}
+
+function ensureLivePurchaseStack() {
+  let stack = document.getElementById('live-purchase-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'live-purchase-stack';
+    stack.className = 'live-purchase-stack';
+    stack.setAttribute('aria-live', 'polite');
+    document.body.appendChild(stack);
+  }
+  return stack;
+}
+
+function showLivePurchasePopup(event) {
+  const data = normalizeLivePurchaseEvent(event);
+  if (!data.username || !data.productName) return;
+  const stack = ensureLivePurchaseStack();
+  const card = document.createElement('article');
+  card.className = 'live-purchase-popup';
+  const image = data.productImage
+    ? `<img src="${escapeHtml(optimizeImageUrl(data.productImage, 120, 70))}" alt="" loading="lazy" decoding="async">`
+    : `<span class="live-purchase-fallback" aria-hidden="true">☕</span>`;
+  card.innerHTML = `
+    ${image}
+    <div>
+      <strong>${escapeHtml(data.username)}</strong>
+      <p>just bought <span>${escapeHtml(data.productName)}</span></p>
+      <small>Moments ago · online shoppers</small>
+    </div>
+  `;
+  stack.appendChild(card);
+  window.setTimeout(() => {
+    card.classList.add('is-leaving');
+    window.setTimeout(() => card.remove(), 320);
+  }, 5200);
+}
+
+function enqueueLivePurchasePopup(event) {
+  const data = normalizeLivePurchaseEvent(event);
+  if (!data.id || livePurchaseSeen.has(data.id)) return;
+  // Don't notify the same browser tab/session that placed the order
+  if (data.clientId && data.clientId === LIVE_PURCHASE_CLIENT_ID) {
+    markLivePurchaseSeen(data.id);
+    return;
+  }
+  const me = getLoggedInUser();
+  if (me?.id && data.buyerId && String(me.id) === String(data.buyerId)) {
+    markLivePurchaseSeen(data.id);
+    return;
+  }
+  markLivePurchaseSeen(data.id);
+  livePurchaseQueue.push(data);
+  drainLivePurchaseQueue();
+}
+
+function drainLivePurchaseQueue() {
+  if (livePurchaseShowing) return;
+  const next = livePurchaseQueue.shift();
+  if (!next) return;
+  livePurchaseShowing = true;
+  showLivePurchasePopup(next);
+  window.setTimeout(() => {
+    livePurchaseShowing = false;
+    drainLivePurchaseQueue();
+  }, 1800);
+}
+
+async function pollLivePurchases() {
+  if (document.body?.dataset?.adminPage) return;
+  try {
+    if (!window.BeanbBloomAPI?.LivePurchases?.list) return;
+    const online = window.BeanbBloomAPI.isLikelyOnline?.()
+      || (await window.BeanbBloomAPI.probeApiHealth?.());
+    if (!online) return;
+    const payload = await window.BeanbBloomAPI.LivePurchases.list(livePurchaseSince);
+    const events = Array.isArray(payload?.events) ? payload.events : [];
+    events.forEach((event) => enqueueLivePurchasePopup(event));
+    if (payload?.serverTime) livePurchaseSince = Number(payload.serverTime) || Date.now();
+    else if (events.length) {
+      livePurchaseSince = Math.max(livePurchaseSince, ...events.map((e) => Number(e.at) || 0));
+    }
+  } catch (_) {}
+}
+
+function startLivePurchaseFeed() {
+  if (document.body?.dataset?.adminPage) return;
+  loadSeenLivePurchases();
+  livePurchaseSince = Date.now();
+
+  window.addEventListener('storage', (event) => {
+    if (event.key !== LIVE_PURCHASE_BUS_KEY || !event.newValue) return;
+    try {
+      enqueueLivePurchasePopup(JSON.parse(event.newValue));
+    } catch (_) {}
+  });
+
+  try {
+    if (typeof BroadcastChannel !== 'undefined') {
+      window.__beanLivePurchaseChannel = new BroadcastChannel('bean-bloom-live-purchases');
+      window.__beanLivePurchaseChannel.onmessage = (message) => {
+        enqueueLivePurchasePopup(message.data);
+      };
+    }
+  } catch (_) {}
+
+  pollLivePurchases();
+  window.clearInterval(livePurchaseTimer);
+  livePurchaseTimer = window.setInterval(pollLivePurchases, 4000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') pollLivePurchases();
+  });
+}
+
 function initMobileNav() {
   const toggle = document.querySelector('.nav-toggle');
   const nav = document.getElementById('site-nav') || document.querySelector('.nav-links');
@@ -5594,6 +5826,8 @@ document.addEventListener('DOMContentLoaded', () => {
   run('blog listing', renderBlogListingPage);
   run('blog post', renderBlogPostPage);
   run('reveal animations', initRevealAnimations);
+  run('whatsapp widget', renderWhatsAppWidget);
+  run('live purchase feed', startLivePurchaseFeed);
   run('admin', initAdmin);
   run('scrub customers', () => {
     try {

@@ -423,6 +423,7 @@ const orderRoutes = require('./routes/orders');
 const discountRoutes = require('./routes/discounts');
 const settingsRoutes = require('./routes/settings');
 const blogRoutes = require('./routes/blogs');
+const livePurchasesRoutes = require('./routes/live-purchases');
 
 app.disable('x-powered-by');
 
@@ -436,6 +437,7 @@ app.use('/api/orders', rateLimit({ windowMs: 60000, max: 40 }), orderRoutes(pool
 app.use('/api/discounts', discountRoutes(pool));
 app.use('/api/settings', settingsRoutes(pool));
 app.use('/api/blogs', blogRoutes(pool));
+app.use('/api/live-purchases', rateLimit({ windowMs: 60000, max: 120 }), livePurchasesRoutes());
 
 app.get('/api/health', (req, res) => {
   res.setHeader('Cache-Control', 'no-store');

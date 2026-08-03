@@ -294,6 +294,9 @@
       };
       saveOrder(order);
       persistOrderToApi(order);
+      if (typeof publishLivePurchase === 'function') {
+        publishLivePurchase(order);
+      }
       clearCart();
 
       document.getElementById('checkout-form').style.display = 'none';
