@@ -107,6 +107,13 @@
               </div>
 
               <div class="settings-card">
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"></circle><circle cx="17.5" cy="10.5" r="2.5"></circle><circle cx="8.5" cy="7.5" r="2.5"></circle><circle cx="6.5" cy="12.5" r="2.5"></circle><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10c0 2.5-1 4.8-2.6 6.5"></path></svg>Brand theme</h3>
+                <p class="muted" style="margin:0 0 1rem;">Pick a modern premium palette for the whole storefront. <strong>Forest Brass</strong> is the default.</p>
+                <input type="hidden" id="s-theme" value="forest-brass">
+                <div class="theme-grid" id="theme-picker" role="listbox" aria-label="Site themes"></div>
+              </div>
+
+              <div class="settings-card">
                 <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>SEO</h3>
                 <p class="muted" style="margin:0 0 1rem;">Controls default title, description, social preview, robots, and JSON-LD for public pages.</p>
                 <div class="settings-grid">
@@ -424,9 +431,48 @@
     }
 
 
+    function renderThemePicker(selectedId = 'forest-brass') {
+      const root = document.getElementById('theme-picker');
+      const hidden = document.getElementById('s-theme');
+      if (!root) return;
+      const themes = (typeof SITE_THEMES !== 'undefined' && Array.isArray(SITE_THEMES))
+        ? SITE_THEMES
+        : [{ id: 'forest-brass', name: 'Forest Brass', blurb: 'Default', preview: ['#eef1ef', '#2f5d4a', '#b08d57', '#1b2420'], isDefault: true }];
+      const active = themes.some((t) => t.id === selectedId) ? selectedId : 'forest-brass';
+      if (hidden) hidden.value = active;
+      if (typeof applySiteTheme === 'function') applySiteTheme(active);
+
+      root.innerHTML = themes.map((theme) => `
+        <button type="button" class="theme-option${theme.id === active ? ' is-selected' : ''}" role="option" aria-selected="${theme.id === active ? 'true' : 'false'}" data-theme-id="${theme.id}">
+          ${theme.isDefault ? '<span class="theme-default-pill">Default</span>' : ''}
+          <div class="theme-swatches" aria-hidden="true">
+            ${(theme.preview || []).map((color) => `<span style="background:${color}"></span>`).join('')}
+          </div>
+          <div>
+            <strong>${theme.name}</strong>
+            <small>${theme.blurb || ''}</small>
+          </div>
+        </button>
+      `).join('');
+
+      root.querySelectorAll('[data-theme-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-theme-id');
+          if (hidden) hidden.value = id;
+          if (typeof applySiteTheme === 'function') applySiteTheme(id);
+          root.querySelectorAll('.theme-option').forEach((el) => {
+            const on = el.getAttribute('data-theme-id') === id;
+            el.classList.toggle('is-selected', on);
+            el.setAttribute('aria-selected', on ? 'true' : 'false');
+          });
+        });
+      });
+    }
+
     function populateSettingsForm(s) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('s-siteName', s.siteName); set('s-footerText', s.footerText);
+      renderThemePicker(s.theme || 'forest-brass');
       const seo = s.seo || {};
       set('s-seo-title', seo.defaultTitle);
       set('s-seo-description', seo.defaultDescription);
@@ -529,6 +575,7 @@
       const current = (typeof loadSettings === 'function' ? loadSettings() : {}) || {};
       return {
         siteName: get('s-siteName'), footerText: get('s-footerText'),
+        theme: get('s-theme') || 'forest-brass',
         seo: {
           defaultTitle: get('s-seo-title'),
           defaultDescription: get('s-seo-description'),
@@ -649,7 +696,9 @@
       });
 
       document.getElementById('save-settings-btn')?.addEventListener('click', () => {
-        saveSettings(collectSettingsFromForm());
+        const next = collectSettingsFromForm();
+        saveSettings(next);
+        if (typeof applySiteTheme === 'function') applySiteTheme(next.theme);
         const status = document.getElementById('save-status');
         status.classList.add('show');
         setTimeout(() => status.classList.remove('show'), 2500);
@@ -657,7 +706,9 @@
 
       document.getElementById('reset-settings-btn')?.addEventListener('click', () => {
         if (!confirm('Reset all settings to defaults?')) return;
-        populateSettingsForm(resetSettingsToDefaults());
+        const defaults = resetSettingsToDefaults();
+        populateSettingsForm(defaults);
+        if (typeof applySiteTheme === 'function') applySiteTheme(defaults.theme || 'forest-brass');
         const status = document.getElementById('save-status');
         status.textContent = '✓ Reset to defaults!';
         status.classList.add('show');

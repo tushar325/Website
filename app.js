@@ -71,6 +71,7 @@ const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
   footerText: '© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.',
   contentVersion: 4,
+  theme: 'forest-brass',
   hero: {
     eyebrow: 'Online specialty coffee shop',
     headline: 'Handcrafted coffee and brew gear, delivered.',
@@ -193,6 +194,89 @@ const DEFAULT_SETTINGS = {
   productPageVersion: 3
 };
 
+const SITE_THEMES = [
+  {
+    id: 'forest-brass',
+    name: 'Forest Brass',
+    blurb: 'Default — calm evergreen with warm brass.',
+    preview: ['#eef1ef', '#2f5d4a', '#b08d57', '#1b2420'],
+    isDefault: true
+  },
+  {
+    id: 'noir-gold',
+    name: 'Noir Gold',
+    blurb: 'Evening black with champagne metal.',
+    preview: ['#121212', '#c6a75e', '#e4d2a0', '#f5f1e8']
+  },
+  {
+    id: 'espresso-walnut',
+    name: 'Espresso Walnut',
+    blurb: 'Roast-brown luxury for coffee-first brands.',
+    preview: ['#f3ebe3', '#6b3f2a', '#c4a484', '#2a1c14']
+  },
+  {
+    id: 'ivory-emerald',
+    name: 'Ivory Emerald',
+    blurb: 'Gallery-white with deep emerald accents.',
+    preview: ['#fbfbf8', '#0f6b4c', '#9bb59a', '#14201b']
+  },
+  {
+    id: 'slate-champagne',
+    name: 'Slate Champagne',
+    blurb: 'Cool stone gray with soft champagne.',
+    preview: ['#f5f6f7', '#3d4a57', '#c9b49a', '#1c2228']
+  },
+  {
+    id: 'carbon-copper',
+    name: 'Carbon Copper',
+    blurb: 'Dark carbon with polished copper.',
+    preview: ['#16181b', '#c56a3c', '#d9a078', '#f2ebe4']
+  },
+  {
+    id: 'porcelain-olive',
+    name: 'Porcelain Olive',
+    blurb: 'Quiet porcelain with olive leaf green.',
+    preview: ['#faf8f3', '#5a6b3f', '#b7a57a', '#1f241c']
+  },
+  {
+    id: 'ink-burgundy',
+    name: 'Ink Burgundy',
+    blurb: 'Hotel-lobby wine with soft metal.',
+    preview: ['#faf6f7', '#7a2438', '#c9a27a', '#2a151a']
+  },
+  {
+    id: 'stone-azure',
+    name: 'Stone Azure',
+    blurb: 'Mineral stone with deep teal azure.',
+    preview: ['#f5f8f9', '#1f5f6b', '#9eb0a7', '#142428']
+  },
+  {
+    id: 'mist-onyx',
+    name: 'Mist Onyx',
+    blurb: 'Minimal mist gray with onyx accents.',
+    preview: ['#f4f5f6', '#1a1d1f', '#8f9598', '#111314']
+  }
+];
+
+function getThemeId(settings = loadSettings()) {
+  const id = settings?.theme || DEFAULT_SETTINGS.theme || 'forest-brass';
+  return SITE_THEMES.some((theme) => theme.id === id) ? id : 'forest-brass';
+}
+
+function applySiteTheme(themeId = getThemeId()) {
+  const id = SITE_THEMES.some((theme) => theme.id === themeId) ? themeId : 'forest-brass';
+  document.documentElement.setAttribute('data-theme', id);
+  return id;
+}
+
+// Apply saved theme as early as possible (before full render)
+try {
+  const bootSettings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
+  applySiteTheme(bootSettings?.theme || DEFAULT_SETTINGS.theme);
+} catch {
+  applySiteTheme(DEFAULT_SETTINGS.theme);
+}
+
 let settingsCache = null;
 let productsCache = null;
 let categoriesCache = null;
@@ -253,7 +337,8 @@ function loadSettings() {
       menuCategories: refreshContent
         ? DEFAULT_SETTINGS.menuCategories.slice()
         : (Array.isArray(saved.menuCategories) ? saved.menuCategories : DEFAULT_SETTINGS.menuCategories),
-      footerText: refreshContent ? DEFAULT_SETTINGS.footerText : (saved.footerText || DEFAULT_SETTINGS.footerText)
+      footerText: refreshContent ? DEFAULT_SETTINGS.footerText : (saved.footerText || DEFAULT_SETTINGS.footerText),
+      theme: SITE_THEMES.some((theme) => theme.id === saved.theme) ? saved.theme : DEFAULT_SETTINGS.theme
     };
     return settingsCache;
   } catch {
@@ -264,6 +349,7 @@ function loadSettings() {
 
 function saveSettings(settings) {
   settingsCache = settings;
+  if (settings?.theme) applySiteTheme(settings.theme);
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   // Persist dynamic site content to MySQL when API + admin token available
   if (window.BeanbBloomAPI?.Settings?.save && sessionStorage.getItem(ADMIN_TOKEN_KEY)) {
@@ -335,7 +421,9 @@ function syncDynamicContentInBackground() {
 function resetSettingsToDefaults() {
   settingsCache = null;
   localStorage.removeItem(SETTINGS_KEY);
-  return loadSettings();
+  const settings = loadSettings();
+  applySiteTheme(settings.theme);
+  return settings;
 }
 
 const ADMIN_SESSION_KEY = 'bean-bloom-admin';
@@ -1207,6 +1295,7 @@ function applySeoMeta(settings = loadSettings()) {
 
 function renderPublicSiteContent() {
   const s = loadSettings();
+  applySiteTheme(s.theme);
   applySeoMeta(s);
 
   // Brand name
