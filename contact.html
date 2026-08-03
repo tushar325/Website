@@ -3,56 +3,104 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Contact | Bean & Bloom</title>
-  <meta name="description" content="Get in touch with Bean & Bloom for visits, events, or coffee inquiries.">
+  <title>Visit | Bean & Bloom</title>
+  <meta name="description" content="Visit Bean & Bloom in Faridabad — hours, directions, and contact for events or coffee inquiries.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">Bean & Bloom</a>
-      <nav class="nav-links">
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
         <a href="menu.html">Menu</a>
-        <a href="contact.html">Contact</a>
-        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <a href="contact.html" class="is-active">Visit</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
         <span id="user-nav"></span>
       </nav>
     </div>
   </header>
 
-  <main class="section">
-    <div class="container intro-grid">
-      <article class="card">
-        <h1>Visit or connect</h1>
-        <p>We’re open daily from 7am to 4pm and welcome coffee lovers, remote workers, and private gatherings.</p>
-        <p><strong>Address:</strong> 88 Market Street, Downtown</p>
-        <p><strong>Email:</strong> hello@beanandbloom.com</p>
-        <p><strong>Phone:</strong> (555) 014-2234</p>
-      </article>
-      <article class="card">
-        <h3>Send a message</h3>
-        <form class="form-grid" id="contact-form">
-          <label>Name
-            <input id="contact-name" placeholder="Your name" required>
-          </label>
-          <label>Email
-            <input id="contact-email" type="email" placeholder="you@example.com" required>
-          </label>
-          <label>Message
-            <textarea id="contact-message" placeholder="Tell us how we can help" required></textarea>
-          </label>
-          <button class="btn" type="submit">Send inquiry</button>
-          <p class="muted" id="contact-status" aria-live="polite"></p>
-        </form>
-      </article>
-    </div>
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Visit us</span>
+        <h1>Find us on Market Street.</h1>
+        <p>We’re open daily for espresso, bakery, and take-home beans. Drop in, book a tasting table, or send a note for events and catering.</p>
+      </div>
+    </section>
+
+    <section class="section reveal">
+      <div class="container contact-layout">
+        <div class="contact-facts">
+          <article class="card contact-fact">
+            <strong>Address</strong>
+            <p class="muted">88 Market Street, Downtown<br>Faridabad, Haryana 121002</p>
+          </article>
+          <article class="card contact-fact">
+            <strong>Hours</strong>
+            <p class="muted">Mon–Fri 7am–7pm<br>Sat 8am–8pm · Sun 8am–6pm</p>
+          </article>
+          <article class="card contact-fact">
+            <strong>Contact</strong>
+            <p class="muted">hello@beanandbloom.com<br>+91 55501 42234</p>
+          </article>
+          <iframe
+            class="map-embed"
+            title="Bean & Bloom location map"
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://maps.google.com/maps?q=Faridabad%20Market&t=&z=14&ie=UTF8&iwloc=&output=embed">
+          </iframe>
+        </div>
+
+        <article class="card">
+          <h2>Send a message</h2>
+          <p class="muted">Questions about catering, private tastings, or wholesale beans? We’ll reply within one business day.</p>
+          <form class="form-grid" id="contact-form" style="margin-top:1.2rem;">
+            <label>Name
+              <input id="contact-name" placeholder="Your name" required>
+            </label>
+            <label>Email
+              <input id="contact-email" type="email" placeholder="you@example.com" required>
+            </label>
+            <label>Topic
+              <select id="contact-topic">
+                <option value="general">General question</option>
+                <option value="catering">Catering / events</option>
+                <option value="wholesale">Wholesale beans</option>
+                <option value="feedback">Feedback</option>
+              </select>
+            </label>
+            <label>Message
+              <textarea id="contact-message" placeholder="Tell us how we can help" required></textarea>
+            </label>
+            <button class="btn" type="submit">Send inquiry</button>
+            <p class="muted" id="contact-status" aria-live="polite"></p>
+          </form>
+        </article>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 Bean & Bloom. We’d love to welcome you.</p>
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="index.html">Bean & Bloom</a>
+        <p>© 2026 Bean & Bloom. We’d love to welcome you.</p>
+      </div>
+      <div class="footer-links">
+        <a href="menu.html">Menu</a>
+        <a href="about.html">Our story</a>
+        <a href="index.html#products">Shop</a>
+      </div>
     </div>
   </footer>
 

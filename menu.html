@@ -4,53 +4,64 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Menu | Bean & Bloom</title>
-  <meta name="description" content="Explore the Bean & Bloom menu of handcrafted coffees, pastries, and seasonal favorites.">
+  <meta name="description" content="Explore the Bean & Bloom cafe menu — espresso, bakery, tea, and seasonal favorites.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">Bean & Bloom</a>
-      <nav class="nav-links">
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
         <a href="about.html">About</a>
-        <a href="menu.html">Menu</a>
-        <a href="contact.html">Contact</a>
-        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <a href="menu.html" class="is-active">Menu</a>
+        <a href="contact.html">Visit</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
         <span id="user-nav"></span>
       </nav>
     </div>
   </header>
 
-  <main class="section">
-    <div class="container">
-      <div class="section-head">
-        <h1>Our menu</h1>
-        <p>Seasonal favorites, signature drinks, and comforting pastries.</p>
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Cafe menu</span>
+        <h1>Drinks and bakery, ready when you are.</h1>
+        <p>Signature espresso, bakery fresh from the morning bake, and infusions for slower afternoons. Add cafe favorites to your cart for pickup.</p>
       </div>
-      <div class="grid grid-3">
-        <article class="card">
-          <h3>Signature Espresso</h3>
-          <p class="muted">Bold and velvety with caramel and cocoa notes.</p>
-          <div class="price">$4.50</div>
-        </article>
-        <article class="card">
-          <h3>Maple Latte</h3>
-          <p class="muted">Smooth espresso, steamed milk, and maple depth.</p>
-          <div class="price">$5.20</div>
-        </article>
-        <article class="card">
-          <h3>Golden Morning Brew</h3>
-          <p class="muted">Bright, floral, and impeccably balanced.</p>
-          <div class="price">$6.00</div>
-        </article>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="menu-toolbar" id="menu-filters" role="tablist" aria-label="Menu categories">
+          <button class="menu-chip active" type="button" data-menu-filter="all">All</button>
+          <button class="menu-chip" type="button" data-menu-filter="Espresso">Espresso</button>
+          <button class="menu-chip" type="button" data-menu-filter="Bakery & Snacks">Bakery</button>
+          <button class="menu-chip" type="button" data-menu-filter="Tea & Infusions">Tea</button>
+          <button class="menu-chip" type="button" data-menu-filter="Cold Brew">Cold brew</button>
+        </div>
+        <div id="cafe-menu"></div>
       </div>
-    </div>
+    </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 Bean & Bloom. Freshly brewed every day.</p>
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="index.html">Bean & Bloom</a>
+        <p>© 2026 Bean & Bloom. Freshly brewed every day.</p>
+      </div>
+      <div class="footer-links">
+        <a href="contact.html">Visit us</a>
+        <a href="index.html#products">Shop gear</a>
+        <a href="about.html">Our story</a>
+      </div>
     </div>
   </footer>
 
