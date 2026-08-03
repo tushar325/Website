@@ -17,11 +17,15 @@
   --glow-1: rgba(47, 93, 74, 0.12);
   --glow-2: rgba(176, 141, 87, 0.14);
   --header-bg: rgba(244, 246, 244, 0.82);
+  --on-accent: #ffffff;
+  --input-bg: #ffffff;
+  --card-bg: #ffffff;
   --radius: 18px;
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
   --font-body: "Outfit", system-ui, sans-serif;
   --container-max: 1440px;
   --container-shop: 1600px;
+  color-scheme: light;
 }
 
 /* Premium modern themes — expensive, restrained color stories */
@@ -29,20 +33,24 @@
   --bg: #121212;
   --bg-top: #1a1a1a;
   --bg-deep: #0d0d0d;
-  --surface: rgba(28, 28, 28, 0.92);
-  --surface-strong: #1e1e1e;
-  --ink: #f5f1e8;
-  --text: #f0ece3;
-  --muted: #a39e94;
-  --accent: #c6a75e;
-  --accent-hover: #d4b96f;
-  --accent-soft: rgba(198, 167, 94, 0.16);
-  --brass: #e4d2a0;
-  --border: rgba(245, 241, 232, 0.12);
+  --surface: rgba(28, 28, 28, 0.94);
+  --surface-strong: #242424;
+  --ink: #f7f2e8;
+  --text: #f7f2e8;
+  --muted: #b7b0a4;
+  --accent: #d4b56a;
+  --accent-hover: #e0c57f;
+  --accent-soft: rgba(212, 181, 106, 0.18);
+  --brass: #e8d7a8;
+  --border: rgba(247, 242, 232, 0.16);
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-  --glow-1: rgba(198, 167, 94, 0.12);
-  --glow-2: rgba(255, 255, 255, 0.04);
-  --header-bg: rgba(18, 18, 18, 0.88);
+  --glow-1: rgba(212, 181, 106, 0.14);
+  --glow-2: rgba(255, 255, 255, 0.05);
+  --header-bg: rgba(18, 18, 18, 0.92);
+  --on-accent: #16130e;
+  --input-bg: #2a2a2a;
+  --card-bg: #242424;
+  color-scheme: dark;
 }
 [data-theme="espresso-walnut"] {
   --bg: #f3ebe3;
@@ -105,20 +113,24 @@
   --bg: #16181b;
   --bg-top: #1c1f23;
   --bg-deep: #101214;
-  --surface: rgba(30, 33, 38, 0.94);
-  --surface-strong: #22262c;
-  --ink: #f2ebe4;
-  --text: #efe7df;
-  --muted: #9a9188;
-  --accent: #c56a3c;
-  --accent-hover: #d57a4c;
-  --accent-soft: rgba(197, 106, 60, 0.16);
-  --brass: #d9a078;
-  --border: rgba(242, 235, 228, 0.12);
+  --surface: rgba(30, 33, 38, 0.96);
+  --surface-strong: #2a2f36;
+  --ink: #f6efe8;
+  --text: #f6efe8;
+  --muted: #b0a79e;
+  --accent: #d07848;
+  --accent-hover: #e08959;
+  --accent-soft: rgba(208, 120, 72, 0.18);
+  --brass: #e0b08a;
+  --border: rgba(246, 239, 232, 0.16);
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
-  --glow-1: rgba(197, 106, 60, 0.14);
-  --glow-2: rgba(255, 255, 255, 0.04);
-  --header-bg: rgba(22, 24, 27, 0.9);
+  --glow-1: rgba(208, 120, 72, 0.16);
+  --glow-2: rgba(255, 255, 255, 0.05);
+  --header-bg: rgba(22, 24, 27, 0.92);
+  --on-accent: #1a120e;
+  --input-bg: #323842;
+  --card-bg: #2a2f36;
+  color-scheme: dark;
 }
 [data-theme="porcelain-olive"] {
   --bg: #f4f2ec;
@@ -195,6 +207,102 @@
   --glow-1: rgba(26, 29, 31, 0.08);
   --glow-2: rgba(143, 149, 152, 0.14);
   --header-bg: rgba(244, 245, 246, 0.9);
+}
+
+[data-theme="espresso-walnut"],
+[data-theme="ivory-emerald"],
+[data-theme="slate-champagne"],
+[data-theme="porcelain-olive"],
+[data-theme="ink-burgundy"],
+[data-theme="stone-azure"],
+[data-theme="mist-onyx"],
+[data-theme="forest-brass"] {
+  --on-accent: #ffffff;
+  --input-bg: var(--surface-strong);
+  --card-bg: var(--surface-strong);
+  color-scheme: light;
+}
+
+/* Readable surfaces on every theme (especially dark) */
+input, textarea, select {
+  background: var(--input-bg, var(--surface-strong)) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.9;
+}
+.card,
+.offer-chip,
+.shop-filters,
+.cart-item-row,
+.cart-summary-box,
+.newsletter-panel,
+.deal-panel,
+.settings-card,
+.theme-option,
+.quantity-control,
+.product-card,
+.sort-field select,
+.search-field input {
+  background: var(--surface-strong);
+  color: var(--text);
+}
+.section-head h1,
+.section-head h2,
+.section-head h3,
+.page-hero h1,
+.product-card h3,
+.cart-item-details h3,
+.brand {
+  color: inherit;
+}
+.page-hero p,
+.section-head p {
+  color: var(--muted);
+}
+.site-footer {
+  color: var(--text);
+  border-top-color: var(--border);
+}
+.site-footer .muted,
+.site-footer p {
+  color: var(--muted);
+}
+
+/* Dark themes: keep contrast high on common chrome */
+[data-theme="noir-gold"] .btn.secondary,
+[data-theme="carbon-copper"] .btn.secondary {
+  color: var(--brass);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+[data-theme="noir-gold"] .btn.secondary:hover,
+[data-theme="carbon-copper"] .btn.secondary:hover {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+[data-theme="noir-gold"] .nav-links a,
+[data-theme="carbon-copper"] .nav-links a {
+  color: var(--text);
+}
+[data-theme="noir-gold"] .nav-links a.is-active,
+[data-theme="carbon-copper"] .nav-links a.is-active,
+[data-theme="noir-gold"] .brand,
+[data-theme="carbon-copper"] .brand {
+  color: var(--accent);
+}
+[data-theme="noir-gold"] .stat-card,
+[data-theme="carbon-copper"] .stat-card,
+[data-theme="noir-gold"] body[data-admin-page] .stat-card,
+[data-theme="carbon-copper"] body[data-admin-page] .stat-card {
+  background: var(--surface-strong);
+  color: var(--text);
+}
+[data-theme="noir-gold"] .theme-option small,
+[data-theme="carbon-copper"] .theme-option small {
+  color: var(--muted);
 }
 
 * { box-sizing: border-box; }
@@ -737,7 +845,7 @@ img { max-width: 100%; display: block; }
   background: rgba(255,255,255,.55);
   box-shadow: 0 1px 4px rgba(0,0,0,.25);
 }
-.product-card-dots span.is-active { background: #fff; }
+.product-card-dots span.is-active { background: var(--surface-strong); }
 .product-card h3 {
   margin: 0;
   font-family: var(--font-display);
@@ -969,7 +1077,7 @@ img { max-width: 100%; display: block; }
   padding: 0.9rem 1.25rem;
   border-radius: 999px;
   background: var(--accent);
-  color: white;
+  color: var(--on-accent, #fff);
   font-weight: 700;
   margin-top: 0.8rem;
   border: 1px solid var(--accent);
@@ -1060,7 +1168,7 @@ body[data-admin-page].admin-authed .admin-shell {
   border: 1px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface-strong);
 }
 .quantity-control button {
   border: none;
@@ -1084,7 +1192,7 @@ body[data-admin-page].admin-authed .admin-shell {
   padding: 0.75rem 0.9rem;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface-strong);
 }
 .cart-item-total {
   display: flex;
@@ -1180,7 +1288,7 @@ body[data-admin-page].admin-authed .admin-shell {
   min-width: 76px;
   width: 76px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface-strong);
   border-radius: 14px;
   padding: 0.2rem;
   cursor: pointer;
@@ -1272,7 +1380,7 @@ body[data-admin-page].admin-authed .admin-shell {
 }
 .pp-feature-chips span {
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface-strong);
   border-radius: 999px;
   padding: 0.4rem 0.85rem;
   font-size: 0.86rem;
@@ -1324,7 +1432,7 @@ body[data-admin-page].admin-authed .admin-shell {
 }
 .pp-option-chip {
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface-strong);
   border-radius: 999px;
   padding: 0.58rem 1rem;
   font: inherit;
@@ -1405,7 +1513,7 @@ body[data-admin-page].admin-authed .admin-shell {
   gap: 0.9rem;
 }
 .pp-info-card {
-  background: #fff;
+  background: var(--surface-strong);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 1rem 1.1rem;
@@ -1425,7 +1533,7 @@ label.pp-qty,
   border: 1px solid var(--border);
   border-radius: 999px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface-strong);
   margin: 0;
   padding: 0;
   gap: 0;
@@ -1505,7 +1613,7 @@ body:has(.pp-sticky-bar:not([hidden])) .whatsapp-float {
   padding: 0.45rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--surface-strong);
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
@@ -1521,7 +1629,7 @@ body:has(.pp-sticky-bar:not([hidden])) .whatsapp-float {
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0.85rem;
-  background: #fff;
+  background: var(--surface-strong);
 }
 .variant-matrix-head,
 .variant-matrix-row {
@@ -1573,7 +1681,7 @@ body:has(.pp-sticky-bar:not([hidden])) .whatsapp-float {
   padding: 0.35rem 0.8rem;
   font-size: 0.86rem;
   font-weight: 600;
-  background: #fff;
+  background: var(--surface-strong);
 }
 .pp-meter { display: grid; gap: 0.4rem; margin-top: 1rem; }
 .pp-meter-track {
@@ -1796,7 +1904,7 @@ input, textarea, select {
   border-radius: 12px;
   padding: 0.8rem 0.9rem;
   font: inherit;
-  background: #fff;
+  background: var(--surface-strong);
   color: var(--text);
   font-weight: 500;
 }
@@ -1809,7 +1917,7 @@ textarea { min-height: 100px; resize: vertical; }
   border-radius: 28px;
   padding: 2.5rem 2rem;
   text-align: center;
-  background: #fff;
+  background: var(--surface-strong);
 }
 #login-form h3 {
   margin-top: 0;
@@ -1830,7 +1938,7 @@ textarea { min-height: 100px; resize: vertical; }
 #login-form input {
   padding-left: 2.5rem;
   border: 1.5px solid rgba(47, 93, 74, 0.28);
-  background: #fff;
+  background: var(--surface-strong);
   width: 100%;
 }
 #login-form input:focus {
@@ -1873,7 +1981,7 @@ textarea { min-height: 100px; resize: vertical; }
   margin-top: 1.2rem;
 }
 .stat-card {
-  background: #fff;
+  background: var(--surface-strong);
   border: 1px solid var(--border);
   border-radius: 22px;
   padding: 1.6rem;
@@ -1976,7 +2084,7 @@ textarea { min-height: 100px; resize: vertical; }
   min-height: 180px;
   border-radius: 22px;
   border: 2px dashed rgba(47, 93, 74, 0.3);
-  background: #fff;
+  background: var(--surface-strong);
   color: var(--accent);
   font-weight: 700;
   cursor: pointer;
@@ -2112,7 +2220,7 @@ body[data-admin-page] #login-form.card {
 #admin-product-panel { display: grid; gap: 1rem; }
 #admin-product-panel.hide { display: none; }
 #product-form-container {
-  background: #fff;
+  background: var(--surface-strong);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 1.5rem 1.6rem;
@@ -2683,7 +2791,7 @@ html.js .reveal.is-visible {
   padding: 0.55rem 0.9rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--surface-strong);
   font: inherit;
   color: var(--ink);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);

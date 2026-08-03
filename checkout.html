@@ -4,6 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Checkout · Bean & Bloom</title>
+    <script>
+    (function () {
+      try {
+        var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
+        var theme = (saved && saved.theme) || 'forest-brass';
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css">
   <style>
     .checkout-grid { display:grid; grid-template-columns:1.4fr .9fr; gap:1.5rem; align-items:start; }
