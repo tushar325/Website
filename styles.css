@@ -318,6 +318,63 @@ img { max-width: 100%; display: block; }
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+.category-rail-wrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+.category-rail-wrap .category-rail {
+  margin: 0;
+  min-width: 0;
+}
+.category-rail-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 8px 20px rgba(27, 36, 32, 0.08);
+  transition: background 0.2s ease, transform 0.2s ease, opacity 0.2s ease;
+  z-index: 2;
+}
+.category-rail-btn svg {
+  width: 1.1rem;
+  height: 1.1rem;
+  display: block;
+}
+.category-rail-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.category-rail-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+  box-shadow: none;
+}
+@media (max-width: 720px) {
+  .category-rail-wrap {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+  .category-rail-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .category-rail-btn.prev { left: 0.35rem; }
+  .category-rail-btn.next { right: 0.35rem; }
+  .category-rail-btn:hover:not(:disabled) { transform: translateY(-50%); }
+  .category-rail-wrap .category-rail { padding-inline: 0.25rem; }
+}
 .category-rail.is-dragging {
   cursor: grabbing;
   scroll-behavior: auto;
@@ -405,6 +462,24 @@ img { max-width: 100%; display: block; }
   color: var(--text);
 }
 .search-field input { min-width: 240px; }
+/* Custom chevron with clear gap from the right edge (avoids native arrow flush left/edge) */
+.sort-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.sort-field select {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0.7rem 2.75rem 0.7rem 1rem;
+  background-color: var(--surface-strong);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231b2420' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 14px;
+  cursor: pointer;
+}
+.sort-field select::-ms-expand { display: none; }
 .shop-result-meta { margin: 0 0 1.1rem; font-size: 0.92rem; }
 
 /* Products */

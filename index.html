@@ -52,7 +52,15 @@
           <h2 id="cat-section-title"></h2>
           <p id="cat-section-sub"></p>
         </div>
-        <div id="public-category-grid" class="category-rail" aria-label="Shop by category"></div>
+        <div class="category-rail-wrap">
+          <button type="button" class="category-rail-btn prev" id="category-rail-prev" aria-label="Scroll categories left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <div id="public-category-grid" class="category-rail" aria-label="Shop by category"></div>
+          <button type="button" class="category-rail-btn next" id="category-rail-next" aria-label="Scroll categories right">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
       </div>
     </section>
 
