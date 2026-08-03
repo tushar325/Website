@@ -278,9 +278,58 @@ async function hydrateSettingsFromSql() {
     if (remote && typeof remote === 'object' && Object.keys(remote).length) {
       settingsCache = null;
       localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, ...remote }));
+      return loadSettings();
     }
   } catch (_) {}
   return loadSettings();
+}
+
+/** Non-blocking: paint first, sync SQL in the background, then soft-refresh changed surfaces. */
+function syncDynamicContentInBackground() {
+  if (!window.BeanbBloomAPI?.probeApiHealth) return;
+  const softRefresh = () => {
+    try {
+      if (document.getElementById('hero-headline') || document.getElementById('footer-text')) {
+        renderPublicSiteContent();
+      }
+      if (document.getElementById('blog-grid') || document.getElementById('blog-featured')) {
+        renderBlogListingPage();
+      }
+      if (document.getElementById('blog-post-title')) {
+        renderBlogPostPage();
+      }
+    } catch (err) {
+      console.warn('[Bean & Bloom] soft refresh skipped:', err);
+    }
+  };
+
+  // Fire-and-forget — never awaited on the critical path
+  Promise.resolve()
+    .then(() => window.BeanbBloomAPI.probeApiHealth())
+    .then(async (online) => {
+      if (!online) return;
+      const tasks = [];
+      tasks.push(
+        hydrateSettingsFromSql().then((before) => before).catch(() => null)
+      );
+      tasks.push(
+        hydrateBlogsFromSql().catch(() => null)
+      );
+      if (window.BeanbBloomAPI.Products?.getAll) {
+        tasks.push(
+          window.BeanbBloomAPI.Products.getAll()
+            .then((remote) => {
+              if (!Array.isArray(remote) || !remote.length) return;
+              // Map SQL rows into local product shape only when useful
+              return remote;
+            })
+            .catch(() => null)
+        );
+      }
+      await Promise.allSettled(tasks);
+      softRefresh();
+    })
+    .catch(() => {});
 }
 
 function resetSettingsToDefaults() {
@@ -2055,8 +2104,8 @@ function formatCurrency(value) {
 }
 
 const CART_KEY = 'bean-bloom-cart'; // per-user key prefix: bean-bloom-cart-{userId}
-const API_BASE = 'http://localhost:3001/api';
-const REVIEW_REQUEST_TIMEOUT = 1200;
+const API_BASE = (typeof window !== 'undefined' && window.BeanbBloomAPI?.API_BASE) || 'http://localhost:3001/api';
+const REVIEW_REQUEST_TIMEOUT = 800;
 
 async function loadProductReviews(productId) {
   if (!productId) return [];
@@ -3917,10 +3966,14 @@ function initAdmin() {
     let authed = false;
     if (window.BeanbBloomAPI?.Auth?.login) {
       try {
-        const result = await window.BeanbBloomAPI.Auth.login(username, password);
-        if (result?.role === 'admin' && result.token) {
-          setAdminLoggedIn(true, result.token);
-          authed = true;
+        const online = window.BeanbBloomAPI.isLikelyOnline?.()
+          || (await window.BeanbBloomAPI.probeApiHealth?.());
+        if (online) {
+          const result = await window.BeanbBloomAPI.Auth.login(username, password);
+          if (result?.role === 'admin' && result.token) {
+            setAdminLoggedIn(true, result.token);
+            authed = true;
+          }
         }
       } catch (_) {}
     }
@@ -5123,44 +5176,41 @@ document.addEventListener('DOMContentLoaded', () => {
     catch (err) { console.error(`[Bean & Bloom] ${label} failed:`, err); }
   };
 
-  // Prefer MySQL-backed settings / blogs when the API is reachable
-  const boot = async () => {
-    try { await hydrateSettingsFromSql(); } catch (err) { console.error('[Bean & Bloom] hydrate settings failed:', err); }
-    try { await hydrateBlogsFromSql(); } catch (err) { console.error('[Bean & Bloom] hydrate blogs failed:', err); }
-    run('mobile nav', initMobileNav);
-    run('site content', renderPublicSiteContent);
-    run('user nav', renderUserNav);
-    run('categories', renderPublicCategoryGrid);
-    run('shop controls', initShopControls);
-    run('offers', renderOfferStrip);
-    run('featured', renderFeaturedProducts);
-    run('recently viewed', renderRecentlyViewedRail);
-    run('compare bar', renderCompareBar);
-    if (document.getElementById('public-products')) {
-      run('products', () => renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' }));
-    }
-    if (document.getElementById('product-detail')) {
-      run('product detail', renderProductDetail);
-    }
-    run('cafe menu', initCafeMenuFilters);
-    run('deal page', renderDealPage);
-    run('cart count', updateCartCount);
-    run('contact form', initContactForm);
-    run('newsletter', initNewsletterForm);
-    run('blog listing', renderBlogListingPage);
-    run('blog post', renderBlogPostPage);
-    run('reveal animations', initRevealAnimations);
-    run('admin', initAdmin);
-    // Scrub any legacy plaintext passwords left in local customer dumps
-    run('scrub customers', () => {
-      try {
-        const raw = JSON.parse(localStorage.getItem(CUSTOMERS_KEY) || '[]');
-        if (Array.isArray(raw) && raw.some((c) => c && (c.password || c.cardNumber || c.cvv))) {
-          saveRegisteredCustomers(raw);
-        }
-      } catch (_) {}
-    });
-  };
+  // LOCAL-FIRST: paint from cache/localStorage immediately.
+  // SQL sync runs in the background with hard timeouts — never blocks first paint.
+  run('mobile nav', initMobileNav);
+  run('site content', renderPublicSiteContent);
+  run('user nav', renderUserNav);
+  run('categories', renderPublicCategoryGrid);
+  run('shop controls', initShopControls);
+  run('offers', renderOfferStrip);
+  run('featured', renderFeaturedProducts);
+  run('recently viewed', renderRecentlyViewedRail);
+  run('compare bar', renderCompareBar);
+  if (document.getElementById('public-products')) {
+    run('products', () => renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' }));
+  }
+  if (document.getElementById('product-detail')) {
+    run('product detail', renderProductDetail);
+  }
+  run('cafe menu', initCafeMenuFilters);
+  run('deal page', renderDealPage);
+  run('cart count', updateCartCount);
+  run('contact form', initContactForm);
+  run('newsletter', initNewsletterForm);
+  run('blog listing', renderBlogListingPage);
+  run('blog post', renderBlogPostPage);
+  run('reveal animations', initRevealAnimations);
+  run('admin', initAdmin);
+  run('scrub customers', () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem(CUSTOMERS_KEY) || '[]');
+      if (Array.isArray(raw) && raw.some((c) => c && (c.password || c.cardNumber || c.cvv))) {
+        saveRegisteredCustomers(raw);
+      }
+    } catch (_) {}
+  });
 
-  boot();
+  // Background MySQL sync (settings, blogs) — max ~900ms per call, skipped if API offline
+  run('background sync', syncDynamicContentInBackground);
 });

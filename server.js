@@ -26,6 +26,47 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
 }));
 
+// Security headers (no third-party helmet dependency)
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self)');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-site');
+  res.removeHeader('X-Powered-By');
+  next();
+});
+
+// Lightweight in-memory rate limit (per IP) — protects auth / write endpoints
+const rateBuckets = new Map();
+function rateLimit({ windowMs = 60000, max = 60 } = {}) {
+  return (req, res, next) => {
+    const ip = req.headers['x-forwarded-for']?.toString().split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+    const key = `${ip}:${req.path.split('?')[0]}`;
+    const now = Date.now();
+    let bucket = rateBuckets.get(key);
+    if (!bucket || now > bucket.resetAt) {
+      bucket = { count: 0, resetAt: now + windowMs };
+      rateBuckets.set(key, bucket);
+    }
+    bucket.count += 1;
+    if (bucket.count > max) {
+      return res.status(429).json({ error: 'Too many requests. Please try again shortly.' });
+    }
+    return next();
+  };
+}
+
+// Cache public catalog reads briefly for snappy repeat views
+app.use('/api', (req, res, next) => {
+  if (req.method === 'GET' && /\/(categories|products|blogs|settings|health|discounts)(\/|$|\?)/.test(req.path)) {
+    res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+  } else {
+    res.setHeader('Cache-Control', 'no-store');
+  }
+  next();
+});
+
 app.use(bodyParser.json({
   limit: '2mb',
   verify: (req, _res, buf) => {
@@ -482,18 +523,21 @@ const discountRoutes = require('./routes/discounts');
 const settingsRoutes = require('./routes/settings');
 const blogRoutes = require('./routes/blogs');
 
+app.disable('x-powered-by');
+
 app.use('/api/categories', categoryRoutes(pool));
 app.use('/api/products', productRoutes(pool));
 app.use('/api/cart', cartRoutes(pool));
-app.use('/api/auth', authRoutes(pool));
-app.use('/api/inquiries', inquiryRoutes(pool));
-app.use('/api/reviews', reviewRoutes(pool));
-app.use('/api/orders', orderRoutes(pool));
+app.use('/api/auth', rateLimit({ windowMs: 60000, max: 20 }), authRoutes(pool));
+app.use('/api/inquiries', rateLimit({ windowMs: 60000, max: 30 }), inquiryRoutes(pool));
+app.use('/api/reviews', rateLimit({ windowMs: 60000, max: 40 }), reviewRoutes(pool));
+app.use('/api/orders', rateLimit({ windowMs: 60000, max: 40 }), orderRoutes(pool));
 app.use('/api/discounts', discountRoutes(pool));
 app.use('/api/settings', settingsRoutes(pool));
 app.use('/api/blogs', blogRoutes(pool));
 
 app.get('/api/health', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.json({
     status: 'Server is running',
     timestamp: new Date(),
