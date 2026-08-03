@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script>
+  <script>
     (function () {
       try {
         var saved = JSON.parse(localStorage.getItem('bean-bloom-site-settings') || 'null');
@@ -38,48 +38,55 @@
     </div>
   </header>
 
-  <main>
-    <section class="page-hero">
-      <div class="container">
+  <main class="contact-page">
+    <section class="contact-hero" aria-label="Contact Bean & Bloom">
+      <div class="contact-hero-media" role="img" aria-label="Quiet coffee counter and warm light"></div>
+      <div class="contact-hero-veil"></div>
+      <div class="container contact-hero-copy">
+        <p class="contact-hero-brand">Bean & Bloom</p>
         <span class="eyebrow">Support</span>
-        <h1>We’re here to help.</h1>
+        <h1>We’re here when you need us.</h1>
         <p>Questions about products, shipping, or an order? Message us on WhatsApp or send a note — we reply within one business day.</p>
-        <p style="margin-top:1rem;">
+        <div class="contact-hero-actions">
           <a class="btn" id="contact-whatsapp" href="#" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
           <a class="btn secondary" href="index.html#products">Browse shop</a>
-        </p>
+        </div>
       </div>
     </section>
 
-    <section class="section reveal">
-      <div class="container contact-layout">
-        <div class="contact-facts">
-          <article class="card contact-fact">
-            <strong>Fulfillment</strong>
+    <section class="section contact-main reveal">
+      <div class="container contact-shell">
+        <aside class="contact-aside">
+          <div class="contact-aside-block">
+            <span class="eyebrow">Fulfillment</span>
+            <strong>Where we ship from</strong>
             <p class="muted" id="contact-address">Warehouse &amp; fulfillment<br>Faridabad, Haryana 121002</p>
-          </article>
-          <article class="card contact-fact">
+          </div>
+          <div class="contact-aside-block">
+            <span class="eyebrow">Hours</span>
             <strong>Support hours</strong>
             <p class="muted" id="contact-hours">Support · Mon – Fri · 9:00 am – 6:00 pm<br>Support · Saturday · 10:00 am – 4:00 pm</p>
-          </article>
-          <article class="card contact-fact">
-            <strong>Contact</strong>
+          </div>
+          <div class="contact-aside-block">
+            <span class="eyebrow">Direct</span>
+            <strong>Reach the team</strong>
             <p class="muted"><span id="contact-email">hello@beanandbloom.com</span><br><span id="contact-phone">+91 55501 42234</span></p>
-          </article>
+          </div>
           <iframe
-            class="map-embed"
+            class="map-embed contact-map"
             id="contact-map"
             title="Bean & Bloom map"
             loading="lazy"
             hidden
             referrerpolicy="no-referrer-when-downgrade">
           </iframe>
-        </div>
+        </aside>
 
-        <article class="card">
+        <div class="contact-form-panel">
+          <span class="eyebrow">Write to us</span>
           <h2>Send a message</h2>
           <p class="muted">Order help, product advice, wholesale, or feedback — we’ll get back soon.</p>
-          <form class="form-grid" id="contact-form" style="margin-top:1.2rem;">
+          <form class="form-grid contact-form-grid" id="contact-form">
             <label>Name
               <input id="contact-name" placeholder="Your name" required>
             </label>
@@ -101,7 +108,7 @@
             <button class="btn" type="submit">Send inquiry</button>
             <p class="muted" id="contact-status" aria-live="polite"></p>
           </form>
-        </article>
+        </div>
       </div>
     </section>
   </main>
@@ -121,6 +128,7 @@
     </div>
   </footer>
 
+  <script src="blogs-seed.js"></script>
   <script src="api-client.js" defer></script>
   <script src="app.js" defer></script>
 </body>

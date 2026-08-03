@@ -117,116 +117,17 @@ async function safeAlter(connection, sql) {
   }
 }
 
-const SEED_BLOGS = [
-  {
-    id: 'blog-pour-over',
-    slug: 'pour-over-ritual-at-home',
-    title: 'The pour-over ritual: slower coffee, clearer flavor',
-    excerpt: 'A calm, repeatable pour-over method that unlocks sweetness without cafe equipment.',
-    category: 'Brew guides',
-    author: 'Bean & Bloom',
-    cover: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
-    featured: 1,
-    content: `Morning light, a kettle just off boil, and a quiet counter — that is where great pour-over begins.
-
-## Why pour-over
-Pour-over rewards attention. Water temperature, grind size, and pour pace shape sweetness, acidity, and body. You do not need a cafe machine; you need rhythm.
-
-## What you need
-- Fresh specialty beans (ideally roasted within the last two weeks)
-- Burr grinder
-- Pour-over dripper and paper filter
-- Gooseneck kettle
-- Scale
-
-## The method
-1. Heat water to about 92–96°C.
-2. Grind medium-fine — like coarse table salt.
-3. Rinse the paper filter to remove paper taste and preheat the dripper.
-4. Add 18g coffee for 300g water (1:16.5).
-5. Bloom with 40g water for 35–45 seconds.
-6. Pour in gentle spirals to 300g by 2:30–3:00.
-
-## Taste notes
-If the cup tastes sharp, grind slightly coarser. If it tastes flat, grind finer or raise brew temperature a little. Keep a tiny notebook — your future self will thank you.
-
-Shop our single-origin bags and brew gear when you are ready to dial it in at home.`
-  },
-  {
-    id: 'blog-espresso-dial',
-    slug: 'dialing-in-home-espresso',
-    title: 'Dialing in espresso without the guesswork',
-    excerpt: 'A practical checklist for dose, yield, and time — so home shots taste intentional.',
-    category: 'Espresso',
-    author: 'Roast desk',
-    cover: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1600&q=80',
-    featured: 1,
-    content: `Espresso is a conversation between grind, dose, and yield. Change one variable at a time.
-
-## Start here
-- Dose: 18g
-- Yield: 36g (1:2)
-- Time: 25–32 seconds
-
-## Then adjust
-- Sour / thin → finer grind or slightly higher dose
-- Bitter / heavy → coarser grind or shorter yield
-- Channeling → distribute grounds evenly and tamp level
-
-## Milk drinks
-For flat whites and cappuccinos, aim for a balanced shot first. Milk amplifies bitterness; a sweet, syrupy espresso holds up better.
-
-Keep our house espresso and milk pitchers nearby — consistency beats complexity.`
-  },
-  {
-    id: 'blog-storage',
-    slug: 'how-to-store-coffee-beans',
-    title: 'How to store coffee beans so they stay vivid',
-    excerpt: 'Skip the fridge myths. Protect aroma with airtight, cool, and dark habits.',
-    category: 'Care',
-    author: 'Bean & Bloom',
-    cover: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80',
-    featured: 0,
-    content: `Coffee is fresh food. Oxygen, heat, moisture, and light fade aroma faster than most people expect.
-
-## Do this
-- Keep beans in an airtight canister or the original valve bag
-- Store in a cool cupboard away from the stove
-- Buy amounts you will finish in 2–3 weeks
-- Grind just before brewing
-
-## Skip this
-- The refrigerator (condensation is the enemy)
-- Leaving the bag open on the counter
-- Freezing and thawing repeatedly
-
-Fresh roast weekly means your cupboard can taste like the cafe — if storage keeps up.`
-  },
-  {
-    id: 'blog-gift',
-    slug: 'building-a-coffee-gift-box',
-    title: 'Building a coffee gift box that feels personal',
-    excerpt: 'Pair a bag, a mug, and a short brew note — gifts that get used, not shelved.',
-    category: 'Gifting',
-    author: 'Studio',
-    cover: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=1600&q=80',
-    featured: 0,
-    content: `A thoughtful coffee gift is not a random sampler. It is a small ritual ready to begin.
-
-## A simple formula
-1. One bag with a clear tasting note
-2. One mug or dripper they will actually use
-3. A handwritten brew card (dose, water, time)
-
-## For beginners
-Choose a forgiving medium roast and a pour-over kit. Include a link to our brew guide.
-
-## For espresso fans
-House espresso plus a milk pitcher beats another novelty mug.
-
-We pack orders carefully so the unboxing feels calm and considered — the way good coffee should feel.`
-  }
-];
+const SEED_BLOGS = (require('./blogs-seed.js') || []).map((post) => ({
+  id: post.id,
+  slug: post.slug,
+  title: post.title,
+  excerpt: post.excerpt,
+  content: post.content,
+  cover: post.coverImage || post.cover,
+  author: post.author || 'Bean & Bloom',
+  category: post.category || 'Brew notes',
+  featured: post.featured ? 1 : 0
+}));
 
 async function initializeDatabase() {
   try {

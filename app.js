@@ -12,65 +12,16 @@ const COMPARE_KEY = 'bean-bloom-compare';
 const BLOGS_KEY = 'bean-bloom-blogs-v1';
 const ADMIN_TOKEN_KEY = 'bean-bloom-admin-token';
 
-const DEFAULT_BLOGS = [
-  {
-    id: 'blog-pour-over',
-    slug: 'pour-over-ritual-at-home',
-    title: 'The pour-over ritual: slower coffee, clearer flavor',
-    excerpt: 'A calm, repeatable pour-over method that unlocks sweetness without cafe equipment.',
-    category: 'Brew guides',
-    author: 'Bean & Bloom',
-    coverImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
-    featured: true,
-    published: true,
-    publishedAt: '2026-07-12T10:00:00.000Z',
-    content: `Morning light, a kettle just off boil, and a quiet counter — that is where great pour-over begins.\n\n## Why pour-over\nPour-over rewards attention. Water temperature, grind size, and pour pace shape sweetness, acidity, and body.\n\n## What you need\n- Fresh specialty beans\n- Burr grinder\n- Pour-over dripper and paper filter\n- Gooseneck kettle\n- Scale\n\n## The method\n1. Heat water to about 92–96°C.\n2. Grind medium-fine — like coarse table salt.\n3. Rinse the paper filter and preheat the dripper.\n4. Add 18g coffee for 300g water (1:16.5).\n5. Bloom with 40g water for 35–45 seconds.\n6. Pour in gentle spirals to 300g by 2:30–3:00.\n\nShop our single-origin bags and brew gear when you are ready to dial it in at home.`
-  },
-  {
-    id: 'blog-espresso-dial',
-    slug: 'dialing-in-home-espresso',
-    title: 'Dialing in espresso without the guesswork',
-    excerpt: 'A practical checklist for dose, yield, and time — so home shots taste intentional.',
-    category: 'Espresso',
-    author: 'Roast desk',
-    coverImage: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1600&q=80',
-    featured: true,
-    published: true,
-    publishedAt: '2026-07-20T10:00:00.000Z',
-    content: `Espresso is a conversation between grind, dose, and yield. Change one variable at a time.\n\n## Start here\n- Dose: 18g\n- Yield: 36g (1:2)\n- Time: 25–32 seconds\n\n## Then adjust\n- Sour / thin → finer grind or slightly higher dose\n- Bitter / heavy → coarser grind or shorter yield\n- Channeling → distribute grounds evenly and tamp level\n\nKeep our house espresso nearby — consistency beats complexity.`
-  },
-  {
-    id: 'blog-storage',
-    slug: 'how-to-store-coffee-beans',
-    title: 'How to store coffee beans so they stay vivid',
-    excerpt: 'Skip the fridge myths. Protect aroma with airtight, cool, and dark habits.',
-    category: 'Care',
-    author: 'Bean & Bloom',
-    coverImage: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80',
-    featured: false,
-    published: true,
-    publishedAt: '2026-07-28T10:00:00.000Z',
-    content: `Coffee is fresh food. Oxygen, heat, moisture, and light fade aroma faster than most people expect.\n\n## Do this\n- Keep beans in an airtight canister or the original valve bag\n- Store in a cool cupboard away from the stove\n- Buy amounts you will finish in 2–3 weeks\n- Grind just before brewing\n\n## Skip this\n- The refrigerator\n- Leaving the bag open on the counter\n- Freezing and thawing repeatedly`
-  },
-  {
-    id: 'blog-gift',
-    slug: 'building-a-coffee-gift-box',
-    title: 'Building a coffee gift box that feels personal',
-    excerpt: 'Pair a bag, a mug, and a short brew note — gifts that get used, not shelved.',
-    category: 'Gifting',
-    author: 'Studio',
-    coverImage: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=1600&q=80',
-    featured: false,
-    published: true,
-    publishedAt: '2026-08-01T10:00:00.000Z',
-    content: `A thoughtful coffee gift is not a random sampler. It is a small ritual ready to begin.\n\n## A simple formula\n1. One bag with a clear tasting note\n2. One mug or dripper they will actually use\n3. A handwritten brew card (dose, water, time)\n\n## For beginners\nChoose a forgiving medium roast and a pour-over kit.\n\n## For espresso fans\nHouse espresso plus a milk pitcher beats another novelty mug.`
-  }
-];
+const DEFAULT_BLOGS = (typeof globalThis !== 'undefined' && Array.isArray(globalThis.BEAN_BLOOM_DEFAULT_BLOGS)
+  ? globalThis.BEAN_BLOOM_DEFAULT_BLOGS
+  : []
+).map((post) => ({ ...post }));
+const BLOGS_SEED_VERSION = 2;
 
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
   footerText: '© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.',
-  contentVersion: 4,
+  contentVersion: 5,
   theme: 'forest-brass',
   hero: {
     eyebrow: 'Online specialty coffee shop',
@@ -87,7 +38,15 @@ const DEFAULT_SETTINGS = {
   deal: {
     eyebrow: 'Limited offer', title: 'Weekend Brunch Blend + Ceramic Mug',
     description: 'A mellow house blend paired with our signature mug — made for slow Saturday mornings at home.',
-    price: '34.99', badge: 'Limited weekend set', ctaLabel: 'View special', ctaUrl: 'deal.html', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80'
+    price: '34.99', badge: 'Limited weekend set', ctaLabel: 'View special', ctaUrl: 'deal.html',
+    imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80',
+    productIds: [
+      'seed-beans-blends-5',
+      'seed-merchandise-1',
+      'seed-bakery-snacks-1',
+      'seed-bakery-snacks-2',
+      'seed-gift-boxes-1'
+    ]
   },
   testimonials: [
     {
@@ -298,7 +257,16 @@ function loadSettings() {
       categorySection: refreshContent ? { ...DEFAULT_SETTINGS.categorySection } : { ...DEFAULT_SETTINGS.categorySection, ...(saved.categorySection || {}) },
       featuredSection: refreshContent ? { ...DEFAULT_SETTINGS.featuredSection } : { ...DEFAULT_SETTINGS.featuredSection, ...(saved.featuredSection || {}) },
       shopSection: refreshContent ? { ...DEFAULT_SETTINGS.shopSection } : { ...DEFAULT_SETTINGS.shopSection, ...(saved.shopSection || {}) },
-      deal: refreshContent ? { ...DEFAULT_SETTINGS.deal } : { ...DEFAULT_SETTINGS.deal, ...(saved.deal || {}) },
+      deal: (() => {
+        const merged = refreshContent
+          ? { ...DEFAULT_SETTINGS.deal }
+          : { ...DEFAULT_SETTINGS.deal, ...(saved.deal || {}) };
+        if (!Array.isArray(merged.productIds) || !merged.productIds.length) {
+          merged.productIds = (DEFAULT_SETTINGS.deal.productIds || []).slice();
+        }
+        if (!merged.imageUrl) merged.imageUrl = DEFAULT_SETTINGS.deal.imageUrl;
+        return merged;
+      })(),
       testimonials: refreshContent
         ? DEFAULT_SETTINGS.testimonials
         : (Array.isArray(saved.testimonials)
@@ -1341,7 +1309,13 @@ function renderPublicSiteContent() {
     dealCta.href = s.deal.ctaUrl === '#products' ? 'deal.html' : s.deal.ctaUrl;
   }
   const dealImg = document.getElementById('deal-image');
-  if (dealImg) dealImg.style.backgroundImage = s.deal.imageUrl ? `url('${escapeHtml(s.deal.imageUrl)}')` : '';
+  if (dealImg) {
+    const dealImageUrl = s.deal.imageUrl || DEFAULT_SETTINGS.deal.imageUrl || '';
+    const safeUrl = String(dealImageUrl).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    dealImg.style.backgroundImage = safeUrl ? `url("${safeUrl}")` : '';
+    dealImg.style.backgroundSize = 'cover';
+    dealImg.style.backgroundPosition = 'center';
+  }
 
   // Testimonials
   const testimonialsGrid = document.getElementById('testimonials-grid');
@@ -1434,9 +1408,21 @@ function renderDealPage() {
   if (!root) return;
 
   const settings = loadSettings();
-  const deal = settings.deal;
-  const dealImage = deal.imageUrl ? escapeHtml(optimizeImageUrl(deal.imageUrl, 960, 74)) : escapeHtml(optimizeImageUrl(DEFAULT_IMAGE_URL, 960, 74));
-  const ctaUrl = deal.ctaUrl === '#products' ? 'index.html#products' : deal.ctaUrl;
+  const deal = { ...DEFAULT_SETTINGS.deal, ...(settings.deal || {}) };
+  const rawImage = deal.imageUrl || DEFAULT_SETTINGS.deal.imageUrl || DEFAULT_IMAGE_URL;
+  const dealImage = optimizeImageUrl(rawImage, 960, 74);
+  const productIds = Array.isArray(deal.productIds) ? deal.productIds.map(String) : [];
+  const catalog = loadProducts();
+  let offerProducts = productIds
+    .map((id) => catalog.find((p) => String(p.id) === id))
+    .filter(Boolean);
+  if (!offerProducts.length) {
+    offerProducts = catalog.filter((p) => productIsOnSale(p) || p.featured).slice(0, 8);
+  }
+
+  const productsHtml = offerProducts.length
+    ? `<div class="grid product-grid product-grid-dense" id="deal-offer-products">${offerProducts.map((product) => renderProductCardHtml(product)).join('')}</div>`
+    : `<div class="card"><p class="muted">No offer products selected yet. Add products under Admin → Settings → Deal of the day.</p></div>`;
 
   root.innerHTML = `
     <section class="section deal-page-hero">
@@ -1450,13 +1436,25 @@ function renderDealPage() {
             <span class="badge">${escapeHtml(deal.badge || 'Limited time')}</span>
           </div>
           <div class="hero-actions">
-            <a class="btn" href="${escapeHtml(ctaUrl)}">${escapeHtml(deal.ctaLabel || 'Shop now')}</a>
+            <a class="btn" href="#deal-offer">${escapeHtml(deal.ctaLabel || 'Shop now')}</a>
             <a class="btn secondary" href="index.html#products">Browse products</a>
           </div>
         </div>
         <div class="deal-page-visual">
-          <img src="${dealImage}" alt="${escapeHtml(deal.title || 'Deal image')}" loading="eager" decoding="async" fetchpriority="high">
+          <img src="${escapeHtml(dealImage)}" alt="${escapeHtml(deal.title || 'Deal image')}" loading="eager" decoding="async" fetchpriority="high">
         </div>
+      </div>
+    </section>
+
+    <section class="section" id="deal-offer">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Products in this offer</h2>
+            <p class="muted">Curated in Admin for this weekend special — add them to your cart or explore each product.</p>
+          </div>
+        </div>
+        ${productsHtml}
       </div>
     </section>
 
@@ -1480,6 +1478,8 @@ function renderDealPage() {
       </div>
     </section>
   `;
+
+  bindProductCardActions(document.getElementById('deal-offer-products') || root);
 }
 
 const defaultCategories = [
@@ -4997,6 +4997,23 @@ function loadBlogs({ includeDrafts = false } = {}) {
   } catch {
     list = DEFAULT_BLOGS.map(normalizeBlogPost);
   }
+
+  // Merge any newly seeded default posts (e.g. expanding from 4 → 50) without wiping admin edits.
+  const seedVersion = Number(localStorage.getItem('bean-bloom-blogs-seed-version') || 0);
+  if (DEFAULT_BLOGS.length && (seedVersion < BLOGS_SEED_VERSION || list.length < DEFAULT_BLOGS.length)) {
+    const byId = new Map(list.map((post) => [String(post.id), post]));
+    const bySlug = new Map(list.map((post) => [String(post.slug), post]));
+    DEFAULT_BLOGS.forEach((seed) => {
+      const normalized = normalizeBlogPost(seed);
+      if (byId.has(normalized.id) || bySlug.has(normalized.slug)) return;
+      list.push(normalized);
+      byId.set(normalized.id, normalized);
+      bySlug.set(normalized.slug, normalized);
+    });
+    saveBlogs(list);
+    localStorage.setItem('bean-bloom-blogs-seed-version', String(BLOGS_SEED_VERSION));
+  }
+
   if (!includeDrafts) list = list.filter((post) => post.published);
   return list.sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
 }
