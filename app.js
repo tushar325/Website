@@ -69,7 +69,41 @@ const DEFAULT_SETTINGS = {
     phonepeMerchantId: '',
     razorpayEnabled: false,
     razorpayKeyId: ''
-  }
+  },
+  cafe: {
+    addressLine: '88 Market Street, Downtown',
+    city: 'Faridabad',
+    state: 'Haryana',
+    pincode: '121002',
+    phone: '+91 55501 42234',
+    email: 'hello@beanandbloom.com',
+    hoursWeekday: 'Mon – Fri · 7:00 am – 7:00 pm',
+    hoursSaturday: 'Saturday · 8:00 am – 8:00 pm',
+    hoursSunday: 'Sunday · 8:00 am – 6:00 pm',
+    mapQuery: 'Faridabad Market',
+    visitEyebrow: 'Cafe hours',
+    visitHeadline: 'Come in for a cup, leave with a ritual.',
+    visitSubtext: 'Open daily for espresso, pour-overs, bakery, and take-home beans. Remote-work tables available until mid-afternoon.'
+  },
+  about: {
+    eyebrow: 'Our story',
+    headline: 'Roasted with care. Served with calm.',
+    intro: 'Bean & Bloom began as a neighborhood espresso counter and grew into a specialty cafe and shop for people who want better coffee at the bar and at home.',
+    body1: 'We source seasonal lots, roast in small batches, and train every barista on dial-in, milk texture, and hospitality. The goal is simple: a cup that feels intentional, whether you stay for twenty minutes or take beans home for the week.',
+    body2: 'Alongside drinks, our shop carries brew gear, gift boxes, and bakery made fresh each morning — so one stop covers your cafe visit and your home setup.',
+    value1Title: 'Thoughtful sourcing',
+    value1Desc: 'We work with importers who share farm details, processing notes, and roast-ready profiles we can stand behind.',
+    value2Title: 'Warm service',
+    value2Desc: 'Ask for a recommendation, a grind setting, or a quieter table — the team is here to make the visit easy.',
+    value3Title: 'Cafe + home',
+    value3Desc: 'Drink in, take away, or shop beans and tools for mornings that start the same way ours do.'
+  },
+  newsletter: {
+    eyebrow: 'Stay in the loop',
+    headline: 'Weekly roast notes & cafe specials',
+    subtext: 'No spam — just brew guides, seasonal drinks, and early access to limited bags.'
+  },
+  menuCategories: ['Espresso', 'Bakery & Snacks', 'Tea & Infusions', 'Cold Brew']
 };
 
 let settingsCache = null;
@@ -98,7 +132,13 @@ function loadSettings() {
           }))
         : DEFAULT_SETTINGS.testimonials,
       promoStrip: saved.promoStrip || DEFAULT_SETTINGS.promoStrip,
-      payments: { ...DEFAULT_SETTINGS.payments, ...(saved.payments || {}) }
+      payments: { ...DEFAULT_SETTINGS.payments, ...(saved.payments || {}) },
+      cafe: { ...DEFAULT_SETTINGS.cafe, ...(saved.cafe || {}) },
+      about: { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
+      newsletter: { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
+      menuCategories: Array.isArray(saved.menuCategories) && saved.menuCategories.length
+        ? saved.menuCategories
+        : DEFAULT_SETTINGS.menuCategories
     };
     return settingsCache;
   } catch {
@@ -110,6 +150,118 @@ function loadSettings() {
 function saveSettings(settings) {
   settingsCache = settings;
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function resetSettingsToDefaults() {
+  settingsCache = null;
+  localStorage.removeItem(SETTINGS_KEY);
+  return loadSettings();
+}
+
+const ADMIN_SESSION_KEY = 'bean-bloom-admin';
+const CUSTOMERS_KEY = 'bean-bloom-customers-v1';
+const LOCAL_INQUIRIES_KEY = 'bean-bloom-inquiries-local';
+
+function isAdminLoggedIn() {
+  return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+}
+
+function setAdminLoggedIn(value) {
+  if (value) sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+  else sessionStorage.removeItem(ADMIN_SESSION_KEY);
+}
+
+function ensureAdminAccess() {
+  const page = document.body?.dataset?.adminPage;
+  if (!page) return true;
+
+  const loginForm = document.getElementById('login-form');
+  const adminPanel = document.getElementById('admin-panel');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  if (isAdminLoggedIn()) {
+    if (loginForm) loginForm.classList.add('hide');
+    if (adminPanel) adminPanel.classList.remove('hide');
+    if (logoutBtn) {
+      logoutBtn.style.display = 'inline-block';
+      if (!logoutBtn.dataset.bound) {
+        logoutBtn.dataset.bound = '1';
+        logoutBtn.addEventListener('click', () => {
+          setAdminLoggedIn(false);
+          window.location.href = 'admin.html';
+        });
+      }
+    }
+    return true;
+  }
+
+  if (loginForm && adminPanel) {
+    loginForm.classList.remove('hide');
+    adminPanel.classList.add('hide');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    return false;
+  }
+
+  const file = (location.pathname.split('/').pop() || 'admin.html').replace(/[^\w.-]/g, '');
+  const search = location.search || '';
+  const next = /^admin[\w.-]*\.html$/.test(file) ? `${file}${search}` : 'admin.html';
+  window.location.href = `admin.html?next=${encodeURIComponent(next)}`;
+  return false;
+}
+
+function loadRegisteredCustomers() {
+  try {
+    const list = JSON.parse(localStorage.getItem(CUSTOMERS_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadAllOrders() {
+  const orders = [];
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(`${ORDERS_KEY}-`)) continue;
+    try {
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!Array.isArray(list)) continue;
+      list.forEach((order) => {
+        orders.push({
+          ...order,
+          _storageKey: key,
+          _customerId: key.slice(`${ORDERS_KEY}-`.length)
+        });
+      });
+    } catch {}
+  }
+  return orders.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+function updateStoredOrder(orderId, updater) {
+  for (let i = 0; i < localStorage.length; i += 1) {
+    const key = localStorage.key(i);
+    if (!key || !key.startsWith(`${ORDERS_KEY}-`)) continue;
+    try {
+      const list = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!Array.isArray(list)) continue;
+      const index = list.findIndex((item) => item.id === orderId);
+      if (index < 0) continue;
+      list[index] = updater(list[index]);
+      localStorage.setItem(key, JSON.stringify(list));
+      return list[index];
+    } catch {}
+  }
+  return null;
+}
+
+function loadLocalInquiries() {
+  try {
+    const list = JSON.parse(localStorage.getItem(LOCAL_INQUIRIES_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
 }
 
 const PAYMENT_METHOD_META = {
@@ -339,7 +491,8 @@ function renderCafeMenu(activeFilter = 'all') {
   const root = document.getElementById('cafe-menu');
   if (!root) return;
 
-  const menuCategories = ['Espresso', 'Bakery & Snacks', 'Tea & Infusions', 'Cold Brew'];
+  const settings = loadSettings();
+  const menuCategories = (settings.menuCategories || DEFAULT_SETTINGS.menuCategories).filter(Boolean);
   const products = loadProducts().filter((product) => menuCategories.includes(product.category));
   const filtered = activeFilter === 'all'
     ? products
@@ -389,6 +542,15 @@ function renderCafeMenu(activeFilter = 'all') {
 function initCafeMenuFilters() {
   const toolbar = document.getElementById('menu-filters');
   if (!toolbar) return;
+  const settings = loadSettings();
+  const menuCategories = (settings.menuCategories || DEFAULT_SETTINGS.menuCategories).filter(Boolean);
+  toolbar.innerHTML = [
+    '<button class="menu-chip active" type="button" data-menu-filter="all">All</button>',
+    ...menuCategories.map((category) => {
+      const label = category === 'Bakery & Snacks' ? 'Bakery' : category === 'Tea & Infusions' ? 'Tea' : category;
+      return `<button class="menu-chip" type="button" data-menu-filter="${escapeHtml(category)}">${escapeHtml(label)}</button>`;
+    })
+  ].join('');
   renderCafeMenu('all');
   toolbar.addEventListener('click', (event) => {
     const button = event.target.closest('[data-menu-filter]');
@@ -467,8 +629,60 @@ function renderPublicSiteContent() {
       </article>`).join('');
   }
 
-  // Footer
-  document.querySelectorAll('.site-footer p').forEach(el => el.textContent = s.footerText);
+  // Cafe / visit / contact
+  const cafe = s.cafe || DEFAULT_SETTINGS.cafe;
+  const fullAddress = [cafe.addressLine, cafe.city, cafe.state, cafe.pincode].filter(Boolean).join(', ');
+  setEl('visit-eyebrow', cafe.visitEyebrow);
+  setEl('visit-headline', cafe.visitHeadline);
+  setEl('visit-subtext', cafe.visitSubtext);
+  setEl('hours-weekday', cafe.hoursWeekday);
+  setEl('hours-saturday', cafe.hoursSaturday);
+  setEl('hours-sunday', cafe.hoursSunday);
+  setEl('hours-location', fullAddress || cafe.city);
+  setEl('contact-address', [cafe.addressLine, `${cafe.city}${cafe.state ? `, ${cafe.state}` : ''} ${cafe.pincode || ''}`.trim()].filter(Boolean).join('\n'));
+  const contactAddressEl = document.getElementById('contact-address');
+  if (contactAddressEl) {
+    contactAddressEl.innerHTML = `${escapeHtml(cafe.addressLine || '')}<br>${escapeHtml([cafe.city, cafe.state, cafe.pincode].filter(Boolean).join(', '))}`;
+  }
+  setEl('contact-hours', [cafe.hoursWeekday, cafe.hoursSaturday, cafe.hoursSunday].filter(Boolean).join('\n'));
+  const contactHoursEl = document.getElementById('contact-hours');
+  if (contactHoursEl) {
+    contactHoursEl.innerHTML = [cafe.hoursWeekday, cafe.hoursSaturday, cafe.hoursSunday]
+      .filter(Boolean)
+      .map((line) => escapeHtml(line))
+      .join('<br>');
+  }
+  setEl('contact-email', cafe.email);
+  setEl('contact-phone', cafe.phone);
+  const mapFrame = document.getElementById('contact-map');
+  if (mapFrame && cafe.mapQuery) {
+    mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(cafe.mapQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+  }
+
+  // About page
+  const about = s.about || DEFAULT_SETTINGS.about;
+  setEl('about-eyebrow', about.eyebrow);
+  setEl('about-headline', about.headline);
+  setEl('about-intro', about.intro);
+  setEl('about-body-1', about.body1);
+  setEl('about-body-2', about.body2);
+  setEl('about-value1-title', about.value1Title);
+  setEl('about-value1-desc', about.value1Desc);
+  setEl('about-value2-title', about.value2Title);
+  setEl('about-value2-desc', about.value2Desc);
+  setEl('about-value3-title', about.value3Title);
+  setEl('about-value3-desc', about.value3Desc);
+
+  // Newsletter
+  const newsletter = s.newsletter || DEFAULT_SETTINGS.newsletter;
+  setEl('newsletter-eyebrow', newsletter.eyebrow);
+  setEl('newsletter-headline', newsletter.headline);
+  setEl('newsletter-subtext', newsletter.subtext);
+
+  // Footer — only branded footer text nodes, not every paragraph
+  document.querySelectorAll('[data-footer-text], #footer-text').forEach((el) => {
+    el.textContent = s.footerText;
+  });
 }
 
 function renderDealPage() {
@@ -693,7 +907,8 @@ function normalizeProduct(product) {
     ...product,
     imageUrl: finalPrimary,
     imageUrls: mergedImages.length ? mergedImages : [DEFAULT_IMAGE_URL],
-    longDescription: String(product?.longDescription || '').trim() || buildDefaultLongDescription(product)
+    longDescription: String(product?.longDescription || '').trim() || buildDefaultLongDescription(product),
+    stock: Number.isFinite(Number(product?.stock)) ? Math.max(0, Number(product.stock)) : 25
   };
 }
 
@@ -1670,12 +1885,24 @@ async function renderProductDetail() {
 }
 
 function initAdmin() {
-  const adminPageType = document.body.dataset.adminPage || 'dashboard';
+  const adminPageType = document.body.dataset.adminPage || '';
+  if (!adminPageType) return;
+
   const isDashboardPage = adminPageType === 'dashboard';
+  const isCategoriesPage = adminPageType === 'categories' || adminPageType === 'category';
   const pageCategory = new URLSearchParams(window.location.search).get('category') || '';
+  const nextPage = new URLSearchParams(window.location.search).get('next') || '';
 
   const loginForm = document.getElementById('login-form');
   const adminPanel = document.getElementById('admin-panel');
+
+  // Stub admin pages: require session, then render feature UI.
+  if (!loginForm || !adminPanel) {
+    if (!ensureAdminAccess()) return;
+    initAdminFeaturePages(adminPageType);
+    return;
+  }
+
   const logoutBtn = document.getElementById('logout-btn');
   const form = document.getElementById('product-form');
   const productList = document.getElementById('product-list');
@@ -1691,12 +1918,6 @@ function initAdmin() {
   const productFormContainer = document.getElementById('product-form-container');
   const showAddProductBtn = document.getElementById('show-add-product');
   let selectedCategory = null;
-
-  // Guard clause: require core elements that exist on all admin pages
-  if (!loginForm || !adminPanel) return;
-  
-  // For dashboard page, also require product management elements
-  if (isDashboardPage && (!form || !productList || !categorySelect || !selectedCategoryName || !productPanel || !productFormContainer || !showAddProductBtn)) return;
 
   function showPanel(visible) {
     adminPanel.classList.toggle('hide', !visible);
@@ -1733,7 +1954,7 @@ function initAdmin() {
       let card;
       if (isDashboardPage) {
         card = document.createElement('a');
-        card.href = `admin-category.html?category=${encodeURIComponent(category)}`;
+        card.href = 'admin-product-categories.html';
       } else {
         card = document.createElement('button');
         card.type = 'button';
@@ -1763,38 +1984,45 @@ function initAdmin() {
 
   function selectCategory(category) {
     selectedCategory = category || null;
-    if (selectedCategory) {
-      selectedCategoryName.textContent = selectedCategory;
-      productPanel.classList.remove('hide');
-      statusBox.textContent = `Showing products in "${selectedCategory}".`;
-    } else {
-      selectedCategoryName.textContent = '';
-      productPanel.classList.add('hide');
-      statusBox.textContent = 'Select a category to manage products.';
+    if (selectedCategoryName) selectedCategoryName.textContent = selectedCategory || '';
+    if (productPanel) productPanel.classList.toggle('hide', !selectedCategory);
+    if (statusBox) {
+      statusBox.textContent = selectedCategory
+        ? `Showing products in "${selectedCategory}".`
+        : 'Select a category to manage products.';
     }
     renderAdminCategoryGrid(selectedCategory);
-    renderAdminProducts();
+    if (typeof renderAdminProducts === 'function') renderAdminProducts();
   }
 
   function showProductForm(title = 'Add product') {
-    document.getElementById('product-form-title').textContent = title;
+    if (!productFormContainer) return;
+    const titleEl = document.getElementById('product-form-title');
+    if (titleEl) titleEl.textContent = title;
     productFormContainer.classList.remove('hide');
-    categorySelect.value = selectedCategory || '';
-    newCategoryInput.value = '';
-    document.getElementById('name').focus();
+    if (categorySelect) categorySelect.value = selectedCategory || '';
+    if (newCategoryInput) newCategoryInput.value = '';
+    document.getElementById('name')?.focus();
   }
 
   function hideProductForm() {
+    if (!productFormContainer) return;
     productFormContainer.classList.add('hide');
-    form.reset();
-    editingIdInput.value = '';
+    if (form) form.reset();
+    if (editingIdInput) editingIdInput.value = '';
   }
 
-  const isLoggedIn = sessionStorage.getItem('bean-bloom-admin') === 'true';
+  const isLoggedIn = isAdminLoggedIn();
   showPanel(isLoggedIn);
+  if (isLoggedIn) {
+    renderAdminMetrics();
+    if (isDashboardPage || isCategoriesPage) {
+      renderAdminCategoryGrid(null);
+    }
+  }
 
   // Category page specific functions
-  if (!isDashboardPage) {
+  if (isCategoriesPage) {
     const categoryDetailsPanel = document.getElementById('admin-category-details');
     const backBtn = document.getElementById('back-to-categories');
     const categoryImageUrlInput = document.getElementById('category-image-url');
@@ -2021,29 +2249,34 @@ function initAdmin() {
 
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+    const username = document.getElementById('username')?.value?.trim();
+    const password = document.getElementById('password')?.value;
     if (username === 'admin' && password === 'admin') {
-      sessionStorage.setItem('bean-bloom-admin', 'true');
-      showPanel(true);
-      if (isDashboardPage) {
-        selectCategory(null);
-        renderCategoryOptions();
-        renderAdminCategoryGrid(null);
-      } else {
-        selectCategory(pageCategory || loadCategories()[0] || null);
-        renderCategoryOptions(selectedCategory);
+      setAdminLoggedIn(true);
+      if (nextPage && /^admin[\w.-]*\.html(\?.*)?$/.test(nextPage)) {
+        window.location.href = nextPage;
+        return;
       }
-      renderAdminProducts();
+      showPanel(true);
+      if (isDashboardPage || isCategoriesPage) {
+        selectCategory(isCategoriesPage ? (pageCategory || null) : null);
+        renderCategoryOptions(selectedCategory);
+        renderAdminCategoryGrid(selectedCategory);
+        if (productList) renderAdminProducts();
+      }
       renderAdminMetrics();
       if (statusBox) statusBox.textContent = 'Admin access granted.';
+      if (adminPageType === 'settings') {
+        document.getElementById('admin-panel')?.classList.remove('hide');
+      }
     } else {
       if (statusBox) statusBox.textContent = 'Use admin / admin to enter the dashboard.';
+      else showToast('Use admin / admin to enter the dashboard.', 'info');
     }
   });
 
-  logoutBtn.addEventListener('click', () => {
-    sessionStorage.removeItem('bean-bloom-admin');
+  logoutBtn?.addEventListener('click', () => {
+    setAdminLoggedIn(false);
     showPanel(false);
     if (form) form.reset();
     if (editingIdInput) editingIdInput.value = '';
@@ -2180,19 +2413,22 @@ function initAdmin() {
   function addCategory(name) {
     const categoryName = normalizeCategory(name);
     if (!categoryName) {
-      statusBox.textContent = 'Enter a category name.';
+      if (statusBox) statusBox.textContent = 'Enter a category name.';
+      else showToast('Enter a category name.', 'info');
       return false;
     }
     const categories = loadCategories();
     if (categories.some(item => item.toLowerCase() === categoryName.toLowerCase())) {
-      statusBox.textContent = 'Category already exists.';
+      if (statusBox) statusBox.textContent = 'Category already exists.';
+      else showToast('Category already exists.', 'info');
       return false;
     }
     categories.unshift(categoryName);
     saveCategories(categories);
     renderCategoryOptions(categoryName);
     renderAdminCategoryGrid(selectedCategory);
-    statusBox.textContent = 'Category added.';
+    if (statusBox) statusBox.textContent = 'Category added.';
+    else showToast('Category added.', 'success');
     return true;
   }
 
@@ -2260,13 +2496,12 @@ function initAdmin() {
     statusBox.textContent = 'Editing product.';
   }
 
-  // Only render these on dashboard page where elements exist
+  // Only render these on dashboard/categories where elements exist
   if (isDashboardPage) {
     renderCategoryOptions();
     renderAdminCategoryGrid(selectedCategory);
-    renderAdminProducts();
-  } else {
-    // On other pages like categories, just render the category grid
+    if (productList) renderAdminProducts();
+  } else if (isCategoriesPage) {
     renderAdminCategoryGrid(selectedCategory);
   }
 
@@ -2309,7 +2544,7 @@ function renderUserNav() {
       container.innerHTML = `
         <span style="display:inline-flex;align-items:center;gap:.5rem;">
           <a href="orders.html" style="font-weight:700;color:var(--muted);font-size:.9rem;">My Orders</a>
-          <a href="account.html" style="font-weight:700;color:var(--accent);">Hi, ${escapeHtml(firstName)}</a>
+          <a href="orders.html" style="font-weight:700;color:var(--accent);">Hi, ${escapeHtml(firstName)}</a>
           <button id="user-logout-btn" class="btn secondary" type="button" style="padding:.4rem .8rem;font-size:.85rem;">Sign out</button>
         </span>`;
       document.getElementById('user-logout-btn').addEventListener('click', () => {
@@ -2398,34 +2633,214 @@ async function renderAdminInquiries() {
   if (!root) return;
 
   root.innerHTML = '<p class="muted">Loading enquiries...</p>';
+  let inquiries = [];
   try {
     const response = await fetch(`${API_BASE}/inquiries`);
-    if (!response.ok) throw new Error('Failed to load enquiries.');
-
-    const inquiries = await response.json();
-    if (!Array.isArray(inquiries) || !inquiries.length) {
-      root.innerHTML = '<p class="muted">No enquiries yet.</p>';
-      return;
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) inquiries = data;
     }
+  } catch {}
 
-    const fragment = document.createDocumentFragment();
-    inquiries.forEach((inquiry) => {
-      const card = document.createElement('article');
-      card.className = 'card';
-      card.innerHTML = `
-        <h4 style="margin:.2rem 0 .35rem;">${escapeHtml(inquiry.name || 'Customer')}</h4>
-        <p class="muted" style="margin:0;">${escapeHtml(inquiry.email || '')}</p>
-        <p style="margin:.85rem 0 .6rem;">${escapeHtml(inquiry.message || '')}</p>
-        <p class="muted" style="margin:0;font-size:.85rem;">${new Date(inquiry.created_at).toLocaleString()}</p>
-      `;
-      fragment.appendChild(card);
-    });
+  const local = loadLocalInquiries().map((item) => ({
+    ...item,
+    source: 'local'
+  }));
+  inquiries = [...inquiries.map((item) => ({ ...item, source: 'api' })), ...local]
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-    root.innerHTML = '';
-    root.appendChild(fragment);
-  } catch (error) {
-    root.innerHTML = '<p class="muted">Unable to load enquiries. Please ensure backend API is running on localhost:3001.</p>';
+  if (!inquiries.length) {
+    root.innerHTML = '<p class="muted">No enquiries yet.</p>';
+    return;
   }
+
+  const fragment = document.createDocumentFragment();
+  inquiries.forEach((inquiry) => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <h4 style="margin:.2rem 0 .35rem;">${escapeHtml(inquiry.name || 'Customer')}</h4>
+      <p class="muted" style="margin:0;">${escapeHtml(inquiry.email || '')}${inquiry.source === 'local' ? ' · saved locally' : ''}</p>
+      <p style="margin:.85rem 0 .6rem;">${escapeHtml(inquiry.message || '')}</p>
+      <p class="muted" style="margin:0;font-size:.85rem;">${inquiry.created_at ? new Date(inquiry.created_at).toLocaleString() : ''}</p>
+    `;
+    fragment.appendChild(card);
+  });
+
+  root.innerHTML = '';
+  root.appendChild(fragment);
+}
+
+function initAdminFeaturePages(pageType) {
+  if (pageType === 'orders') renderAdminOrdersPage();
+  if (pageType === 'customers') renderAdminCustomersPage();
+  if (pageType === 'inventory') renderAdminInventoryPage();
+  if (pageType === 'analytics') renderAdminAnalyticsPage();
+}
+
+function renderAdminOrdersPage() {
+  const root = document.getElementById('admin-orders-list');
+  if (!root) return;
+  const orders = loadAllOrders();
+  const summary = document.getElementById('admin-orders-summary');
+  if (summary) {
+    const paid = orders.filter((o) => o.status === 'Paid').length;
+    const confirmed = orders.filter((o) => o.status === 'Confirmed').length;
+    const revenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    summary.innerHTML = `
+      <div class="stats-grid">
+        <article class="stat-card"><p class="stat-label">Orders</p><strong>${orders.length}</strong></article>
+        <article class="stat-card"><p class="stat-label">Paid</p><strong>${paid}</strong></article>
+        <article class="stat-card"><p class="stat-label">Confirmed</p><strong>${confirmed}</strong></article>
+        <article class="stat-card"><p class="stat-label">Revenue</p><strong>${formatCurrencyAmount(revenue)}</strong></article>
+      </div>`;
+  }
+
+  if (!orders.length) {
+    root.innerHTML = '<div class="card"><p class="muted">No customer orders yet. Orders placed at checkout will appear here.</p></div>';
+    return;
+  }
+
+  root.innerHTML = orders.map((order) => {
+    const addr = order.address || {};
+    const items = (order.items || []).map((item) => `${escapeHtml(item.name)} × ${item.quantity}`).join(', ');
+    return `
+      <article class="card" style="margin-bottom:1rem;" data-order-id="${escapeHtml(order.id)}">
+        <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:start;">
+          <div>
+            <h3 style="margin:0 0 .35rem;font-family:var(--font-display,inherit);">${escapeHtml(order.id)}</h3>
+            <p class="muted" style="margin:0;">${new Date(order.date).toLocaleString('en-IN')} · ${escapeHtml(addr.name || 'Customer')} · ${escapeHtml(addr.city || '')}</p>
+            <p style="margin:.7rem 0 0;font-size:.92rem;">${items || 'No items'}</p>
+            <p class="muted" style="margin:.45rem 0 0;font-size:.85rem;">${getPaymentMethodIcon(order.payMethod)} ${escapeHtml(getPaymentMethodLabel(order.payMethod))}</p>
+          </div>
+          <div style="text-align:right;display:grid;gap:.55rem;justify-items:end;">
+            <strong>${formatCurrencyAmount(order.total)}</strong>
+            <select data-order-status="${escapeHtml(order.id)}" style="min-width:140px;">
+              ${['Confirmed', 'Paid', 'Preparing', 'Out for delivery', 'Delivered', 'Cancelled'].map((status) => `
+                <option value="${status}"${order.status === status ? ' selected' : ''}>${status}</option>
+              `).join('')}
+            </select>
+          </div>
+        </div>
+      </article>`;
+  }).join('');
+
+  root.querySelectorAll('[data-order-status]').forEach((select) => {
+    select.addEventListener('change', () => {
+      const id = select.getAttribute('data-order-status');
+      updateStoredOrder(id, (order) => ({ ...order, status: select.value }));
+      showToast(`Order ${id} marked ${select.value}.`, 'success');
+      renderAdminOrdersPage();
+    });
+  });
+}
+
+function renderAdminCustomersPage() {
+  const customersRoot = document.getElementById('admin-customers-list');
+  if (customersRoot) {
+    const customers = loadRegisteredCustomers();
+    if (!customers.length) {
+      customersRoot.innerHTML = '<p class="muted">No registered customers yet.</p>';
+    } else {
+      customersRoot.innerHTML = customers.map((customer) => `
+        <article class="card" style="margin-bottom:.8rem;">
+          <h4 style="margin:0 0 .35rem;">${escapeHtml(customer.name || 'Customer')}</h4>
+          <p class="muted" style="margin:0;">${escapeHtml(customer.email || '')}${customer.phone ? ` · ${escapeHtml(customer.phone)}` : ''}</p>
+          <p class="muted" style="margin:.45rem 0 0;font-size:.85rem;">Joined ${customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-IN') : '—'}</p>
+        </article>
+      `).join('');
+    }
+  }
+  renderAdminInquiries();
+}
+
+function renderAdminInventoryPage() {
+  const root = document.getElementById('admin-inventory-list');
+  if (!root) return;
+  const products = loadProducts();
+  const lowStock = products.filter((p) => Number(p.stock) <= 5).length;
+  const summary = document.getElementById('admin-inventory-summary');
+  if (summary) {
+    summary.innerHTML = `
+      <div class="stats-grid">
+        <article class="stat-card"><p class="stat-label">SKU count</p><strong>${products.length}</strong></article>
+        <article class="stat-card"><p class="stat-label">Low stock (≤5)</p><strong>${lowStock}</strong></article>
+        <article class="stat-card"><p class="stat-label">Out of stock</p><strong>${products.filter((p) => Number(p.stock) <= 0).length}</strong></article>
+      </div>`;
+  }
+
+  root.innerHTML = products.map((product) => `
+    <article class="card" style="display:grid;grid-template-columns:72px 1fr auto;gap:1rem;align-items:center;margin-bottom:.8rem;">
+      <img src="${escapeHtml(optimizeImageUrl(product.imageUrl || DEFAULT_IMAGE_URL, 120, 70))}" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:12px;">
+      <div>
+        <strong>${escapeHtml(product.name)}</strong>
+        <p class="muted" style="margin:.25rem 0 0;font-size:.88rem;">${escapeHtml(product.category || '')} · ${formatCurrencyAmount(product.price)}</p>
+      </div>
+      <label style="margin:0;min-width:110px;">Stock
+        <input type="number" min="0" value="${Number(product.stock)}" data-stock-id="${escapeHtml(product.id)}" style="width:100%;">
+      </label>
+    </article>
+  `).join('') || '<div class="card"><p class="muted">No products in inventory.</p></div>';
+
+  root.querySelectorAll('[data-stock-id]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const id = input.getAttribute('data-stock-id');
+      const productsList = loadProducts();
+      const product = productsList.find((item) => item.id === id);
+      if (!product) return;
+      product.stock = Math.max(0, Number(input.value) || 0);
+      saveProducts(productsList);
+      showToast(`${product.name} stock updated to ${product.stock}.`, 'success');
+      renderAdminInventoryPage();
+    });
+  });
+}
+
+function renderAdminAnalyticsPage() {
+  const root = document.getElementById('admin-analytics-panel');
+  if (!root) return;
+  const orders = loadAllOrders();
+  const products = loadProducts();
+  const customers = loadRegisteredCustomers();
+  const revenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const avgOrder = orders.length ? revenue / orders.length : 0;
+  const methodCounts = {};
+  orders.forEach((order) => {
+    const key = order.payMethod || 'unknown';
+    methodCounts[key] = (methodCounts[key] || 0) + 1;
+  });
+  const topProducts = {};
+  orders.forEach((order) => {
+    (order.items || []).forEach((item) => {
+      topProducts[item.name] = (topProducts[item.name] || 0) + Number(item.quantity || 0);
+    });
+  });
+  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  root.innerHTML = `
+    <div class="stats-grid" style="margin-bottom:1.5rem;">
+      <article class="stat-card"><p class="stat-label">Revenue</p><strong>${formatCurrencyAmount(revenue)}</strong></article>
+      <article class="stat-card"><p class="stat-label">Orders</p><strong>${orders.length}</strong></article>
+      <article class="stat-card"><p class="stat-label">Avg order</p><strong>${formatCurrencyAmount(avgOrder)}</strong></article>
+      <article class="stat-card"><p class="stat-label">Customers</p><strong>${customers.length}</strong></article>
+      <article class="stat-card"><p class="stat-label">Catalog SKUs</p><strong>${products.length}</strong></article>
+      <article class="stat-card"><p class="stat-label">Featured</p><strong>${products.filter((p) => p.featured).length}</strong></article>
+    </div>
+    <div class="grid grid-2">
+      <article class="card">
+        <h3 style="margin-top:0;">Payment mix</h3>
+        ${Object.keys(methodCounts).length ? Object.entries(methodCounts).map(([method, count]) => `
+          <div class="summary-row"><span>${escapeHtml(getPaymentMethodLabel(method))}</span><strong>${count}</strong></div>
+        `).join('') : '<p class="muted">No payments yet.</p>'}
+      </article>
+      <article class="card">
+        <h3 style="margin-top:0;">Top sellers</h3>
+        ${topList.length ? topList.map(([name, qty]) => `
+          <div class="summary-row"><span>${escapeHtml(name)}</span><strong>${qty}</strong></div>
+        `).join('') : '<p class="muted">No sales data yet.</p>'}
+      </article>
+    </div>
+  `;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -2455,6 +2870,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initContactForm();
   initNewsletterForm();
   initRevealAnimations();
-  renderAdminInquiries();
   initAdmin();
 });
