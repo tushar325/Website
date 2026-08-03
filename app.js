@@ -2104,8 +2104,8 @@ function formatCurrency(value) {
 }
 
 const CART_KEY = 'bean-bloom-cart'; // per-user key prefix: bean-bloom-cart-{userId}
-const API_BASE = 'http://localhost:3001/api';
-const REVIEW_REQUEST_TIMEOUT = 1200;
+const API_BASE = (typeof window !== 'undefined' && window.BeanbBloomAPI?.API_BASE) || 'http://localhost:3001/api';
+const REVIEW_REQUEST_TIMEOUT = 800;
 
 async function loadProductReviews(productId) {
   if (!productId) return [];
@@ -3966,10 +3966,14 @@ function initAdmin() {
     let authed = false;
     if (window.BeanbBloomAPI?.Auth?.login) {
       try {
-        const result = await window.BeanbBloomAPI.Auth.login(username, password);
-        if (result?.role === 'admin' && result.token) {
-          setAdminLoggedIn(true, result.token);
-          authed = true;
+        const online = window.BeanbBloomAPI.isLikelyOnline?.()
+          || (await window.BeanbBloomAPI.probeApiHealth?.());
+        if (online) {
+          const result = await window.BeanbBloomAPI.Auth.login(username, password);
+          if (result?.role === 'admin' && result.token) {
+            setAdminLoggedIn(true, result.token);
+            authed = true;
+          }
         }
       } catch (_) {}
     }
