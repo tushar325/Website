@@ -218,9 +218,18 @@
                     <div><label for="product-brew-grind" style="display:block;font-weight:700;margin-bottom:.4rem;">Grind size</label><input id="product-brew-grind" type="text"></div>
                     <div style="grid-column:1/-1;"><label for="product-brew-tips" style="display:block;font-weight:700;margin-bottom:.4rem;">Tips</label><textarea id="product-brew-tips" rows="2"></textarea></div>
                   </div>
-                  <h5>Variants (one per line: label | price | stock | grind)</h5>
+                  <h5>Options (size & type)</h5>
                   <div>
-                    <textarea id="product-variants" rows="3" placeholder="250g Whole bean | 18 | 20 | Whole bean"></textarea>
+                    <label for="product-option-sizes" style="display:block;font-weight:700;margin-bottom:.4rem;">Sizes (comma or new line)</label>
+                    <input id="product-option-sizes" type="text" placeholder="250g, 500g">
+                  </div>
+                  <div>
+                    <label for="product-option-types" style="display:block;font-weight:700;margin-bottom:.4rem;">Types (comma or new line)</label>
+                    <input id="product-option-types" type="text" placeholder="Whole bean, Ground">
+                  </div>
+                  <div>
+                    <label for="product-variants" style="display:block;font-weight:700;margin-bottom:.4rem;">Combinations (one per line: size | type | price | stock)</label>
+                    <textarea id="product-variants" rows="4" placeholder="250g | Whole bean | 18 | 20"></textarea>
                   </div>
                   <h5>Nutrition</h5>
                   <div class="grid grid-2" style="gap:.8rem;">
