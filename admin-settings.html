@@ -150,7 +150,7 @@
 
               <div class="settings-card">
                 <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Product page sections</h3>
-                <p class="muted" style="margin:0 0 1rem;">Toggle optional product-page blocks. By default only purchase, overview, variants, shipping, reviews, and related stay on — turn extras on when needed.</p>
+                <p class="muted" style="margin:0 0 1rem;">Enable or disable customer-facing blocks on product detail pages. Detail content comes from each product’s admin fields.</p>
                 <div class="settings-grid cols-3" id="product-page-toggles">
                   <label class="compare-check"><input id="s-pp-hero" type="checkbox"> Hero / purchase</label>
                   <label class="compare-check"><input id="s-pp-overview" type="checkbox"> Overview</label>
@@ -532,7 +532,7 @@
         },
         menuCategories: get('s-menu-categories').split(',').map((item) => item.trim()).filter(Boolean),
         shopSection: current.shopSection || { title: 'Shop the collection', subtext: '' },
-        productPageVersion: 2,
+        productPageVersion: 3,
         productPage: {
           hero: checked('s-pp-hero'),
           overview: checked('s-pp-overview'),
