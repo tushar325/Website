@@ -8,45 +8,45 @@ const ADDRESS_KEY = 'bean-bloom-address'; // per-user: bean-bloom-address-{userI
 
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
-  footerText: '© 2026 Bean & Bloom. Fresh coffee, calm spaces, and warm welcomes.',
+  footerText: '© 2026 Bean & Bloom. Specialty coffee, calm spaces, and warm welcomes in Faridabad.',
   hero: {
-    eyebrow: 'A perfect cup, mug, or carafe every time',
-    headline: 'Modern coffee products with premium style and effortless performance.',
-    subtext: 'Discover expertly curated roasts, elegant brewing gear, and premium accessories designed for coffee lovers and modern kitchens.',
-    cta1Label: 'Shop products', cta1Url: '#products',
-    cta2Label: 'Explore more', cta2Url: 'about.html',
-    tile1Badge: 'Best Seller', tile1Title: 'Canberra Coffee', tile1Desc: 'Bright, balanced, and roasted to perfection.',
-    tile2Badge: 'Featured', tile2Title: 'Commercial Coffee', tile2Desc: 'Rich and smooth for every morning ritual.'
+    eyebrow: 'Specialty cafe & shop · Faridabad',
+    headline: 'Handcrafted coffee for the bar and the kitchen counter.',
+    subtext: 'Espresso, fresh bakery, seasonal beans, and brew gear — from our Market Street cafe to your morning ritual.',
+    cta1Label: 'Shop the collection', cta1Url: '#products',
+    cta2Label: 'View cafe menu', cta2Url: 'menu.html',
+    tile1Badge: 'House favorite', tile1Title: 'Signature Espresso', tile1Desc: 'Bold, velvety, and dialed in every morning.',
+    tile2Badge: 'Take home', tile2Title: 'Golden Morning Brew', tile2Desc: 'Bright single-origin for pour-over and drip.'
   },
-  categorySection: { title: 'Shop by category', subtext: 'Explore the coffee machines, accessories, and premium beans that define our collection.' },
-  featuredSection: { title: 'Featured products', subtext: '' },
+  categorySection: { title: 'Shop by category', subtext: 'Cafe drinks, bakery, beans, and gear — browse what we pour and what we send home.' },
+  featuredSection: { title: 'Featured picks', subtext: 'Staff favorites from the bar and the shelf.' },
   deal: {
-    eyebrow: 'Deal of the day', title: 'Keurig® K15 Classic Series',
-    description: 'Compact, convenient, and built for modern kitchens. Elevate your daily coffee ritual with this premium machine.',
-    price: '99.99', badge: 'Limited time offer', ctaLabel: 'View deal', ctaUrl: 'deal.html', imageUrl: ''
+    eyebrow: 'Cafe special', title: 'Weekend Brunch Blend + Ceramic Mug',
+    description: 'A mellow house blend paired with our signature mug — made for slow Saturday mornings at home or at the cafe counter.',
+    price: '34.99', badge: 'Limited weekend set', ctaLabel: 'View special', ctaUrl: 'deal.html', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80'
   },
   testimonials: [
     {
-      quote: 'The product selection is refined, and the delivery was effortless.',
+      quote: 'My weekday stop for a ristretto and a quiet table. The beans I take home taste just as good.',
       author: 'Aarav Mehta, Designer',
       avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg'
     },
     {
-      quote: 'A beautifully designed storefront with excellent products and support.',
+      quote: 'Friendly baristas, honest recommendations, and bakery that actually sells out by afternoon.',
       author: 'Ishita Sharma, Founder',
       avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg'
     },
     {
-      quote: 'High-quality gear and premium coffee — exactly what I was looking for.',
+      quote: 'Ordered a gift box online and picked up espresso gear in-store the same week. Seamless.',
       author: 'Rohan Verma, Consultant',
       avatarUrl: 'https://randomuser.me/api/portraits/men/42.jpg'
     }
   ],
   promoStrip: [
-    { title: 'Free shipping', desc: 'On orders over Rs 100' },
-    { title: 'Secure checkout', desc: 'Trusted payment every time' },
-    { title: 'Premium support', desc: 'Here to help with every order' },
-    { title: 'Quality guarantee', desc: 'Expertly curated product range' }
+    { title: 'Local delivery', desc: 'Same-day bakery in Faridabad' },
+    { title: 'Cafe pickup', desc: 'Order online, collect at the bar' },
+    { title: 'Fresh roast', desc: 'Small-batch beans each week' },
+    { title: 'Barista help', desc: 'Grind & brew advice anytime' }
   ],
   payments: {
     codEnabled: true,
@@ -106,12 +106,166 @@ function setEl(id, value, attr = 'text') {
   else el.setAttribute(attr, value);
 }
 
+function showToast(message, type = 'info') {
+  let stack = document.getElementById('toast-stack');
+  if (!stack) {
+    stack = document.createElement('div');
+    stack.id = 'toast-stack';
+    stack.className = 'toast-stack';
+    stack.setAttribute('aria-live', 'polite');
+    document.body.appendChild(stack);
+  }
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  stack.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(8px)';
+    toast.style.transition = 'opacity .25s ease, transform .25s ease';
+    setTimeout(() => toast.remove(), 260);
+  }, 2600);
+}
+
+function initMobileNav() {
+  const toggle = document.querySelector('.nav-toggle');
+  const nav = document.getElementById('site-nav') || document.querySelector('.nav-links');
+  if (!toggle || !nav) return;
+  toggle.addEventListener('click', () => {
+    const open = nav.classList.toggle('is-open');
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+}
+
+function initRevealAnimations() {
+  const items = document.querySelectorAll('.reveal');
+  if (!items.length) return;
+  if (!('IntersectionObserver' in window)) {
+    items.forEach((el) => el.classList.add('is-visible'));
+    return;
+  }
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  items.forEach((el) => observer.observe(el));
+}
+
+function initNewsletterForm() {
+  const form = document.getElementById('newsletter-form');
+  if (!form) return;
+  const emailInput = document.getElementById('newsletter-email');
+  const status = document.getElementById('newsletter-status');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const email = String(emailInput?.value || '').trim();
+    if (!email) {
+      if (status) status.textContent = 'Enter a valid email address.';
+      return;
+    }
+    try {
+      const key = 'bean-bloom-newsletter';
+      const existing = JSON.parse(localStorage.getItem(key) || '[]');
+      const list = Array.isArray(existing) ? existing : [];
+      if (!list.includes(email)) list.push(email);
+      localStorage.setItem(key, JSON.stringify(list));
+    } catch {}
+    form.reset();
+    if (status) status.textContent = 'You’re on the list. Watch for roast notes soon.';
+    showToast('Subscribed to Bean & Bloom updates.', 'success');
+  });
+}
+
+function initShopControls() {
+  const search = document.getElementById('product-search');
+  const sort = document.getElementById('product-sort');
+  if (!search && !sort) return;
+  const rerender = () => {
+    renderPublicProducts({
+      searchQuery: search?.value || '',
+      sortBy: sort?.value || 'featured'
+    });
+  };
+  search?.addEventListener('input', rerender);
+  sort?.addEventListener('change', rerender);
+}
+
+function renderCafeMenu(activeFilter = 'all') {
+  const root = document.getElementById('cafe-menu');
+  if (!root) return;
+
+  const menuCategories = ['Espresso', 'Bakery & Snacks', 'Tea & Infusions', 'Cold Brew'];
+  const products = loadProducts().filter((product) => menuCategories.includes(product.category));
+  const filtered = activeFilter === 'all'
+    ? products
+    : products.filter((product) => product.category === activeFilter);
+
+  if (!filtered.length) {
+    root.innerHTML = '<div class="card"><p class="muted">Menu items will appear here once cafe categories are stocked.</p></div>';
+    return;
+  }
+
+  const groups = {};
+  filtered.forEach((product) => {
+    const key = product.category || 'Menu';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(product);
+  });
+
+  root.innerHTML = Object.entries(groups).map(([category, items]) => `
+    <div class="menu-group reveal is-visible">
+      <h2>${escapeHtml(category)}</h2>
+      ${items.map((item) => `
+        <article class="menu-item">
+          <img src="${escapeHtml(optimizeImageUrl(item.imageUrl || DEFAULT_IMAGE_URL, 180, 70))}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async">
+          <div>
+            <h3>${escapeHtml(item.name)}</h3>
+            <p>${escapeHtml(item.description || '')}</p>
+          </div>
+          <div style="display:grid;gap:.55rem;justify-items:end;">
+            <span class="price">${formatCurrencyAmount(Number(item.price))}</span>
+            <button class="btn secondary" type="button" data-menu-add="${escapeHtml(item.id)}" style="margin:0;padding:.55rem .9rem;font-size:.85rem;">Add</button>
+          </div>
+        </article>
+      `).join('')}
+    </div>
+  `).join('');
+
+  root.querySelectorAll('[data-menu-add]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const id = button.getAttribute('data-menu-add');
+      const product = loadProducts().find((item) => item.id === id);
+      const added = addToCart(id);
+      if (added) showToast(`${product?.name || 'Item'} added to cart.`, 'success');
+    });
+  });
+}
+
+function initCafeMenuFilters() {
+  const toolbar = document.getElementById('menu-filters');
+  if (!toolbar) return;
+  renderCafeMenu('all');
+  toolbar.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-menu-filter]');
+    if (!button) return;
+    toolbar.querySelectorAll('.menu-chip').forEach((chip) => chip.classList.remove('active'));
+    button.classList.add('active');
+    renderCafeMenu(button.getAttribute('data-menu-filter') || 'all');
+  });
+}
+
 function renderPublicSiteContent() {
   const s = loadSettings();
 
   // Brand name
-  document.querySelectorAll('.brand').forEach(el => { if (el.closest('.site-header')) el.textContent = s.siteName; });
+  document.querySelectorAll('.brand').forEach(el => { if (el.closest('.site-header') || el.closest('.site-footer')) el.textContent = s.siteName; });
   document.querySelectorAll('.brand-name').forEach(el => { el.textContent = s.siteName; });
+  setEl('hero-brand', s.siteName);
 
   // Hero
   setEl('hero-eyebrow', s.hero.eyebrow);
@@ -822,8 +976,8 @@ function renderCartFromAPI(cartData) {
         <h3>${escapeHtml(item.name)}</h3>
         <p class="muted">${escapeHtml(item.category_name || 'Coffee')}</p>
         <div class="cart-item-meta">
-          <span>Seller: Bean & Bloom</span>
-          <span>Delivery in 2 days</span>
+          <span>Bean & Bloom cafe & shop</span>
+          <span>Pickup or delivery</span>
         </div>
         <div class="cart-item-controls">
           <div class="quantity-control">
@@ -861,8 +1015,8 @@ function renderCartFromAPI(cartData) {
       <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(totalAmount)}</span></div>
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
-      <p class="summary-note">You will save ${formatCurrencyAmount(discount + coupon)} on this order.</p>
-      <p class="summary-subnote">Safe and secure payments. Easy returns. 100% authentic products.</p>
+      <p class="summary-note">You save ${formatCurrencyAmount(discount + coupon)} with cafe member pricing.</p>
+      <p class="summary-subnote">Secure checkout · Cafe pickup available · Fresh bakery same-day locally.</p>
     </div>
   `;
 
@@ -971,8 +1125,8 @@ function renderCart() {
         <h3>${escapeHtml(item.name)}</h3>
         <p class="muted">${escapeHtml(item.category || 'Coffee')}</p>
         <div class="cart-item-meta">
-          <span>Seller: Bean & Bloom</span>
-          <span>Delivery in 2 days</span>
+          <span>Bean & Bloom cafe & shop</span>
+          <span>Pickup or delivery</span>
         </div>
         <div class="cart-item-controls">
           <div class="quantity-control">
@@ -1009,8 +1163,8 @@ function renderCart() {
       <div class="summary-total"><span>Total amount</span><span>${formatCurrencyAmount(totalAmount)}</span></div>
       <button class="btn place-order" id="checkout-button" type="button">Place order</button>
       <button class="btn secondary" id="clear-cart" type="button">Clear cart</button>
-      <p class="summary-note">You will save ${formatCurrencyAmount(discount + coupon)} on this order.</p>
-      <p class="summary-subnote">Safe and secure payments. Easy returns. 100% authentic products.</p>
+      <p class="summary-note">You save ${formatCurrencyAmount(discount + coupon)} with cafe member pricing.</p>
+      <p class="summary-subnote">Secure checkout · Cafe pickup available · Fresh bakery same-day locally.</p>
     </div>
   `;
 
@@ -1118,15 +1272,40 @@ function renderPublicProducts(options = {}) {
   let products = loadProducts();
   if (!showAll) products = products.filter(p => p.featured !== false);
   const categoryFilter = options.categoryFilter || getCategoryFilter();
+  const searchQuery = String(options.searchQuery ?? document.getElementById('product-search')?.value ?? '').trim().toLowerCase();
+  const sortBy = options.sortBy || document.getElementById('product-sort')?.value || 'featured';
 
   if (categoryFilter) {
     products = products.filter((product) => matchesCategory(product.category, categoryFilter));
   }
 
+  if (searchQuery) {
+    products = products.filter((product) => {
+      const haystack = `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
+      return haystack.includes(searchQuery);
+    });
+  }
+
+  if (sortBy === 'price-asc') {
+    products = [...products].sort((a, b) => Number(a.price) - Number(b.price));
+  } else if (sortBy === 'price-desc') {
+    products = [...products].sort((a, b) => Number(b.price) - Number(a.price));
+  } else if (sortBy === 'name') {
+    products = [...products].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  } else {
+    products = [...products].sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
+  }
+
+  const meta = document.getElementById('shop-result-meta');
+  if (meta) {
+    const label = searchQuery ? `Showing ${products.length} result${products.length === 1 ? '' : 's'} for “${searchQuery}”` : `${products.length} products`;
+    meta.textContent = label;
+  }
+
   root.innerHTML = '';
 
   if (!products.length) {
-    root.innerHTML = '<div class="card"><p class="muted">No products yet. Add one from the admin panel.</p></div>';
+    root.innerHTML = '<div class="card"><p class="muted">No products match your search. Try another keyword or clear filters.</p></div>';
     return;
   }
 
@@ -1153,7 +1332,7 @@ function renderPublicProducts(options = {}) {
       addButton.addEventListener('click', (event) => {
         event.stopPropagation();
         const added = addToCart(product.id);
-        if (added) alert(`${product.name} has been added to your cart.`);
+        if (added) showToast(`${product.name} added to cart.`, 'success');
       });
     }
 
@@ -1266,7 +1445,7 @@ async function renderProductDetail() {
   if (buyButton) {
     buyButton.addEventListener('click', () => {
       const added = addToCart(product.id);
-      if (added) alert(`${product.name} has been added to your cart.`);
+      if (added) showToast(`${product.name} added to cart.`, 'success');
     });
   }
 
@@ -2011,6 +2190,7 @@ async function initContactForm() {
   const nameInput = document.getElementById('contact-name');
   const emailInput = document.getElementById('contact-email');
   const messageInput = document.getElementById('contact-message');
+  const topicInput = document.getElementById('contact-topic');
   const status = document.getElementById('contact-status');
 
   form.addEventListener('submit', async (event) => {
@@ -2018,6 +2198,7 @@ async function initContactForm() {
     const name = String(nameInput?.value || '').trim();
     const email = String(emailInput?.value || '').trim();
     const message = String(messageInput?.value || '').trim();
+    const topic = String(topicInput?.value || 'general').trim();
 
     if (!name || !email || !message) {
       if (status) status.textContent = 'Please fill in name, email, and message.';
@@ -2028,11 +2209,17 @@ async function initContactForm() {
     if (submitButton) submitButton.disabled = true;
     if (status) status.textContent = 'Sending your enquiry...';
 
+    const payload = {
+      name,
+      email,
+      message: topic && topic !== 'general' ? `[${topic}] ${message}` : message
+    };
+
     try {
       const response = await fetch(`${API_BASE}/inquiries`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, message })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
@@ -2046,8 +2233,20 @@ async function initContactForm() {
 
       form.reset();
       if (status) status.textContent = 'Thanks. Your enquiry has been submitted.';
+      showToast('Enquiry sent. We’ll reply soon.', 'success');
     } catch (error) {
-      if (status) status.textContent = 'Unable to send enquiry right now. Please ensure backend API is running on localhost:3001.';
+      try {
+        const key = 'bean-bloom-inquiries-local';
+        const existing = JSON.parse(localStorage.getItem(key) || '[]');
+        const list = Array.isArray(existing) ? existing : [];
+        list.unshift({ ...payload, created_at: new Date().toISOString() });
+        localStorage.setItem(key, JSON.stringify(list.slice(0, 50)));
+        form.reset();
+        if (status) status.textContent = 'Saved locally. We’ll sync when the cafe server is online.';
+        showToast('Enquiry saved on this device.', 'info');
+      } catch {
+        if (status) status.textContent = 'Unable to send enquiry right now. Please try again later or email hello@beanandbloom.com.';
+      }
     } finally {
       if (submitButton) submitButton.disabled = false;
     }
@@ -2099,18 +2298,23 @@ document.addEventListener('DOMContentLoaded', () => {
     target.src = DEFAULT_IMAGE_URL;
   }, true);
 
+  initMobileNav();
   renderPublicSiteContent();
   renderUserNav();
   renderPublicCategoryGrid();
+  initShopControls();
   if (document.getElementById('public-products')) {
     renderPublicProducts();
   }
   if (document.getElementById('product-detail')) {
     renderProductDetail();
   }
+  initCafeMenuFilters();
   renderDealPage();
   updateCartCount();
   initContactForm();
+  initNewsletterForm();
+  initRevealAnimations();
   renderAdminInquiries();
   initAdmin();
 });

@@ -4,38 +4,76 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>About | Bean & Bloom</title>
-  <meta name="description" content="Learn about Bean & Bloom’s craft, values, and warm cafe experience.">
+  <meta name="description" content="Learn about Bean & Bloom’s craft, values, and specialty coffee cafe in Faridabad.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">Bean & Bloom</a>
-      <nav class="nav-links">
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
-        <a href="about.html">About</a>
+        <a href="about.html" class="is-active">About</a>
         <a href="menu.html">Menu</a>
-        <a href="contact.html">Contact</a>
-        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <a href="contact.html">Visit</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
         <span id="user-nav"></span>
       </nav>
     </div>
   </header>
 
-  <main class="section">
-    <div class="container">
-      <div class="card">
-        <span class="badge">Our story</span>
-        <h1>Crafted for calm, flavor, and daily ritual.</h1>
-        <p>Bean & Bloom was built around one simple idea: the best days start with a beautiful cup of coffee. We blend thoughtful sourcing, precise brewing, and warm service to create a refined experience in the middle of busy lives.</p>
-        <p>Our team is passionate about quality, sustainability, and making every visit feel personal. Whether you are stopping in for a fast espresso or staying for a longer morning, the cafe is designed to feel welcoming and quietly luxurious.</p>
+  <main>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Our story</span>
+        <h1>Roasted with care. Served with calm.</h1>
+        <p>Bean & Bloom began as a neighborhood espresso counter and grew into a specialty cafe and shop for people who want better coffee at the bar and at home.</p>
       </div>
-    </div>
+    </section>
+
+    <section class="section reveal">
+      <div class="container story-grid">
+        <article class="card">
+          <h2>Crafted for daily ritual</h2>
+          <p>We source seasonal lots, roast in small batches, and train every barista on dial-in, milk texture, and hospitality. The goal is simple: a cup that feels intentional, whether you stay for twenty minutes or take beans home for the week.</p>
+          <p>Alongside drinks, our shop carries brew gear, gift boxes, and bakery made fresh each morning — so one stop covers your cafe visit and your home setup.</p>
+        </article>
+        <div class="story-visual" role="img" aria-label="Barista pouring espresso in a cafe"></div>
+      </div>
+      <div class="container values-grid">
+        <article class="card value-item">
+          <h3>Thoughtful sourcing</h3>
+          <p class="muted">We work with importers who share farm details, processing notes, and roast-ready profiles we can stand behind.</p>
+        </article>
+        <article class="card value-item">
+          <h3>Warm service</h3>
+          <p class="muted">Ask for a recommendation, a grind setting, or a quieter table — the team is here to make the visit easy.</p>
+        </article>
+        <article class="card value-item">
+          <h3>Cafe + home</h3>
+          <p class="muted">Drink in, take away, or shop beans and tools for mornings that start the same way ours do.</p>
+        </article>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container">
-      <p>© 2026 Bean & Bloom. Crafted for daily rituals.</p>
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="index.html">Bean & Bloom</a>
+        <p>© 2026 Bean & Bloom. Crafted for daily rituals.</p>
+      </div>
+      <div class="footer-links">
+        <a href="menu.html">Menu</a>
+        <a href="contact.html">Visit us</a>
+        <a href="index.html#products">Shop</a>
+      </div>
     </div>
   </footer>
 
