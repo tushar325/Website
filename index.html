@@ -120,7 +120,7 @@
         </div>
         <div class="shop-layout">
           <aside class="shop-filters card">
-            <h3 style="margin-top:0;">Filters</h3>
+            <h3>Filters</h3>
             <div class="field">
               <label for="filter-price-min">Min price (₹)</label>
               <input id="filter-price-min" type="number" min="0" step="1" placeholder="0">
@@ -129,10 +129,32 @@
               <label for="filter-price-max">Max price (₹)</label>
               <input id="filter-price-max" type="number" min="0" step="1" placeholder="500">
             </div>
-            <label class="compare-check" style="display:flex;gap:.5rem;align-items:center;margin:0 0 1rem;">
-              <input id="filter-in-stock" type="checkbox"> In stock only
+            <div class="field">
+              <label for="filter-badge">Badge</label>
+              <select id="filter-badge">
+                <option value="">Any badge</option>
+                <option value="Bestseller">Bestseller</option>
+                <option value="New">New</option>
+                <option value="Organic">Organic</option>
+                <option value="Staff Pick">Staff Pick</option>
+                <option value="Limited Edition">Limited Edition</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="filter-availability">Availability</label>
+              <select id="filter-availability">
+                <option value="all">All items</option>
+                <option value="in-stock">In stock</option>
+                <option value="out-of-stock">Out of stock</option>
+              </select>
+            </div>
+            <label class="compare-check">
+              <input id="filter-featured-only" type="checkbox"> Featured only
             </label>
-            <button class="btn secondary" type="button" id="shop-clear-filters" style="width:100%;margin:0;">Clear filters</button>
+            <label class="compare-check">
+              <input id="filter-on-sale" type="checkbox"> On sale
+            </label>
+            <button class="btn secondary" type="button" id="shop-clear-filters">Clear filters</button>
           </aside>
           <div class="shop-results">
             <div class="shop-controls">
@@ -153,6 +175,9 @@
             <div id="shop-category-chips" class="shop-chip-row"></div>
             <p class="shop-result-meta muted" id="shop-result-meta"></p>
             <div id="public-products" class="grid product-grid product-grid-dense" data-show-all="true"></div>
+            <div class="shop-more-wrap" id="shop-load-more-wrap" hidden>
+              <button class="btn secondary" type="button" id="shop-load-more">More products</button>
+            </div>
           </div>
         </div>
       </div>
