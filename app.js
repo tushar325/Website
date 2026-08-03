@@ -100,6 +100,26 @@ const DEFAULT_SETTINGS = {
     canonicalBase: '',
     robots: 'index,follow',
     twitterHandle: '@beanandbloom'
+  },
+  productPage: {
+    hero: true,
+    overview: true,
+    ingredients: true,
+    coffeeInfo: true,
+    flavorProfile: true,
+    brewingGuide: true,
+    variants: true,
+    nutrition: true,
+    certifications: true,
+    packaging: true,
+    shipping: true,
+    reviews: true,
+    related: true,
+    faq: true,
+    mediaGallery: true,
+    labels: true,
+    stickyBar: true,
+    footerCta: true
   }
 };
 
@@ -135,6 +155,7 @@ function loadSettings() {
       about: { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
       newsletter: { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
       seo: { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}) },
+      productPage: { ...DEFAULT_SETTINGS.productPage, ...(saved.productPage || {}) },
       menuCategories: Array.isArray(saved.menuCategories) && saved.menuCategories.length
         ? saved.menuCategories
         : DEFAULT_SETTINGS.menuCategories
@@ -1115,7 +1136,8 @@ const defaultProducts = Object.entries(seedCatalog).flatMap(([category, items]) 
     category,
     description: item.description,
     featured: index < 2,
-    imageUrl: item.imageUrl
+    imageUrl: item.imageUrl,
+    details: buildSeedProductDetails(category, item, index)
   }));
 });
 
@@ -1138,9 +1160,17 @@ const categoryFallbackImages = {
 
 function mergeSeedProducts(existingProducts) {
   const list = Array.isArray(existingProducts) ? existingProducts : [];
+  const seedById = new Map(defaultProducts.map((item) => [String(item.id), item]));
   const existingIds = new Set(list.map((item) => String(item.id || '')));
+  const enriched = list.map((item) => {
+    const seed = seedById.get(String(item.id));
+    if (!seed) return item;
+    const hasDetails = item.details && typeof item.details === 'object' && Object.keys(item.details).length;
+    if (hasDetails) return item;
+    return { ...item, details: seed.details };
+  });
   const missing = defaultProducts.filter((item) => !existingIds.has(item.id));
-  return missing.length ? [...list, ...missing] : list;
+  return missing.length ? [...enriched, ...missing] : enriched;
 }
 
 function parseImageUrlsInput(value) {
@@ -1157,6 +1187,199 @@ function buildDefaultLongDescription(product) {
   return `${name} is part of our ${category} range, selected for customers who want reliable quality, thoughtful design, and a polished coffee experience at home. ${shortDescription} Expect balanced performance, premium presentation, and a product that fits effortlessly into your daily routine, whether you are upgrading your morning setup or gifting something refined to another coffee lover.`;
 }
 
+function emptyProductDetails() {
+  return {
+    subtitle: '',
+    videoUrl: '',
+    compareAtPrice: null,
+    badges: [],
+    sku: '',
+    features: [],
+    highlights: [],
+    ingredients: { list: '', allergens: '', additives: '', organicNote: '' },
+    coffee: { variety: '', origin: '', region: '', roastLevel: '', process: '', harvestYear: '', roastDate: '' },
+    flavor: { notes: '', aroma: '', body: '', acidity: '', sweetness: '', bitterness: '', finish: '', roastMeter: 0, caffeine: '' },
+    brewing: { methods: [], ratio: '', temperature: '', brewTime: '', grindSize: '', tips: '' },
+    variants: [],
+    nutrition: { servingSize: '', calories: '', protein: '', fat: '', carbs: '', sugar: '', sodium: '', caffeine: '' },
+    certifications: [],
+    packaging: { size: '', material: '', freshnessValve: '', shelfLife: '', storage: '' },
+    shipping: { estimatedDays: '', charges: '', freeShippingOver: '', returnPolicy: '', refundPolicy: '' },
+    faq: [],
+    relatedIds: [],
+    frequentlyBoughtIds: [],
+    footerCtaMessage: ''
+  };
+}
+
+function parseLines(value) {
+  return String(value || '')
+    .split(/\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeProductDetails(raw, product = {}) {
+  const base = emptyProductDetails();
+  const d = raw && typeof raw === 'object' ? raw : {};
+  const coffeeCats = /bean|blend|pour over|cold brew|coffee capsule/i.test(String(product.category || ''))
+    && !/gear|machine|tool|merch|accessor/i.test(String(product.category || ''));
+  const seedCoffee = coffeeCats && !(d.coffee && Object.values(d.coffee).some((v) => String(v || '').trim()))
+    ? {
+      variety: 'Arabica',
+      origin: 'India',
+      region: 'Chikmagalur',
+      roastLevel: 'Medium',
+      process: 'Washed',
+      harvestYear: '2025',
+      roastDate: 'Roasted weekly'
+    }
+    : { ...base.coffee, ...(d.coffee || {}) };
+
+  return {
+    ...base,
+    ...d,
+    subtitle: String(d.subtitle || '').trim(),
+    videoUrl: String(d.videoUrl || '').trim(),
+    compareAtPrice: d.compareAtPrice != null && d.compareAtPrice !== '' ? Number(d.compareAtPrice) : null,
+    badges: Array.isArray(d.badges) ? d.badges.map(String).filter(Boolean) : parseLines(d.badges),
+    sku: String(d.sku || product.sku || '').trim(),
+    features: Array.isArray(d.features) ? d.features.map(String).filter(Boolean) : parseLines(d.features),
+    highlights: Array.isArray(d.highlights) ? d.highlights.map(String).filter(Boolean) : parseLines(d.highlights),
+    ingredients: { ...base.ingredients, ...(d.ingredients || {}) },
+    coffee: { ...seedCoffee, ...(d.coffee || {}) },
+    flavor: {
+      ...base.flavor,
+      ...(d.flavor || {}),
+      roastMeter: Math.max(0, Math.min(100, Number(d.flavor?.roastMeter || 0) || 0))
+    },
+    brewing: {
+      ...base.brewing,
+      ...(d.brewing || {}),
+      methods: Array.isArray(d.brewing?.methods) ? d.brewing.methods.map(String).filter(Boolean) : parseLines(d.brewing?.methods)
+    },
+    variants: Array.isArray(d.variants) ? d.variants.map((v, i) => ({
+      id: String(v.id || `var-${i + 1}`),
+      label: String(v.label || v.size || `Option ${i + 1}`),
+      size: String(v.size || ''),
+      weight: String(v.weight || ''),
+      grind: String(v.grind || ''),
+      price: Number(v.price != null ? v.price : product.price) || Number(product.price) || 0,
+      stock: Number.isFinite(Number(v.stock)) ? Number(v.stock) : Number(product.stock) || 0
+    })) : [],
+    nutrition: { ...base.nutrition, ...(d.nutrition || {}) },
+    certifications: Array.isArray(d.certifications) ? d.certifications.map(String).filter(Boolean) : parseLines(d.certifications),
+    packaging: { ...base.packaging, ...(d.packaging || {}) },
+    shipping: { ...base.shipping, ...(d.shipping || {}) },
+    faq: Array.isArray(d.faq) ? d.faq.map((item) => ({
+      q: String(item.q || item.question || '').trim(),
+      a: String(item.a || item.answer || '').trim()
+    })).filter((item) => item.q && item.a) : [],
+    relatedIds: Array.isArray(d.relatedIds) ? d.relatedIds.map(String) : parseLines(d.relatedIds),
+    frequentlyBoughtIds: Array.isArray(d.frequentlyBoughtIds) ? d.frequentlyBoughtIds.map(String) : parseLines(d.frequentlyBoughtIds),
+    footerCtaMessage: String(d.footerCtaMessage || '').trim()
+  };
+}
+
+function buildSeedProductDetails(category, item, index) {
+  const details = emptyProductDetails();
+  details.subtitle = item.description || '';
+  details.sku = `BB-${toSlug(category).slice(0, 6).toUpperCase()}-${String(index + 1).padStart(2, '0')}`;
+  details.badges = index === 0 ? ['Bestseller', 'Staff Pick'] : index === 1 ? ['New'] : [];
+  details.features = ['Cafe-quality finish', 'Ready for home or gift', 'Razorpay + cafe pickup'];
+  details.highlights = [item.description || 'Selected by Bean & Bloom baristas.'];
+  details.shipping = {
+    estimatedDays: '2–4 days in Faridabad',
+    charges: 'Calculated at checkout',
+    freeShippingOver: '₹999',
+    returnPolicy: '7-day returns on sealed gear and unused bags.',
+    refundPolicy: 'Refunds processed to original Razorpay payment within 5–7 days.'
+  };
+  details.packaging = {
+    size: 'Retail pack',
+    material: 'Recyclable outer / food-safe liner',
+    freshnessValve: /bean|blend|espresso|pour|cold/i.test(category) ? 'One-way freshness valve' : '',
+    shelfLife: /bakery/i.test(category) ? 'Best same day' : 'Best within 4–6 weeks of roast',
+    storage: 'Cool, dry place away from direct sunlight'
+  };
+  details.faq = [
+    { q: 'Can I pick this up at the cafe?', a: 'Yes — choose cafe pickup at checkout and collect from our Market Street counter.' },
+    { q: 'How fresh is the coffee?', a: 'Beans are roasted in small batches each week. Roast timing is listed when available on the bag.' }
+  ];
+  if (/bean|blend|espresso|pour|cold brew|coffee|capsule/i.test(category)) {
+    details.coffee = {
+      variety: 'Arabica',
+      origin: 'India',
+      region: index % 2 ? 'Coorg' : 'Chikmagalur',
+      roastLevel: index % 3 === 0 ? 'Light' : index % 3 === 1 ? 'Medium' : 'Medium-Dark',
+      process: index % 2 ? 'Natural' : 'Washed',
+      harvestYear: '2025',
+      roastDate: 'Roasted weekly'
+    };
+    details.flavor = {
+      notes: index % 2 ? 'Cocoa, caramel, toasted nut' : 'Citrus, florals, honey',
+      aroma: 'Sweet and inviting',
+      body: index % 2 ? 'Full' : 'Medium',
+      acidity: index % 2 ? 'Low' : 'Bright',
+      sweetness: 'Medium-high',
+      bitterness: 'Low',
+      finish: 'Clean and lingering',
+      roastMeter: index % 3 === 0 ? 30 : index % 3 === 1 ? 55 : 72,
+      caffeine: 'Regular'
+    };
+    details.brewing = {
+      methods: ['Pour over', 'Espresso', 'French press'],
+      ratio: '1:16',
+      temperature: '92–96°C',
+      brewTime: '2:30–3:30',
+      grindSize: 'Medium-fine to medium',
+      tips: 'Bloom for 30 seconds, then pour in slow circles.'
+    };
+    details.ingredients = {
+      list: '100% coffee beans',
+      allergens: 'None declared',
+      additives: 'No artificial additives',
+      organicNote: index === 0 ? 'Ask barista for current organic lots' : ''
+    };
+    details.nutrition = {
+      servingSize: '1 prepared cup',
+      calories: '2',
+      protein: '0g',
+      fat: '0g',
+      carbs: '0g',
+      sugar: '0g',
+      sodium: '0mg',
+      caffeine: '~95mg'
+    };
+    details.certifications = index === 0 ? ['Fair Trade', 'Rainforest Alliance'] : [];
+    details.variants = [
+      { id: '250g-wb', label: '250g · Whole bean', size: '250g', weight: '250g', grind: 'Whole bean', price: item.price, stock: 20 },
+      { id: '250g-gr', label: '250g · Ground', size: '250g', weight: '250g', grind: 'Ground', price: Number(item.price) + 0.5, stock: 15 },
+      { id: '500g-wb', label: '500g · Whole bean', size: '500g', weight: '500g', grind: 'Whole bean', price: Number(item.price) * 1.85, stock: 10 }
+    ];
+    details.compareAtPrice = Number((Number(item.price) * 1.15).toFixed(2));
+  }
+  if (/bakery|snack|ready/i.test(category)) {
+    details.ingredients = {
+      list: 'Flour, butter, sugar, eggs, cafe house ingredients — ask counter for full list',
+      allergens: 'Contains gluten, dairy, eggs. May contain nuts.',
+      additives: 'No artificial colors',
+      organicNote: ''
+    };
+    details.nutrition = {
+      servingSize: '1 piece',
+      calories: '280',
+      protein: '5g',
+      fat: '14g',
+      carbs: '34g',
+      sugar: '12g',
+      sodium: '180mg',
+      caffeine: '0mg'
+    };
+  }
+  return details;
+}
+
 function normalizeProduct(product) {
   const primaryImage = String(product?.imageUrl || '').trim();
   const imageUrls = Array.isArray(product?.imageUrls)
@@ -1167,14 +1390,189 @@ function normalizeProduct(product) {
     ...(primaryImage && /^https?:\/\//i.test(primaryImage) ? [primaryImage] : [])
   ]));
   const finalPrimary = mergedImages[0] || DEFAULT_IMAGE_URL;
+  const details = normalizeProductDetails(product?.details, product);
 
   return {
     ...product,
     imageUrl: finalPrimary,
     imageUrls: mergedImages.length ? mergedImages : [DEFAULT_IMAGE_URL],
     longDescription: String(product?.longDescription || '').trim() || buildDefaultLongDescription(product),
-    stock: Number.isFinite(Number(product?.stock)) ? Math.max(0, Number(product.stock)) : 25
+    stock: Number.isFinite(Number(product?.stock)) ? Math.max(0, Number(product.stock)) : 25,
+    sku: String(product?.sku || details.sku || '').trim(),
+    compareAtPrice: product?.compareAtPrice != null && product?.compareAtPrice !== ''
+      ? Number(product.compareAtPrice)
+      : details.compareAtPrice,
+    badges: Array.isArray(product?.badges) && product.badges.length ? product.badges.map(String) : details.badges,
+    details
   };
+}
+
+function collectProductDetailsFromAdminForm(existingDetails = {}) {
+  const val = (id) => document.getElementById(id)?.value ?? '';
+  const variants = String(val('product-variants') || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line, index) => {
+      const [label, price, stock, grind] = line.split('|').map((part) => part.trim());
+      return {
+        id: existingDetails.variants?.[index]?.id || `var-${index + 1}`,
+        label: label || `Option ${index + 1}`,
+        size: label || '',
+        weight: label || '',
+        grind: grind || '',
+        price: Number(price) || 0,
+        stock: Number.isFinite(Number(stock)) ? Number(stock) : 0
+      };
+    });
+  const faq = String(val('product-faq') || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [q, ...rest] = line.split('|');
+      return { q: String(q || '').trim(), a: rest.join('|').trim() };
+    })
+    .filter((item) => item.q && item.a);
+
+  return normalizeProductDetails({
+    subtitle: val('product-subtitle'),
+    sku: val('product-sku'),
+    compareAtPrice: val('product-compare-price'),
+    badges: val('product-badges'),
+    videoUrl: val('product-video-url'),
+    features: val('product-features'),
+    highlights: val('product-highlights'),
+    ingredients: {
+      list: val('product-ingredients-list'),
+      allergens: val('product-allergens'),
+      additives: val('product-additives'),
+      organicNote: val('product-organic-note')
+    },
+    coffee: {
+      variety: val('product-coffee-variety'),
+      origin: val('product-coffee-origin'),
+      region: val('product-coffee-region'),
+      roastLevel: val('product-coffee-roast'),
+      process: val('product-coffee-process'),
+      harvestYear: val('product-coffee-harvest'),
+      roastDate: val('product-coffee-roast-date')
+    },
+    flavor: {
+      notes: val('product-flavor-notes'),
+      aroma: val('product-flavor-aroma'),
+      body: val('product-flavor-body'),
+      acidity: val('product-flavor-acidity'),
+      sweetness: val('product-flavor-sweetness'),
+      bitterness: val('product-flavor-bitterness'),
+      finish: val('product-flavor-finish'),
+      caffeine: val('product-flavor-caffeine'),
+      roastMeter: val('product-flavor-roast-meter')
+    },
+    brewing: {
+      methods: val('product-brew-methods'),
+      ratio: val('product-brew-ratio'),
+      temperature: val('product-brew-temp'),
+      brewTime: val('product-brew-time'),
+      grindSize: val('product-brew-grind'),
+      tips: val('product-brew-tips')
+    },
+    variants,
+    nutrition: {
+      servingSize: val('product-nut-serving'),
+      calories: val('product-nut-calories'),
+      protein: val('product-nut-protein'),
+      fat: val('product-nut-fat'),
+      carbs: val('product-nut-carbs'),
+      sugar: val('product-nut-sugar'),
+      sodium: val('product-nut-sodium'),
+      caffeine: val('product-nut-caffeine')
+    },
+    certifications: val('product-certifications'),
+    packaging: {
+      size: val('product-pack-size'),
+      material: val('product-pack-material'),
+      freshnessValve: val('product-pack-valve'),
+      shelfLife: val('product-pack-shelf'),
+      storage: val('product-pack-storage')
+    },
+    shipping: {
+      estimatedDays: val('product-ship-days'),
+      charges: val('product-ship-charges'),
+      freeShippingOver: val('product-ship-free'),
+      returnPolicy: val('product-ship-return'),
+      refundPolicy: val('product-ship-refund')
+    },
+    faq,
+    relatedIds: val('product-related-ids'),
+    frequentlyBoughtIds: val('product-fbt-ids'),
+    footerCtaMessage: val('product-footer-cta')
+  });
+}
+
+function populateProductDetailsAdminForm(product = {}) {
+  const details = normalizeProductDetails(product.details, product);
+  const set = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? '';
+  };
+  set('product-subtitle', details.subtitle);
+  set('product-sku', details.sku || product.sku || '');
+  set('product-compare-price', details.compareAtPrice ?? product.compareAtPrice ?? '');
+  set('product-badges', (details.badges || []).join(', '));
+  set('product-video-url', details.videoUrl);
+  set('product-features', (details.features || []).join('\n'));
+  set('product-highlights', (details.highlights || []).join('\n'));
+  set('product-ingredients-list', details.ingredients.list);
+  set('product-allergens', details.ingredients.allergens);
+  set('product-additives', details.ingredients.additives);
+  set('product-organic-note', details.ingredients.organicNote);
+  set('product-coffee-variety', details.coffee.variety);
+  set('product-coffee-origin', details.coffee.origin);
+  set('product-coffee-region', details.coffee.region);
+  set('product-coffee-roast', details.coffee.roastLevel);
+  set('product-coffee-process', details.coffee.process);
+  set('product-coffee-harvest', details.coffee.harvestYear);
+  set('product-coffee-roast-date', details.coffee.roastDate);
+  set('product-flavor-notes', details.flavor.notes);
+  set('product-flavor-aroma', details.flavor.aroma);
+  set('product-flavor-body', details.flavor.body);
+  set('product-flavor-acidity', details.flavor.acidity);
+  set('product-flavor-sweetness', details.flavor.sweetness);
+  set('product-flavor-bitterness', details.flavor.bitterness);
+  set('product-flavor-finish', details.flavor.finish);
+  set('product-flavor-caffeine', details.flavor.caffeine);
+  set('product-flavor-roast-meter', details.flavor.roastMeter || '');
+  set('product-brew-methods', (details.brewing.methods || []).join(', '));
+  set('product-brew-ratio', details.brewing.ratio);
+  set('product-brew-temp', details.brewing.temperature);
+  set('product-brew-time', details.brewing.brewTime);
+  set('product-brew-grind', details.brewing.grindSize);
+  set('product-brew-tips', details.brewing.tips);
+  set('product-variants', (details.variants || []).map((v) => `${v.label} | ${v.price} | ${v.stock} | ${v.grind || ''}`).join('\n'));
+  set('product-nut-serving', details.nutrition.servingSize);
+  set('product-nut-calories', details.nutrition.calories);
+  set('product-nut-protein', details.nutrition.protein);
+  set('product-nut-fat', details.nutrition.fat);
+  set('product-nut-carbs', details.nutrition.carbs);
+  set('product-nut-sugar', details.nutrition.sugar);
+  set('product-nut-sodium', details.nutrition.sodium);
+  set('product-nut-caffeine', details.nutrition.caffeine);
+  set('product-certifications', (details.certifications || []).join(', '));
+  set('product-pack-size', details.packaging.size);
+  set('product-pack-material', details.packaging.material);
+  set('product-pack-valve', details.packaging.freshnessValve);
+  set('product-pack-shelf', details.packaging.shelfLife);
+  set('product-pack-storage', details.packaging.storage);
+  set('product-ship-days', details.shipping.estimatedDays);
+  set('product-ship-charges', details.shipping.charges);
+  set('product-ship-free', details.shipping.freeShippingOver);
+  set('product-ship-return', details.shipping.returnPolicy);
+  set('product-ship-refund', details.shipping.refundPolicy);
+  set('product-faq', (details.faq || []).map((item) => `${item.q} | ${item.a}`).join('\n'));
+  set('product-related-ids', (details.relatedIds || []).join(', '));
+  set('product-fbt-ids', (details.frequentlyBoughtIds || []).join(', '));
+  set('product-footer-cta', details.footerCtaMessage);
 }
 
 function normalizeProductList(products) {
@@ -2046,52 +2444,225 @@ async function renderProductDetail() {
   document.body.dataset.seoDescription = product.description || `${product.name} from Bean & Bloom`;
   applySeoMeta();
 
+  const settings = loadSettings();
+  const page = { ...DEFAULT_SETTINGS.productPage, ...(settings.productPage || {}) };
+  const details = normalizeProductDetails(product.details, product);
   const images = Array.isArray(product.imageUrls) && product.imageUrls.length
     ? product.imageUrls
     : [product.imageUrl || DEFAULT_IMAGE_URL];
   const currentUser = getLoggedInUser();
-  const similar = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
   const wished = loadWishlist().includes(String(product.id));
+  const badges = (product.badges && product.badges.length ? product.badges : details.badges) || [];
+  const compareAt = product.compareAtPrice != null ? Number(product.compareAtPrice) : details.compareAtPrice;
+  const basePrice = Number(product.price) || 0;
+  const related = (details.relatedIds.length
+    ? details.relatedIds.map((id) => products.find((p) => String(p.id) === String(id))).filter(Boolean)
+    : products.filter((p) => p.category === product.category && p.id !== product.id)
+  ).slice(0, 4);
+  const frequentlyBought = details.frequentlyBoughtIds
+    .map((id) => products.find((p) => String(p.id) === String(id)))
+    .filter(Boolean)
+    .slice(0, 3);
 
-  root.innerHTML = `
-    <section class="section product-detail-section">
+  const hasCoffee = Object.values(details.coffee || {}).some((v) => String(v || '').trim());
+  const hasFlavor = Object.entries(details.flavor || {}).some(([k, v]) => k !== 'roastMeter' && String(v || '').trim()) || Number(details.flavor?.roastMeter) > 0;
+  const hasBrewing = (details.brewing?.methods || []).length || Object.entries(details.brewing || {}).some(([k, v]) => k !== 'methods' && String(v || '').trim());
+  const hasIngredients = Object.values(details.ingredients || {}).some((v) => String(v || '').trim());
+  const hasNutrition = Object.values(details.nutrition || {}).some((v) => String(v || '').trim());
+  const hasPackaging = Object.values(details.packaging || {}).some((v) => String(v || '').trim());
+  const hasShipping = Object.values(details.shipping || {}).some((v) => String(v || '').trim());
+  const hasOverview = !!(product.longDescription || product.description || details.features.length || details.highlights.length);
+  const discountPct = compareAt && compareAt > basePrice
+    ? Math.round(((compareAt - basePrice) / compareAt) * 100)
+    : 0;
+
+  const meter = (label, value) => {
+    const n = Math.max(0, Math.min(100, Number(value) || 0));
+    return `<div class="pp-meter"><span>${escapeHtml(label)}</span><div class="pp-meter-track"><i style="width:${n}%"></i></div></div>`;
+  };
+
+  const dlRows = (rows) => rows.filter(([, v]) => String(v || '').trim()).map(([k, v]) => `
+    <div class="pp-kv"><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join('');
+
+  const section = (enabled, id, title, body) => {
+    if (!enabled || !body) return '';
+    return `<section class="pp-section" id="${id}"><div class="container"><div class="section-head"><div><h2>${title}</h2></div></div>${body}</div></section>`;
+  };
+
+  const heroHtml = page.hero === false ? '' : `
+    <section class="section product-detail-section pp-hero" id="pp-hero">
       <div class="container product-detail-grid">
         <div class="product-gallery-wrap">
           <div class="product-detail-image">
-            <img id="product-main-image" src="${escapeHtml(images[0])}" alt="${escapeHtml(product.name)}">
+            <img id="product-main-image" src="${escapeHtml(optimizeImageUrl(images[0], 900, 72))}" alt="${escapeHtml(product.name)}">
           </div>
-          <div class="product-thumb-row${images.length <= 1 ? ' hide' : ''}" id="product-thumb-row">
-            ${images.map((src, index) => `
-              <button class="product-thumb${index === 0 ? ' active' : ''}" type="button" data-product-image="${escapeHtml(src)}">
-                <img src="${escapeHtml(src)}" alt="${escapeHtml(product.name)} image ${index + 1}">
-              </button>
-            `).join('')}
-          </div>
+          ${page.mediaGallery !== false && images.length > 1 ? `
+            <div class="product-thumb-row" id="product-thumb-row">
+              ${images.map((src, index) => `
+                <button class="product-thumb${index === 0 ? ' active' : ''}" type="button" data-product-image="${escapeHtml(src)}">
+                  <img src="${escapeHtml(optimizeImageUrl(src, 200, 65))}" alt="${escapeHtml(product.name)} image ${index + 1}">
+                </button>`).join('')}
+            </div>` : ''}
+          ${page.mediaGallery !== false && details.videoUrl ? `
+            <div class="pp-video card">
+              <h3 style="margin-top:0;">Product video</h3>
+              <div class="pp-video-frame"><iframe src="${escapeHtml(details.videoUrl)}" title="${escapeHtml(product.name)} video" loading="lazy" allowfullscreen></iframe></div>
+            </div>` : ''}
         </div>
         <div class="product-detail-copy">
           <span class="eyebrow">${escapeHtml(product.category || 'Coffee')}</span>
+          ${page.labels !== false && badges.length ? `<div class="pp-badges">${badges.map((b) => `<span class="pp-badge">${escapeHtml(b)}</span>`).join('')}</div>` : ''}
           <h1 class="product-title">${escapeHtml(product.name)}</h1>
-          <p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p>
+          ${details.subtitle ? `<p class="pp-subtitle">${escapeHtml(details.subtitle)}</p>` : `<p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p>`}
           <div class="product-rating-row" id="product-rating-row">
             <span class="product-review-stars product-review-stars-lg">${renderRatingStars(0)}</span>
             <span class="muted">Loading reviews...</span>
           </div>
-          <div class="product-detail-meta">
-            <span class="price">${formatCurrencyAmount(Number(product.price))}</span>
-            <button class="btn" id="buy-button" type="button">Add to cart</button>
-            <button class="btn secondary" id="wishlist-detail-btn" type="button">${wished ? '♥ Wishlisted' : '♡ Wishlist'}</button>
+          <div class="pp-price-row" id="pp-price-row">
+            <span class="price" id="pp-current-price">${formatCurrencyAmount(basePrice)}</span>
+            ${compareAt && compareAt > basePrice ? `<span class="pp-compare">${formatCurrencyAmount(compareAt)}</span><span class="pp-discount">${discountPct}% off</span>` : ''}
           </div>
-          <p class="muted" style="margin:.6rem 0 0;font-size:.88rem;">${Number(product.stock) > 0 ? `${product.stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock'}</p>
-          <div class="product-detail-panel">
-            <h3>Product details</h3>
-            <p class="product-detail-note">${escapeHtml(product.longDescription || product.description || 'Enjoy fast shipping, secure checkout, and premium customer support with every order.')}</p>
+          ${details.sku ? `<p class="muted pp-sku">SKU: ${escapeHtml(details.sku || product.sku)}</p>` : ''}
+          <p class="muted pp-stock" id="pp-stock">${Number(product.stock) > 0 ? `${product.stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock'}</p>
+          ${page.variants !== false && details.variants.length ? `
+            <div class="pp-variants" id="pp-variants">
+              <span class="pp-label">Choose option</span>
+              <div class="pp-variant-list">
+                ${details.variants.map((v, i) => `
+                  <button type="button" class="pp-variant-btn${i === 0 ? ' is-active' : ''}" data-variant-id="${escapeHtml(v.id)}" data-variant-price="${escapeHtml(v.price)}" data-variant-stock="${escapeHtml(v.stock)}" data-variant-label="${escapeHtml(v.label)}">
+                    <strong>${escapeHtml(v.label)}</strong>
+                    <span>${formatCurrencyAmount(v.price)}${Number(v.stock) <= 0 ? ' · Sold out' : ''}</span>
+                  </button>`).join('')}
+              </div>
+            </div>` : ''}
+          <div class="pp-purchase-row">
+            <label class="pp-qty">
+              <span class="visually-hidden">Quantity</span>
+              <button type="button" id="pp-qty-minus" aria-label="Decrease quantity">−</button>
+              <input id="pp-qty" type="number" min="1" value="1">
+              <button type="button" id="pp-qty-plus" aria-label="Increase quantity">+</button>
+            </label>
+            <button class="btn" id="buy-button" type="button" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
+            <button class="btn secondary" id="buy-now-button" type="button" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Buy now</button>
+            <button class="btn secondary" id="wishlist-detail-btn" type="button">${wished ? '♥ Wishlisted' : '♡ Wishlist'}</button>
+            <button class="btn secondary" id="share-product-btn" type="button">Share</button>
           </div>
         </div>
       </div>
+    </section>`;
 
-      ${similar.length ? `<div class="container" style="margin-top:2rem;"><div class="section-head"><div><h2>Similar in ${escapeHtml(product.category || 'this range')}</h2><p class="muted">Customers also browse these.</p></div></div><div class="grid product-grid product-grid-dense" id="similar-products-rail">${similar.map((item) => renderProductCardHtml(item)).join('')}</div></div>` : ''}
+  const overviewHtml = section(page.overview !== false && hasOverview, 'pp-overview', 'Product overview', `
+    <div class="pp-panel grid grid-2">
+      <div>
+        <h3>Description</h3>
+        <p class="muted">${escapeHtml(product.description || '')}</p>
+        <p>${escapeHtml(product.longDescription || '')}</p>
+      </div>
+      <div>
+        ${details.features.length ? `<h3>Key features</h3><ul class="pp-list">${details.features.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul>` : ''}
+        ${details.highlights.length ? `<h3>Highlights</h3><ul class="pp-list">${details.highlights.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul>` : ''}
+      </div>
+    </div>`);
 
-      <div class="container product-review-section">
+  const ingredientsHtml = section(page.ingredients !== false && hasIngredients, 'pp-ingredients', 'Ingredients', `
+    <dl class="pp-kv-grid">${dlRows([
+      ['Ingredients', details.ingredients.list],
+      ['Allergens', details.ingredients.allergens],
+      ['Additives', details.ingredients.additives],
+      ['Organic / natural', details.ingredients.organicNote]
+    ])}</dl>`);
+
+  const coffeeHtml = section(page.coffeeInfo !== false && hasCoffee, 'pp-coffee', 'Coffee information', `
+    <dl class="pp-kv-grid">${dlRows([
+      ['Bean variety', details.coffee.variety],
+      ['Country of origin', details.coffee.origin],
+      ['Region / farm', details.coffee.region],
+      ['Roast level', details.coffee.roastLevel],
+      ['Processing', details.coffee.process],
+      ['Harvest year', details.coffee.harvestYear],
+      ['Roast date', details.coffee.roastDate]
+    ])}</dl>`);
+
+  const flavorHtml = section(page.flavorProfile !== false && hasFlavor, 'pp-flavor', 'Flavor profile', `
+    <div class="pp-panel">
+      <dl class="pp-kv-grid">${dlRows([
+        ['Flavor notes', details.flavor.notes],
+        ['Aroma', details.flavor.aroma],
+        ['Body', details.flavor.body],
+        ['Acidity', details.flavor.acidity],
+        ['Sweetness', details.flavor.sweetness],
+        ['Bitterness', details.flavor.bitterness],
+        ['Finish', details.flavor.finish],
+        ['Caffeine', details.flavor.caffeine]
+      ])}</dl>
+      ${Number(details.flavor.roastMeter) > 0 ? meter('Roast level', details.flavor.roastMeter) : ''}
+    </div>`);
+
+  const brewingHtml = section(page.brewingGuide !== false && hasBrewing, 'pp-brewing', 'Brewing guide', `
+    <div class="pp-panel">
+      ${(details.brewing.methods || []).length ? `<div class="pp-method-row">${details.brewing.methods.map((m) => `<span class="pp-method">${escapeHtml(m)}</span>`).join('')}</div>` : ''}
+      <dl class="pp-kv-grid">${dlRows([
+        ['Coffee-to-water ratio', details.brewing.ratio],
+        ['Water temperature', details.brewing.temperature],
+        ['Brew time', details.brewing.brewTime],
+        ['Grind size', details.brewing.grindSize],
+        ['Tips', details.brewing.tips]
+      ])}</dl>
+    </div>`);
+
+  const nutritionHtml = section(page.nutrition !== false && hasNutrition, 'pp-nutrition', 'Nutrition information', `
+    <dl class="pp-kv-grid">${dlRows([
+      ['Serving size', details.nutrition.servingSize],
+      ['Calories', details.nutrition.calories],
+      ['Protein', details.nutrition.protein],
+      ['Fat', details.nutrition.fat],
+      ['Carbohydrates', details.nutrition.carbs],
+      ['Sugar', details.nutrition.sugar],
+      ['Sodium', details.nutrition.sodium],
+      ['Caffeine', details.nutrition.caffeine]
+    ])}</dl>`);
+
+  const certHtml = section(page.certifications !== false && details.certifications.length, 'pp-certs', 'Certifications', `
+    <div class="pp-badges">${details.certifications.map((c) => `<span class="pp-badge pp-badge-cert">${escapeHtml(c)}</span>`).join('')}</div>`);
+
+  const packagingHtml = section(page.packaging !== false && hasPackaging, 'pp-packaging', 'Packaging information', `
+    <dl class="pp-kv-grid">${dlRows([
+      ['Package size', details.packaging.size],
+      ['Material', details.packaging.material],
+      ['Freshness valve', details.packaging.freshnessValve],
+      ['Shelf life', details.packaging.shelfLife],
+      ['Storage', details.packaging.storage]
+    ])}</dl>`);
+
+  const shippingHtml = section(page.shipping !== false && hasShipping, 'pp-shipping', 'Shipping & returns', `
+    <dl class="pp-kv-grid">${dlRows([
+      ['Estimated delivery', details.shipping.estimatedDays],
+      ['Shipping charges', details.shipping.charges],
+      ['Free shipping', details.shipping.freeShippingOver ? `Orders over ${details.shipping.freeShippingOver}` : ''],
+      ['Return policy', details.shipping.returnPolicy],
+      ['Refund policy', details.shipping.refundPolicy]
+    ])}</dl>`);
+
+  const faqHtml = section(page.faq !== false && details.faq.length, 'pp-faq', 'Frequently asked questions', `
+    <div class="pp-faq-list">${details.faq.map((item, i) => `
+      <details class="pp-faq-item"${i === 0 ? ' open' : ''}>
+        <summary>${escapeHtml(item.q)}</summary>
+        <p>${escapeHtml(item.a)}</p>
+      </details>`).join('')}</div>`);
+
+  const relatedHtml = page.related !== false && (related.length || frequentlyBought.length) ? `
+    <section class="pp-section" id="pp-related">
+      <div class="container">
+        ${related.length ? `<div class="section-head"><div><h2>Related products</h2><p class="muted">Similar picks from the cafe shop.</p></div></div>
+        <div class="grid product-grid product-grid-dense" id="similar-products-rail">${related.map((item) => renderProductCardHtml(item)).join('')}</div>` : ''}
+        ${frequentlyBought.length ? `<div class="section-head" style="margin-top:2rem;"><div><h2>Frequently bought together</h2></div></div>
+        <div class="grid product-grid product-grid-dense" id="fbt-products-rail">${frequentlyBought.map((item) => renderProductCardHtml(item)).join('')}</div>` : ''}
+      </div>
+    </section>` : '';
+
+  const reviewsHtml = page.reviews === false ? '' : `
+    <section class="pp-section product-review-section" id="pp-reviews">
+      <div class="container">
         <div class="product-review-header">
           <div>
             <h2>Customer reviews</h2>
@@ -2103,9 +2674,7 @@ async function renderProductDetail() {
           ${currentUser ? `
             <form class="card product-review-form" id="product-review-form">
               <h3 style="margin-top:0;">Write a review</h3>
-              <label>Name
-                <input id="reviewer-name" value="${escapeHtml(currentUser.name || 'Customer')}" readonly>
-              </label>
+              <label>Name<input id="reviewer-name" value="${escapeHtml(currentUser.name || 'Customer')}" readonly></label>
               <label>Rating (1 to 5)
                 <select id="reviewer-rating" required>
                   <option value="">Select rating</option>
@@ -2116,37 +2685,117 @@ async function renderProductDetail() {
                   <option value="1">1 - Poor</option>
                 </select>
               </label>
-              <label>Comment
-                <textarea id="reviewer-comment" rows="4" placeholder="What did you like or dislike?" required></textarea>
-              </label>
+              <label>Comment<textarea id="reviewer-comment" rows="4" placeholder="What did you like or dislike?" required></textarea></label>
+              <label>Photo URLs (optional)<textarea id="reviewer-photos" rows="2" placeholder="https://image-1.jpg"></textarea></label>
               <button class="btn" type="submit">Submit review</button>
               <p class="muted" id="review-submit-status"></p>
-            </form>
-          ` : `
+            </form>` : `
             <div class="card product-review-form">
               <h3 style="margin-top:0;">Write a review</h3>
               <p class="muted">Sign in to write a review and have it saved to your account history.</p>
               <a class="btn" href="login.html">Sign in to review</a>
-            </div>
-          `}
+            </div>`}
         </div>
       </div>
-    </section>
-  `;
+    </section>`;
 
-  const buyButton = document.getElementById('buy-button');
-  if (buyButton) {
-    buyButton.addEventListener('click', () => {
-      const added = addToCart(product.id);
-      if (added) showToast(`${product.name} added to cart.`, 'success');
+  const footerCtaHtml = page.footerCta === false ? '' : `
+    <section class="pp-section pp-footer-cta" id="pp-footer-cta">
+      <div class="container pp-footer-cta-inner">
+        <div>
+          <h2>${escapeHtml(details.footerCtaMessage || `Ready for ${product.name}?`)}</h2>
+          <p class="muted">Secure Razorpay checkout or cafe pickup in Faridabad.</p>
+        </div>
+        <div class="pp-footer-cta-actions">
+          <button class="btn" type="button" id="footer-add-cart" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
+          <button class="btn secondary" type="button" id="footer-buy-now" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Buy now</button>
+        </div>
+      </div>
+    </section>`;
+
+  const stickyHtml = page.stickyBar === false ? '' : `
+    <div class="pp-sticky-bar" id="pp-sticky-bar" hidden>
+      <div class="pp-sticky-inner">
+        <img src="${escapeHtml(optimizeImageUrl(images[0], 120, 60))}" alt="">
+        <div>
+          <strong>${escapeHtml(product.name)}</strong>
+          <span class="muted" id="pp-sticky-variant">Default</span>
+        </div>
+        <span class="price" id="pp-sticky-price">${formatCurrencyAmount(basePrice)}</span>
+        <button class="btn" type="button" id="sticky-add-cart" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
+      </div>
+    </div>`;
+
+  root.innerHTML = `${heroHtml}${overviewHtml}${ingredientsHtml}${coffeeHtml}${flavorHtml}${brewingHtml}${nutritionHtml}${certHtml}${packagingHtml}${shippingHtml}${faqHtml}${relatedHtml}${reviewsHtml}${footerCtaHtml}${stickyHtml}`;
+
+  let selectedVariant = details.variants[0] || null;
+  const qtyInput = document.getElementById('pp-qty');
+  const getQty = () => Math.max(1, Number(qtyInput?.value || 1));
+  const syncPriceUi = () => {
+    const price = selectedVariant ? Number(selectedVariant.price) : basePrice;
+    const stock = selectedVariant ? Number(selectedVariant.stock) : Number(product.stock);
+    const priceEl = document.getElementById('pp-current-price');
+    const stockEl = document.getElementById('pp-stock');
+    const stickyPrice = document.getElementById('pp-sticky-price');
+    const stickyVariant = document.getElementById('pp-sticky-variant');
+    if (priceEl) priceEl.textContent = formatCurrencyAmount(price);
+    if (stickyPrice) stickyPrice.textContent = formatCurrencyAmount(price);
+    if (stickyVariant) stickyVariant.textContent = selectedVariant ? selectedVariant.label : 'Standard';
+    if (stockEl) stockEl.textContent = stock > 0 ? `${stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock';
+    ['buy-button', 'buy-now-button', 'footer-add-cart', 'footer-buy-now', 'sticky-add-cart'].forEach((id) => {
+      const btn = document.getElementById(id);
+      if (btn) btn.disabled = stock <= 0;
     });
-  }
+  };
+
+  const addProduct = (goCheckout = false) => {
+    const qty = getQty();
+    const added = addToCart(product.id, qty);
+    if (!added) return;
+    showToast(`${product.name} added to cart.`, 'success');
+    if (goCheckout) window.location.href = 'checkout.html';
+  };
+
+  document.getElementById('buy-button')?.addEventListener('click', () => addProduct(false));
+  document.getElementById('buy-now-button')?.addEventListener('click', () => addProduct(true));
+  document.getElementById('footer-add-cart')?.addEventListener('click', () => addProduct(false));
+  document.getElementById('footer-buy-now')?.addEventListener('click', () => addProduct(true));
+  document.getElementById('sticky-add-cart')?.addEventListener('click', () => addProduct(false));
+  document.getElementById('pp-qty-minus')?.addEventListener('click', () => { if (qtyInput) qtyInput.value = Math.max(1, getQty() - 1); });
+  document.getElementById('pp-qty-plus')?.addEventListener('click', () => { if (qtyInput) qtyInput.value = getQty() + 1; });
   document.getElementById('wishlist-detail-btn')?.addEventListener('click', (e) => {
     const on = toggleWishlist(product.id);
     e.currentTarget.textContent = on ? '♥ Wishlisted' : '♡ Wishlist';
     showToast(on ? 'Saved to wishlist.' : 'Removed from wishlist.', 'success');
   });
+  document.getElementById('share-product-btn')?.addEventListener('click', async () => {
+    const shareData = { title: product.name, text: product.description || product.name, url: window.location.href };
+    try {
+      if (navigator.share) await navigator.share(shareData);
+      else {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Product link copied.', 'success');
+      }
+    } catch {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast('Product link copied.', 'success');
+      } catch {
+        showToast('Unable to share right now.', 'info');
+      }
+    }
+  });
+
+  document.getElementById('pp-variants')?.addEventListener('click', (event) => {
+    const btn = event.target.closest('[data-variant-id]');
+    if (!btn) return;
+    selectedVariant = details.variants.find((v) => v.id === btn.getAttribute('data-variant-id')) || selectedVariant;
+    document.querySelectorAll('.pp-variant-btn').forEach((node) => node.classList.toggle('is-active', node === btn));
+    syncPriceUi();
+  });
+
   bindProductCardActions(document.getElementById('similar-products-rail') || document);
+  bindProductCardActions(document.getElementById('fbt-products-rail') || document);
 
   const mainImage = document.getElementById('product-main-image');
   const thumbRow = document.getElementById('product-thumb-row');
@@ -2162,36 +2811,48 @@ async function renderProductDetail() {
     });
   }
 
-  loadProductReviews(product.id).then((reviews) => {
-    const averageRating = reviews.length
-      ? (reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length)
-      : 0;
-    const ratingRow = document.getElementById('product-rating-row');
-    const reviewList = document.getElementById('product-review-list');
-    if (ratingRow) {
-      ratingRow.innerHTML = `
-        <span class="product-review-stars product-review-stars-lg">${renderRatingStars(Math.round(averageRating))}</span>
-        <span class="muted">${averageRating ? averageRating.toFixed(1) : '0.0'} / 5 (${reviews.length} review${reviews.length === 1 ? '' : 's'})</span>
-      `;
-    }
-    if (reviewList) {
-      reviewList.innerHTML = reviews.length
-        ? reviews.map((item) => {
-            const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '';
-            return `
-              <article class="product-review-card">
-                <div class="product-review-top">
-                  <strong>${escapeHtml(item.name || 'Customer')}</strong>
-                  <span class="product-review-stars">${renderRatingStars(item.rating)}</span>
-                </div>
-                <p>${escapeHtml(item.comment || '')}</p>
-                <span class="product-review-date">${escapeHtml(createdAt)}</span>
-              </article>
-            `;
-          }).join('')
-        : '<p class="muted">No reviews yet. Be the first to review this product.</p>';
-    }
-  });
+  const sticky = document.getElementById('pp-sticky-bar');
+  if (sticky && page.stickyBar !== false) {
+    const onScroll = () => {
+      sticky.hidden = window.scrollY < 520;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+  syncPriceUi();
+
+  if (page.reviews !== false) {
+    loadProductReviews(product.id).then((reviews) => {
+      const averageRating = reviews.length
+        ? (reviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) / reviews.length)
+        : 0;
+      const ratingRow = document.getElementById('product-rating-row');
+      const reviewList = document.getElementById('product-review-list');
+      if (ratingRow) {
+        ratingRow.innerHTML = `
+          <span class="product-review-stars product-review-stars-lg">${renderRatingStars(Math.round(averageRating))}</span>
+          <span class="muted">${averageRating ? averageRating.toFixed(1) : '0.0'} / 5 (${reviews.length} review${reviews.length === 1 ? '' : 's'})</span>`;
+      }
+      if (reviewList) {
+        reviewList.innerHTML = reviews.length
+          ? reviews.map((item) => {
+              const createdAt = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '';
+              const photos = Array.isArray(item.photos) ? item.photos : [];
+              return `
+                <article class="product-review-card">
+                  <div class="product-review-top">
+                    <strong>${escapeHtml(item.name || 'Customer')}${item.verified ? ' <span class="pp-verified">Verified</span>' : ''}</strong>
+                    <span class="product-review-stars">${renderRatingStars(item.rating)}</span>
+                  </div>
+                  <p>${escapeHtml(item.comment || '')}</p>
+                  ${photos.length ? `<div class="pp-review-photos">${photos.map((src) => `<img src="${escapeHtml(src)}" alt="Review photo">`).join('')}</div>` : ''}
+                  <span class="product-review-date">${escapeHtml(createdAt)}</span>
+                </article>`;
+            }).join('')
+          : '<p class="muted">No reviews yet. Be the first to review this product.</p>';
+      }
+    });
+  }
 
   const reviewForm = document.getElementById('product-review-form');
   if (reviewForm) {
@@ -2199,25 +2860,24 @@ async function renderProductDetail() {
       event.preventDefault();
       const rating = Number(document.getElementById('reviewer-rating')?.value || 0);
       const comment = String(document.getElementById('reviewer-comment')?.value || '').trim();
+      const photos = parseLines(document.getElementById('reviewer-photos')?.value || '');
       const status = document.getElementById('review-submit-status');
-
       if (!rating || rating < 1 || rating > 5 || !comment) {
         if (status) status.textContent = 'Please add a rating and comment.';
         return;
       }
-
       if (!currentUser?.id) {
         if (status) status.textContent = 'Sign in to submit a review.';
         return;
       }
-
       if (status) status.textContent = 'Saving your review...';
       try {
         await saveProductReview(product.id, {
           userId: currentUser.id,
           name: currentUser.name || 'Customer',
           rating,
-          comment
+          comment,
+          photos
         });
         if (status) status.textContent = 'Review saved.';
         await renderProductDetail();
@@ -2227,6 +2887,7 @@ async function renderProductDetail() {
     });
   }
 }
+
 
 function initAdmin() {
   const adminPageType = document.body.dataset.adminPage || '';
@@ -2478,6 +3139,7 @@ function initAdmin() {
       if (productFormContainer2) productFormContainer2.classList.add('hide');
       if (categoryProductForm) categoryProductForm.reset();
       if (editingProductId) editingProductId.value = '';
+      populateProductDetailsAdminForm({});
     }
 
     // Expose functions globally for use in event listeners
@@ -2501,6 +3163,9 @@ function initAdmin() {
 
     if (showAddProductBtn2) {
       showAddProductBtn2.addEventListener('click', () => {
+        if (editingProductId) editingProductId.value = '';
+        if (categoryProductForm) categoryProductForm.reset();
+        populateProductDetailsAdminForm({});
         showCategoryProductForm('Add product');
       });
     }
@@ -2514,12 +3179,15 @@ function initAdmin() {
         event.preventDefault();
         const products = loadProducts();
         const id = editingProductId.value;
+        const existing = products.find((item) => item.id === id) || {};
         const images = parseImageUrlsInput([
           productImageInput?.value || '',
           productImageUrlsInput?.value || ''
         ].join('\n'));
+        const details = collectProductDetailsFromAdminForm(existing.details || {});
         
         const product = {
+          ...existing,
           id: id || crypto.randomUUID(),
           name: productNameInput?.value,
           price: parseFloat(productPriceInput?.value || 0),
@@ -2528,7 +3196,11 @@ function initAdmin() {
           imageUrls: images.length ? images : [DEFAULT_IMAGE_URL],
           description: productDescInput?.value,
           longDescription: productLongDescInput?.value,
-          featured: !!productFeaturedInput?.checked
+          featured: !!productFeaturedInput?.checked,
+          sku: details.sku,
+          compareAtPrice: details.compareAtPrice,
+          badges: details.badges,
+          details
         };
 
         if (!product.name) {
@@ -2546,6 +3218,7 @@ function initAdmin() {
         saveProducts(products);
         categoryProductForm.reset();
         editingProductId.value = '';
+        populateProductDetailsAdminForm({});
         renderCategoryProductsForPage();
         renderPublicProducts();
         hideCategoryProductForm();
@@ -2577,6 +3250,7 @@ function initAdmin() {
             if (productDescInput) productDescInput.value = product.description || '';
             if (productLongDescInput) productLongDescInput.value = product.longDescription || '';
             if (productFeaturedInput) productFeaturedInput.checked = !!product.featured;
+            populateProductDetailsAdminForm(product);
             showCategoryProductForm('Edit product');
           }
         }
