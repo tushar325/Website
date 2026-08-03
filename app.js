@@ -104,23 +104,24 @@ const DEFAULT_SETTINGS = {
   productPage: {
     hero: true,
     overview: true,
-    ingredients: true,
-    coffeeInfo: true,
-    flavorProfile: true,
-    brewingGuide: true,
+    ingredients: false,
+    coffeeInfo: false,
+    flavorProfile: false,
+    brewingGuide: false,
     variants: true,
-    nutrition: true,
-    certifications: true,
-    packaging: true,
+    nutrition: false,
+    certifications: false,
+    packaging: false,
     shipping: true,
     reviews: true,
     related: true,
-    faq: true,
+    faq: false,
     mediaGallery: true,
     labels: true,
     stickyBar: true,
-    footerCta: true
-  }
+    footerCta: false
+  },
+  productPageVersion: 2
 };
 
 let settingsCache = null;
@@ -155,7 +156,10 @@ function loadSettings() {
       about: { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
       newsletter: { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
       seo: { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}) },
-      productPage: { ...DEFAULT_SETTINGS.productPage, ...(saved.productPage || {}) },
+      productPage: saved.productPageVersion >= 2
+        ? { ...DEFAULT_SETTINGS.productPage, ...(saved.productPage || {}) }
+        : { ...DEFAULT_SETTINGS.productPage },
+      productPageVersion: saved.productPageVersion >= 2 ? saved.productPageVersion : DEFAULT_SETTINGS.productPageVersion,
       menuCategories: Array.isArray(saved.menuCategories) && saved.menuCategories.length
         ? saved.menuCategories
         : DEFAULT_SETTINGS.menuCategories
@@ -622,22 +626,43 @@ function initNewsletterForm() {
   });
 }
 
+function getShopPageSize() {
+  const width = window.innerWidth || 1200;
+  let columns = 4;
+  if (width >= 1560) columns = 6;
+  else if (width >= 1280) columns = 5;
+  else if (width < 520) columns = 1;
+  else if (width < 720) columns = 2;
+  else if (width < 980) columns = 3;
+  return columns * 4;
+}
+
 function initShopControls() {
   const search = document.getElementById('product-search');
   const sort = document.getElementById('product-sort');
   const priceMin = document.getElementById('filter-price-min');
   const priceMax = document.getElementById('filter-price-max');
+  const availability = document.getElementById('filter-availability');
   const inStock = document.getElementById('filter-in-stock');
+  const badge = document.getElementById('filter-badge');
+  const featuredOnly = document.getElementById('filter-featured-only');
+  const onSale = document.getElementById('filter-on-sale');
   const categoryChips = document.getElementById('shop-category-chips');
   const clearBtn = document.getElementById('shop-clear-filters');
-  const rerender = () => {
+  const loadMoreBtn = document.getElementById('shop-load-more');
+  const rerender = (opts = {}) => {
     renderPublicProducts({
       searchQuery: search?.value || '',
       sortBy: sort?.value || 'featured',
       priceMin: priceMin?.value,
       priceMax: priceMax?.value,
-      inStockOnly: !!inStock?.checked,
-      categoryChip: document.querySelector('[data-shop-category].is-active')?.getAttribute('data-shop-category') || ''
+      availability: availability?.value || (inStock?.checked ? 'in-stock' : 'all'),
+      inStockOnly: availability ? availability.value === 'in-stock' : !!inStock?.checked,
+      badge: badge?.value || '',
+      featuredOnly: !!featuredOnly?.checked,
+      onSaleOnly: !!onSale?.checked,
+      categoryChip: document.querySelector('[data-shop-category].is-active')?.getAttribute('data-shop-category') || '',
+      resetLimit: opts.resetLimit !== false
     });
   };
   if (categoryChips && !categoryChips.dataset.bound) {
@@ -648,26 +673,55 @@ function initShopControls() {
       if (!btn) return;
       categoryChips.querySelectorAll('.shop-chip').forEach((el) => el.classList.remove('is-active'));
       btn.classList.add('is-active');
-      rerender();
+      rerender({ resetLimit: true });
     });
   }
   if (!search && !sort && !categoryChips && !priceMin) return;
-  search?.addEventListener('input', rerender);
-  sort?.addEventListener('change', rerender);
-  priceMin?.addEventListener('change', rerender);
-  priceMax?.addEventListener('change', rerender);
-  inStock?.addEventListener('change', rerender);
+  search?.addEventListener('input', () => rerender({ resetLimit: true }));
+  sort?.addEventListener('change', () => rerender({ resetLimit: true }));
+  priceMin?.addEventListener('change', () => rerender({ resetLimit: true }));
+  priceMax?.addEventListener('change', () => rerender({ resetLimit: true }));
+  availability?.addEventListener('change', () => rerender({ resetLimit: true }));
+  inStock?.addEventListener('change', () => rerender({ resetLimit: true }));
+  badge?.addEventListener('change', () => rerender({ resetLimit: true }));
+  featuredOnly?.addEventListener('change', () => rerender({ resetLimit: true }));
+  onSale?.addEventListener('change', () => rerender({ resetLimit: true }));
   clearBtn?.addEventListener('click', () => {
     if (search) search.value = '';
     if (sort) sort.value = 'featured';
     if (priceMin) priceMin.value = '';
     if (priceMax) priceMax.value = '';
+    if (availability) availability.value = 'all';
     if (inStock) inStock.checked = false;
+    if (badge) badge.value = '';
+    if (featuredOnly) featuredOnly.checked = false;
+    if (onSale) onSale.checked = false;
     categoryChips?.querySelectorAll('.shop-chip').forEach((el, i) => el.classList.toggle('is-active', i === 0));
-    rerender();
+    rerender({ resetLimit: true });
   });
+  if (loadMoreBtn && !loadMoreBtn.dataset.bound) {
+    loadMoreBtn.dataset.bound = 'true';
+    loadMoreBtn.addEventListener('click', () => {
+      const root = document.getElementById('public-products');
+      if (!root) return;
+      const current = Number(root.dataset.visibleCount || getShopPageSize());
+      root.dataset.visibleCount = String(current + getShopPageSize());
+      rerender({ resetLimit: false });
+    });
+  }
   const q = new URLSearchParams(window.location.search).get('q');
   if (q && search) search.value = q;
+}
+
+function productBadgesList(product) {
+  const detailsBadges = Array.isArray(product?.details?.badges) ? product.details.badges : [];
+  const topBadges = Array.isArray(product?.badges) ? product.badges : [];
+  return [...topBadges, ...detailsBadges].map((item) => String(item || '').trim()).filter(Boolean);
+}
+
+function productIsOnSale(product) {
+  const compare = Number(product.compareAtPrice ?? product.details?.compareAtPrice);
+  return Number.isFinite(compare) && compare > Number(product.price || 0);
 }
 
 function renderCafeMenu(activeFilter = 'all') {
@@ -2406,21 +2460,54 @@ function renderPublicProducts(options = {}) {
   const sortBy = options.sortBy || document.getElementById('product-sort')?.value || 'featured';
   const priceMin = Number(options.priceMin ?? document.getElementById('filter-price-min')?.value);
   const priceMax = Number(options.priceMax ?? document.getElementById('filter-price-max')?.value);
-  const inStockOnly = options.inStockOnly ?? !!document.getElementById('filter-in-stock')?.checked;
+  const availability = options.availability
+    || document.getElementById('filter-availability')?.value
+    || (document.getElementById('filter-in-stock')?.checked ? 'in-stock' : 'all');
+  const inStockOnly = options.inStockOnly ?? availability === 'in-stock';
+  const badge = String(options.badge ?? document.getElementById('filter-badge')?.value ?? '').trim().toLowerCase();
+  const featuredOnly = options.featuredOnly ?? !!document.getElementById('filter-featured-only')?.checked;
+  const onSaleOnly = options.onSaleOnly ?? !!document.getElementById('filter-on-sale')?.checked;
   if (categoryFilter) products = products.filter((product) => matchesCategory(product.category, categoryFilter));
   if (categoryChip) products = products.filter((product) => String(product.category || '').toLowerCase() === categoryChip.toLowerCase());
   if (searchQuery) products = products.filter((product) => `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase().includes(searchQuery));
   if (Number.isFinite(priceMin) && priceMin > 0) products = products.filter((p) => Number(p.price) >= priceMin);
   if (Number.isFinite(priceMax) && priceMax > 0) products = products.filter((p) => Number(p.price) <= priceMax);
-  if (inStockOnly) products = products.filter((p) => Number(p.stock) > 0);
+  if (inStockOnly || availability === 'in-stock') products = products.filter((p) => Number(p.stock) > 0);
+  if (availability === 'out-of-stock') products = products.filter((p) => Number(p.stock) <= 0);
+  if (badge) products = products.filter((p) => productBadgesList(p).some((item) => item.toLowerCase() === badge));
+  if (featuredOnly) products = products.filter((p) => !!p.featured);
+  if (onSaleOnly) products = products.filter((p) => productIsOnSale(p));
   if (sortBy === 'price-asc') products = [...products].sort((a, b) => Number(a.price) - Number(b.price));
   else if (sortBy === 'price-desc') products = [...products].sort((a, b) => Number(b.price) - Number(a.price));
   else if (sortBy === 'name') products = [...products].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
   else products = [...products].sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
+
+  const pageSize = getShopPageSize();
+  if (options.resetLimit !== false || !root.dataset.visibleCount) {
+    root.dataset.visibleCount = String(pageSize);
+  }
+  const visibleCount = Math.max(pageSize, Number(root.dataset.visibleCount || pageSize));
+  const visibleProducts = products.slice(0, visibleCount);
+  const remaining = Math.max(0, products.length - visibleProducts.length);
+
   const meta = document.getElementById('shop-result-meta');
-  if (meta) meta.textContent = searchQuery ? `Showing ${products.length} result${products.length === 1 ? '' : 's'} for “${searchQuery}”` : `${products.length} products`;
-  if (!products.length) { root.innerHTML = '<div class="card"><p class="muted">No products match your filters. Try clearing search or widening the price range.</p></div>'; return; }
-  root.innerHTML = products.map((product) => renderProductCardHtml(product)).join('');
+  if (meta) {
+    const shownLabel = `${visibleProducts.length} of ${products.length}`;
+    meta.textContent = searchQuery
+      ? `Showing ${shownLabel} result${products.length === 1 ? '' : 's'} for “${searchQuery}”`
+      : `Showing ${shownLabel} products`;
+  }
+  const moreWrap = document.getElementById('shop-load-more-wrap');
+  if (moreWrap) moreWrap.hidden = remaining <= 0;
+  const moreBtn = document.getElementById('shop-load-more');
+  if (moreBtn) moreBtn.textContent = remaining > 0 ? `More products (${remaining} left)` : 'More products';
+
+  if (!products.length) {
+    root.innerHTML = '<div class="card"><p class="muted">No products match your filters. Try clearing search or widening the price range.</p></div>';
+    if (moreWrap) moreWrap.hidden = true;
+    return;
+  }
+  root.innerHTML = visibleProducts.map((product) => renderProductCardHtml(product)).join('');
   bindProductCardActions(root);
   renderCompareBar();
 }
@@ -2544,24 +2631,25 @@ async function renderProductDetail() {
             </label>
             <button class="btn" id="buy-button" type="button" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
             <button class="btn secondary" id="buy-now-button" type="button" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Buy now</button>
-            <button class="btn secondary" id="wishlist-detail-btn" type="button">${wished ? '♥ Wishlisted' : '♡ Wishlist'}</button>
-            <button class="btn secondary" id="share-product-btn" type="button">Share</button>
+          </div>
+          <div class="pp-secondary-actions">
+            <button class="btn ghost" id="wishlist-detail-btn" type="button">${wished ? '♥ Wishlisted' : '♡ Wishlist'}</button>
+            <button class="btn ghost" id="share-product-btn" type="button">Share</button>
+          </div>
+          <div class="pp-trust-row">
+            <span>Secure Razorpay</span>
+            <span>Cafe pickup</span>
+            <span>${escapeHtml(details.shipping.estimatedDays || 'Fast local delivery')}</span>
           </div>
         </div>
       </div>
     </section>`;
 
-  const overviewHtml = section(page.overview !== false && hasOverview, 'pp-overview', 'Product overview', `
-    <div class="pp-panel grid grid-2">
-      <div>
-        <h3>Description</h3>
-        <p class="muted">${escapeHtml(product.description || '')}</p>
-        <p>${escapeHtml(product.longDescription || '')}</p>
-      </div>
-      <div>
-        ${details.features.length ? `<h3>Key features</h3><ul class="pp-list">${details.features.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul>` : ''}
-        ${details.highlights.length ? `<h3>Highlights</h3><ul class="pp-list">${details.highlights.map((f) => `<li>${escapeHtml(f)}</li>`).join('')}</ul>` : ''}
-      </div>
+  const overviewHtml = section(page.overview !== false && hasOverview, 'pp-overview', 'About this product', `
+    <div class="pp-overview-modern">
+      <p class="pp-lead">${escapeHtml(product.description || '')}</p>
+      <p class="muted">${escapeHtml(product.longDescription || '')}</p>
+      ${details.features.length ? `<div class="pp-feature-chips">${details.features.map((f) => `<span>${escapeHtml(f)}</span>`).join('')}</div>` : ''}
     </div>`);
 
   const ingredientsHtml = section(page.ingredients !== false && hasIngredients, 'pp-ingredients', 'Ingredients', `
@@ -2634,14 +2722,13 @@ async function renderProductDetail() {
       ['Storage', details.packaging.storage]
     ])}</dl>`);
 
-  const shippingHtml = section(page.shipping !== false && hasShipping, 'pp-shipping', 'Shipping & returns', `
-    <dl class="pp-kv-grid">${dlRows([
-      ['Estimated delivery', details.shipping.estimatedDays],
-      ['Shipping charges', details.shipping.charges],
-      ['Free shipping', details.shipping.freeShippingOver ? `Orders over ${details.shipping.freeShippingOver}` : ''],
-      ['Return policy', details.shipping.returnPolicy],
-      ['Refund policy', details.shipping.refundPolicy]
-    ])}</dl>`);
+  const shippingHtml = section(page.shipping !== false && hasShipping, 'pp-shipping', 'Delivery & returns', `
+    <div class="pp-info-cards">
+      ${details.shipping.estimatedDays ? `<article class="pp-info-card"><h3>Delivery</h3><p>${escapeHtml(details.shipping.estimatedDays)}</p></article>` : ''}
+      ${details.shipping.charges || details.shipping.freeShippingOver ? `<article class="pp-info-card"><h3>Shipping</h3><p>${escapeHtml([details.shipping.charges, details.shipping.freeShippingOver ? `Free over ${details.shipping.freeShippingOver}` : ''].filter(Boolean).join(' · '))}</p></article>` : ''}
+      ${details.shipping.returnPolicy ? `<article class="pp-info-card"><h3>Returns</h3><p>${escapeHtml(details.shipping.returnPolicy)}</p></article>` : ''}
+      ${details.shipping.refundPolicy ? `<article class="pp-info-card"><h3>Refunds</h3><p>${escapeHtml(details.shipping.refundPolicy)}</p></article>` : ''}
+    </div>`);
 
   const faqHtml = section(page.faq !== false && details.faq.length, 'pp-faq', 'Frequently asked questions', `
     <div class="pp-faq-list">${details.faq.map((item, i) => `
