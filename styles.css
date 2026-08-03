@@ -267,6 +267,9 @@ img { max-width: 100%; display: block; }
 
 /* Sections */
 .section { padding: 4rem 0; }
+#featured.section { padding-top: 2.75rem; padding-bottom: 2.5rem; }
+#featured + .best-deal { padding-top: 2rem; }
+#recently-viewed-section[hidden] { display: none !important; padding: 0; margin: 0; }
 .section-alt {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent);
   border-top: 1px solid var(--border);
