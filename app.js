@@ -2806,6 +2806,48 @@ function enableHorizontalDragScroll(root) {
   root.addEventListener('pointerleave', endDrag);
 }
 
+function enableCategoryRailControls(root) {
+  if (!root) return;
+  const wrap = root.closest('.category-rail-wrap');
+  const prev = wrap?.querySelector('.category-rail-btn.prev') || document.getElementById('category-rail-prev');
+  const next = wrap?.querySelector('.category-rail-btn.next') || document.getElementById('category-rail-next');
+  if (!prev || !next) return;
+
+  const scrollAmount = () => {
+    const card = root.querySelector('.category-card');
+    const gap = 16;
+    return card ? Math.round(card.getBoundingClientRect().width + gap) : Math.round(root.clientWidth * 0.8);
+  };
+
+  const updateButtons = () => {
+    const maxScroll = Math.max(0, root.scrollWidth - root.clientWidth - 2);
+    prev.disabled = root.scrollLeft <= 2;
+    next.disabled = root.scrollLeft >= maxScroll;
+  };
+
+  if (prev.dataset.bound !== 'true') {
+    prev.dataset.bound = 'true';
+    prev.addEventListener('click', () => {
+      root.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
+    });
+  }
+  if (next.dataset.bound !== 'true') {
+    next.dataset.bound = 'true';
+    next.addEventListener('click', () => {
+      root.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
+    });
+  }
+  if (root.dataset.railControlsBound !== 'true') {
+    root.dataset.railControlsBound = 'true';
+    root.addEventListener('scroll', updateButtons, { passive: true });
+    window.addEventListener('resize', updateButtons);
+  }
+  updateButtons();
+  // After images/layout settle
+  requestAnimationFrame(updateButtons);
+  setTimeout(updateButtons, 320);
+}
+
 function renderPublicCategoryGrid() {
   const root = document.getElementById('public-category-grid');
   if (!root) return;
@@ -2846,6 +2888,7 @@ function renderPublicCategoryGrid() {
   });
 
   enableHorizontalDragScroll(root);
+  enableCategoryRailControls(root);
 }
 
 
