@@ -69,16 +69,41 @@
       </div>
     </section>
 
-    <section class="section reveal" id="trending">
-      <div class="container" id="trending-rail"></div>
+    <section class="section products-section is-visible" id="featured">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 id="featured-section-title">Featured picks</h2>
+            <p id="featured-section-sub">Staff favorites from the bar and the shelf.</p>
+          </div>
+          <a class="btn secondary" href="#products">Browse all</a>
+        </div>
+        <div id="featured-products" class="grid product-grid product-grid-dense"></div>
+      </div>
+    </section>
+
+    <section class="section best-deal reveal">
+      <div class="container deal-panel">
+        <div class="deal-copy">
+          <span class="eyebrow" id="deal-eyebrow"></span>
+          <h2 id="deal-title"></h2>
+          <p id="deal-desc"></p>
+          <div class="deal-meta">
+            <strong id="deal-price"></strong>
+            <span id="deal-badge"></span>
+          </div>
+          <a class="btn" id="deal-cta" href="deal.html"></a>
+        </div>
+        <div class="deal-visual" id="deal-image"></div>
+      </div>
     </section>
 
     <section class="section products-section reveal" id="products">
       <div class="container">
         <div class="section-head">
           <div>
-            <h2 id="featured-section-title"></h2>
-            <p id="featured-section-sub"></p>
+            <h2 id="shop-section-title">Shop the collection</h2>
+            <p id="shop-section-sub">Browse every bean, drink, bakery item, and brew tool in the cafe shop.</p>
           </div>
         </div>
         <div class="shop-layout">
@@ -121,23 +146,15 @@
       </div>
     </section>
 
-    <section class="section reveal">
-      <div class="container" id="recently-viewed-rail"></div>
-    </section>
-
-    <section class="section best-deal reveal">
-      <div class="container deal-panel">
-        <div class="deal-copy">
-          <span class="eyebrow" id="deal-eyebrow"></span>
-          <h2 id="deal-title"></h2>
-          <p id="deal-desc"></p>
-          <div class="deal-meta">
-            <strong id="deal-price"></strong>
-            <span id="deal-badge"></span>
+    <section class="section reveal" id="recently-viewed-section" hidden>
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Recently viewed</h2>
+            <p class="muted">Pick up where you left off.</p>
           </div>
-          <a class="btn" id="deal-cta" href="deal.html"></a>
         </div>
-        <div class="deal-visual" id="deal-image"></div>
+        <div id="recently-viewed-rail" class="grid product-grid product-grid-dense"></div>
       </div>
     </section>
 

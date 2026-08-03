@@ -24,6 +24,7 @@ const DEFAULT_SETTINGS = {
   },
   categorySection: { title: 'Shop by category', subtext: 'Cafe drinks, bakery, beans, and gear — browse what we pour and what we send home.' },
   featuredSection: { title: 'Featured picks', subtext: 'Staff favorites from the bar and the shelf.' },
+  shopSection: { title: 'Shop the collection', subtext: 'Browse every bean, drink, bakery item, and brew tool in the cafe shop.' },
   deal: {
     eyebrow: 'Cafe special', title: 'Weekend Brunch Blend + Ceramic Mug',
     description: 'A mellow house blend paired with our signature mug — made for slow Saturday mornings at home or at the cafe counter.',
@@ -120,6 +121,7 @@ function loadSettings() {
       hero: { ...DEFAULT_SETTINGS.hero, ...(saved.hero || {}) },
       categorySection: { ...DEFAULT_SETTINGS.categorySection, ...(saved.categorySection || {}) },
       featuredSection: { ...DEFAULT_SETTINGS.featuredSection, ...(saved.featuredSection || {}) },
+      shopSection: { ...DEFAULT_SETTINGS.shopSection, ...(saved.shopSection || {}) },
       deal: { ...DEFAULT_SETTINGS.deal, ...(saved.deal || {}) },
       testimonials: Array.isArray(saved.testimonials)
         ? saved.testimonials.map((item, index) => ({
@@ -786,9 +788,11 @@ function renderPublicSiteContent() {
   setEl('cat-section-title', s.categorySection.title);
   setEl('cat-section-sub', s.categorySection.subtext);
 
-  // Featured section headings
+  // Featured + shop section headings
   setEl('featured-section-title', s.featuredSection.title);
   setEl('featured-section-sub', s.featuredSection.subtext === 'Highlighted selections from the admin-managed collection.' ? '' : s.featuredSection.subtext);
+  setEl('shop-section-title', s.shopSection?.title || DEFAULT_SETTINGS.shopSection.title);
+  setEl('shop-section-sub', s.shopSection?.subtext || DEFAULT_SETTINGS.shopSection.subtext);
 
   // Deal of the day
   setEl('deal-eyebrow', s.deal.eyebrow);
@@ -1880,36 +1884,97 @@ function renderPublicCategoryGrid() {
 function renderRecentlyViewedRail() {
   const root = document.getElementById('recently-viewed-rail');
   if (!root) return;
-  const products = loadRecentlyViewed().map((id) => loadProducts().find((p) => String(p.id) === id)).filter(Boolean);
-  if (!products.length) { root.innerHTML = ''; return; }
-  root.innerHTML = `<div class="section-head"><div><h2>Recently viewed</h2><p class="muted">Pick up where you left off.</p></div></div><div class="product-rail">${products.map((product) => renderProductCardHtml(product, { compact: true })).join('')}</div>`;
+  const section = document.getElementById('recently-viewed-section') || root.closest('section');
+  const products = loadRecentlyViewed()
+    .map((id) => loadProducts().find((p) => String(p.id) === id))
+    .filter(Boolean)
+    .slice(0, 8);
+  if (!products.length) {
+    root.innerHTML = '';
+    if (section) section.hidden = true;
+    return;
+  }
+  if (section) {
+    section.hidden = false;
+    section.classList.add('is-visible');
+  }
+  root.classList.add('grid', 'product-grid', 'product-grid-dense');
+  root.innerHTML = products.map((product) => renderProductCardHtml(product)).join('');
   bindProductCardActions(root);
 }
-function renderTrendingRail() {
-  const root = document.getElementById('trending-rail');
+
+function renderFeaturedProducts() {
+  const root = document.getElementById('featured-products');
   if (!root) return;
-  const products = loadProducts().filter((p) => p.featured).slice(0, 8);
-  root.innerHTML = `<div class="section-head"><div><h2>Trending now</h2><p class="muted">Staff picks and popular cafe staples.</p></div><a class="btn secondary" href="#products">Browse all</a></div><div class="product-rail">${products.map((product) => renderProductCardHtml(product, { compact: true })).join('')}</div>`;
+  let products = loadProducts().filter((p) => p.featured).slice(0, 8);
+  if (!products.length) {
+    products = loadProducts().slice(0, 8);
+  }
+  if (!products.length) {
+    root.innerHTML = '<div class="card"><p class="muted">No featured products yet. Mark items as featured in admin.</p></div>';
+    return;
+  }
+  root.innerHTML = products.map((product) => renderProductCardHtml(product)).join('');
   bindProductCardActions(root);
+  const section = root.closest('section');
+  if (section) {
+    section.hidden = false;
+    section.classList.add('is-visible');
+  }
 }
+
+function renderTrendingRail() {
+  // Kept for compatibility — featured grid replaced the old horizontal rail.
+  renderFeaturedProducts();
+}
+
 function renderOfferStrip() {
   const root = document.getElementById('offer-strip');
   if (!root) return;
   const discounts = getActiveDiscounts().slice(0, 4);
-  const offers = discounts.length ? discounts.map((d) => ({ title: d.name, desc: d.type === 'store' ? 'Store-wide' : d.type === 'category' ? `On ${d.category}` : 'Selected product', value: d.valueType === 'fixed' ? formatCurrencyAmount(d.value) : `${d.value}% off` })) : [
+  const offers = discounts.length ? discounts.map((d) => ({
+    title: d.name,
+    desc: d.type === 'store' ? 'Store-wide' : d.type === 'category' ? `On ${d.category}` : 'Selected product',
+    value: d.valueType === 'fixed' ? formatCurrencyAmount(d.value) : `${d.value}% off`
+  })) : [
     { title: 'Cafe pickup', desc: 'Order online, collect at the bar', value: 'Free' },
     { title: 'Fresh roast', desc: 'Small-batch beans each week', value: 'New' },
     { title: 'Bank offer', desc: 'Extra savings on Razorpay UPI', value: 'UPI' },
     { title: 'Gift ready', desc: 'Hamper wraps available in-store', value: 'Gift' }
   ];
-  root.innerHTML = offers.map((o) => `<article class="offer-chip"><strong>${escapeHtml(o.value)}</strong><div><span>${escapeHtml(o.title)}</span><small>${escapeHtml(o.desc)}</small></div></article>`).join('');
+  root.innerHTML = offers.map((o) => `
+    <article class="offer-chip">
+      <strong>${escapeHtml(o.value)}</strong>
+      <div><span>${escapeHtml(o.title)}</span><small>${escapeHtml(o.desc)}</small></div>
+    </article>`).join('');
 }
+
 function renderProductCardHtml(product, options = {}) {
   const wished = loadWishlist().includes(String(product.id));
   const compared = loadCompareList().includes(String(product.id));
   const stock = Number(product.stock);
-  const imageSrc = product.imageUrl ? escapeHtml(optimizeImageUrl(product.imageUrl, 520, 70)) : DEFAULT_IMAGE_URL;
-  return `<article class="product-card${options.compact ? ' product-card-compact' : ''}" data-product-id="${escapeHtml(product.id)}"><button class="wishlist-btn${wished ? ' is-active' : ''}" type="button" data-wishlist="${escapeHtml(product.id)}" aria-label="Wishlist">${wished ? '♥' : '♡'}</button><img class="product-image" src="${imageSrc}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async"><span class="badge">${escapeHtml(product.category || 'Coffee')}</span>${stock <= 5 ? `<span class="stock-pill">${stock <= 0 ? 'Sold out' : 'Only few left'}</span>` : ''}<h3>${escapeHtml(product.name)}</h3><p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p><div class="product-meta"><div><div class="price">${formatCurrencyAmount(Number(product.price))}</div><label class="compare-check"><input type="checkbox" data-compare="${escapeHtml(product.id)}" ${compared ? 'checked' : ''}> Compare</label></div><div class="product-actions"><button class="btn secondary add-to-kart" type="button" data-buy="${escapeHtml(product.id)}" ${stock <= 0 ? 'disabled' : ''}>Add to cart</button></div></div></article>`;
+  const imageSrc = escapeHtml(optimizeImageUrl(product.imageUrl || DEFAULT_IMAGE_URL, 520, 70));
+  const name = escapeHtml(product.name || 'Product');
+  const description = escapeHtml(product.description || 'Freshly made with care.');
+  const category = escapeHtml(product.category || 'Coffee');
+  return `
+    <article class="product-card${options.compact ? ' product-card-compact' : ''}" data-product-id="${escapeHtml(product.id)}">
+      <button class="wishlist-btn${wished ? ' is-active' : ''}" type="button" data-wishlist="${escapeHtml(product.id)}" aria-label="Wishlist">${wished ? '♥' : '♡'}</button>
+      <img class="product-image" src="${imageSrc}" alt="${name}" loading="lazy" decoding="async">
+      <span class="badge">${category}</span>
+      ${stock <= 5 ? `<span class="stock-pill">${stock <= 0 ? 'Sold out' : 'Only few left'}</span>` : ''}
+      <h3>${name}</h3>
+      <p class="muted">${description}</p>
+      <div class="product-meta">
+        <div>
+          <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
+          <label class="compare-check"><input type="checkbox" data-compare="${escapeHtml(product.id)}" ${compared ? 'checked' : ''}> Compare</label>
+        </div>
+        <div class="product-actions">
+          <button class="btn secondary add-to-kart" type="button" data-buy="${escapeHtml(product.id)}" ${stock <= 0 ? 'disabled' : ''}>Add to cart</button>
+        </div>
+      </div>
+    </article>`;
 }
 function bindProductCardActions(root = document) {
   root.querySelectorAll('[data-buy]').forEach((btn) => {
@@ -2024,7 +2089,7 @@ async function renderProductDetail() {
         </div>
       </div>
 
-      ${similar.length ? `<div class="container" style="margin-top:2rem;"><div class="section-head"><div><h2>Similar in ${escapeHtml(product.category || 'this range')}</h2><p class="muted">Customers also browse these.</p></div></div><div class="product-rail" id="similar-products-rail">${similar.map((item) => renderProductCardHtml(item, { compact: true })).join('')}</div></div>` : ''}
+      ${similar.length ? `<div class="container" style="margin-top:2rem;"><div class="section-head"><div><h2>Similar in ${escapeHtml(product.category || 'this range')}</h2><p class="muted">Customers also browse these.</p></div></div><div class="grid product-grid product-grid-dense" id="similar-products-rail">${similar.map((item) => renderProductCardHtml(item)).join('')}</div></div>` : ''}
 
       <div class="container product-review-section">
         <div class="product-review-header">
@@ -3385,7 +3450,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPublicCategoryGrid();
   initShopControls();
   renderOfferStrip();
-  renderTrendingRail();
+  renderFeaturedProducts();
   renderRecentlyViewedRail();
   renderCompareBar();
   if (document.getElementById('public-products')) {
