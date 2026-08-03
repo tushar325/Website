@@ -6,8 +6,25 @@
   <title>Admin Product Categories</title>
   <meta name="description" content="Admin product categories placeholder.">
   <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      try {
+        if (sessionStorage.getItem('bean-bloom-admin') === 'true') {
+          document.documentElement.classList.add('admin-authed-html');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body data-admin-page="categories">
+  <script>
+    (function () {
+      var authed = false;
+      try { authed = sessionStorage.getItem('bean-bloom-admin') === 'true'; } catch (e) {}
+      if (authed) document.body.classList.add('admin-authed');
+    })();
+  </script>
+
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">Bean & Bloom</a>

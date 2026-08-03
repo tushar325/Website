@@ -610,6 +610,25 @@ img { max-width: 100%; display: block; }
 .muted { color: var(--muted); }
 .hide { display: none; }
 
+/* Lock admin UI until session is proven */
+body[data-admin-page]:not(.admin-authed) .admin-shell,
+body[data-admin-page]:not(.admin-authed) #admin-panel {
+  display: none !important;
+}
+body[data-admin-page]:not(.admin-authed) #login-form {
+  display: grid !important;
+}
+body[data-admin-page].admin-authed #login-form {
+  display: none !important;
+}
+body[data-admin-page].admin-authed #admin-panel {
+  display: block !important;
+}
+body[data-admin-page].admin-authed #admin-panel.admin-shell,
+body[data-admin-page].admin-authed .admin-shell {
+  display: grid !important;
+}
+
 /* Cart */
 .cart-grid {
   display: grid;
