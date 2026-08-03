@@ -1,4 +1,5 @@
 const express = require('express');
+const { requireAdmin } = require('../middleware/auth');
 
 module.exports = (pool) => {
   const router = express.Router();
@@ -78,7 +79,7 @@ module.exports = (pool) => {
   });
 
   // Create product
-  router.post('/', async (req, res) => {
+  router.post('/', requireAdmin, async (req, res) => {
     const { id, name, price, category_id, image_url, description, featured } = req.body;
 
     if (!id || !name || !price || !category_id) {
@@ -106,7 +107,7 @@ module.exports = (pool) => {
   });
 
   // Update product
-  router.put('/:id', async (req, res) => {
+  router.put('/:id', requireAdmin, async (req, res) => {
     const { name, price, category_id, image_url, description, featured } = req.body;
 
     try {
@@ -124,7 +125,7 @@ module.exports = (pool) => {
   });
 
   // Delete product
-  router.delete('/:id', async (req, res) => {
+  router.delete('/:id', requireAdmin, async (req, res) => {
     try {
       const connection = await pool.getConnection();
       await connection.execute('DELETE FROM products WHERE id = ?', [req.params.id]);

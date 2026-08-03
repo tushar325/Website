@@ -213,7 +213,27 @@ CREATE TABLE IF NOT EXISTS newsletter_subscribers (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed default admin (password must be changed in production)
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id VARCHAR(64) PRIMARY KEY,
+  slug VARCHAR(190) NOT NULL UNIQUE,
+  title VARCHAR(255) NOT NULL,
+  excerpt LONGTEXT,
+  content LONGTEXT,
+  cover_image LONGTEXT,
+  author VARCHAR(120) NOT NULL DEFAULT 'Bean & Bloom',
+  category VARCHAR(120) NOT NULL DEFAULT 'Brew notes',
+  tags_json JSON NULL,
+  featured TINYINT(1) NOT NULL DEFAULT 0,
+  is_published TINYINT(1) NOT NULL DEFAULT 1,
+  published_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_blog_published (is_published, published_at),
+  INDEX idx_blog_featured (featured)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Seed default admin — replace password with a bcrypt hash in production
+-- (server bootstrap hashes 'admin' automatically when the API starts)
 INSERT INTO users (username, password, role, full_name)
 SELECT 'admin', 'admin', 'admin', 'Cafe Admin'
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = 'admin');

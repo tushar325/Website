@@ -9,6 +9,63 @@ const DISCOUNTS_KEY = 'bean-bloom-discounts-v1';
 const RECENTLY_VIEWED_KEY = 'bean-bloom-recently-viewed';
 const WISHLIST_KEY = 'bean-bloom-wishlist';
 const COMPARE_KEY = 'bean-bloom-compare';
+const BLOGS_KEY = 'bean-bloom-blogs-v1';
+const ADMIN_TOKEN_KEY = 'bean-bloom-admin-token';
+
+const DEFAULT_BLOGS = [
+  {
+    id: 'blog-pour-over',
+    slug: 'pour-over-ritual-at-home',
+    title: 'The pour-over ritual: slower coffee, clearer flavor',
+    excerpt: 'A calm, repeatable pour-over method that unlocks sweetness without cafe equipment.',
+    category: 'Brew guides',
+    author: 'Bean & Bloom',
+    coverImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1600&q=80',
+    featured: true,
+    published: true,
+    publishedAt: '2026-07-12T10:00:00.000Z',
+    content: `Morning light, a kettle just off boil, and a quiet counter — that is where great pour-over begins.\n\n## Why pour-over\nPour-over rewards attention. Water temperature, grind size, and pour pace shape sweetness, acidity, and body.\n\n## What you need\n- Fresh specialty beans\n- Burr grinder\n- Pour-over dripper and paper filter\n- Gooseneck kettle\n- Scale\n\n## The method\n1. Heat water to about 92–96°C.\n2. Grind medium-fine — like coarse table salt.\n3. Rinse the paper filter and preheat the dripper.\n4. Add 18g coffee for 300g water (1:16.5).\n5. Bloom with 40g water for 35–45 seconds.\n6. Pour in gentle spirals to 300g by 2:30–3:00.\n\nShop our single-origin bags and brew gear when you are ready to dial it in at home.`
+  },
+  {
+    id: 'blog-espresso-dial',
+    slug: 'dialing-in-home-espresso',
+    title: 'Dialing in espresso without the guesswork',
+    excerpt: 'A practical checklist for dose, yield, and time — so home shots taste intentional.',
+    category: 'Espresso',
+    author: 'Roast desk',
+    coverImage: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=1600&q=80',
+    featured: true,
+    published: true,
+    publishedAt: '2026-07-20T10:00:00.000Z',
+    content: `Espresso is a conversation between grind, dose, and yield. Change one variable at a time.\n\n## Start here\n- Dose: 18g\n- Yield: 36g (1:2)\n- Time: 25–32 seconds\n\n## Then adjust\n- Sour / thin → finer grind or slightly higher dose\n- Bitter / heavy → coarser grind or shorter yield\n- Channeling → distribute grounds evenly and tamp level\n\nKeep our house espresso nearby — consistency beats complexity.`
+  },
+  {
+    id: 'blog-storage',
+    slug: 'how-to-store-coffee-beans',
+    title: 'How to store coffee beans so they stay vivid',
+    excerpt: 'Skip the fridge myths. Protect aroma with airtight, cool, and dark habits.',
+    category: 'Care',
+    author: 'Bean & Bloom',
+    coverImage: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80',
+    featured: false,
+    published: true,
+    publishedAt: '2026-07-28T10:00:00.000Z',
+    content: `Coffee is fresh food. Oxygen, heat, moisture, and light fade aroma faster than most people expect.\n\n## Do this\n- Keep beans in an airtight canister or the original valve bag\n- Store in a cool cupboard away from the stove\n- Buy amounts you will finish in 2–3 weeks\n- Grind just before brewing\n\n## Skip this\n- The refrigerator\n- Leaving the bag open on the counter\n- Freezing and thawing repeatedly`
+  },
+  {
+    id: 'blog-gift',
+    slug: 'building-a-coffee-gift-box',
+    title: 'Building a coffee gift box that feels personal',
+    excerpt: 'Pair a bag, a mug, and a short brew note — gifts that get used, not shelved.',
+    category: 'Gifting',
+    author: 'Studio',
+    coverImage: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=1600&q=80',
+    featured: false,
+    published: true,
+    publishedAt: '2026-08-01T10:00:00.000Z',
+    content: `A thoughtful coffee gift is not a random sampler. It is a small ritual ready to begin.\n\n## A simple formula\n1. One bag with a clear tasting note\n2. One mug or dripper they will actually use\n3. A handwritten brew card (dose, water, time)\n\n## For beginners\nChoose a forgiving medium roast and a pour-over kit.\n\n## For espresso fans\nHouse espresso plus a milk pitcher beats another novelty mug.`
+  }
+];
 
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
@@ -208,6 +265,22 @@ function loadSettings() {
 function saveSettings(settings) {
   settingsCache = settings;
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  // Persist dynamic site content to MySQL when API + admin token available
+  if (window.BeanbBloomAPI?.Settings?.save && sessionStorage.getItem(ADMIN_TOKEN_KEY)) {
+    window.BeanbBloomAPI.Settings.save(settings).catch(() => {});
+  }
+}
+
+async function hydrateSettingsFromSql() {
+  if (!window.BeanbBloomAPI?.Settings?.get) return loadSettings();
+  try {
+    const remote = await window.BeanbBloomAPI.Settings.get();
+    if (remote && typeof remote === 'object' && Object.keys(remote).length) {
+      settingsCache = null;
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...DEFAULT_SETTINGS, ...remote }));
+    }
+  } catch (_) {}
+  return loadSettings();
 }
 
 function resetSettingsToDefaults() {
@@ -224,9 +297,14 @@ function isAdminLoggedIn() {
   return sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
 }
 
-function setAdminLoggedIn(value) {
-  if (value) sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
-  else sessionStorage.removeItem(ADMIN_SESSION_KEY);
+function setAdminLoggedIn(value, token = null) {
+  if (value) {
+    sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    if (token) sessionStorage.setItem(ADMIN_TOKEN_KEY, token);
+  } else {
+    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+  }
 }
 
 function ensureAdminAccess() {
@@ -273,10 +351,26 @@ function ensureAdminAccess() {
 function loadRegisteredCustomers() {
   try {
     const list = JSON.parse(localStorage.getItem(CUSTOMERS_KEY) || '[]');
-    return Array.isArray(list) ? list : [];
+    if (!Array.isArray(list)) return [];
+    // Never expose passwords / card fields in admin customer views
+    return list.map((customer) => {
+      const { password, cardNumber, cvv, pan, card, ...safe } = customer || {};
+      return safe;
+    });
   } catch {
     return [];
   }
+}
+
+function sanitizeCustomerRecord(customer) {
+  if (!customer || typeof customer !== 'object') return customer;
+  const { password, cardNumber, cvv, cvc, pan, card, expiry, ...safe } = customer;
+  return safe;
+}
+
+function saveRegisteredCustomers(list) {
+  const safe = (Array.isArray(list) ? list : []).map(sanitizeCustomerRecord);
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(safe));
 }
 
 function loadAllOrders() {
@@ -3796,12 +3890,11 @@ function initAdmin() {
     }
   }
 
-  loginForm.addEventListener('submit', (event) => {
+  loginForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const username = document.getElementById('username')?.value?.trim();
     const password = document.getElementById('password')?.value;
-    if (username === 'admin' && password === 'admin') {
-      setAdminLoggedIn(true);
+    const finishLogin = () => {
       if (nextPage && /^admin[\w.-]*\.html(\?.*)?$/.test(nextPage)) {
         window.location.href = nextPage;
         return;
@@ -3819,9 +3912,30 @@ function initAdmin() {
       if (adminPageType === 'settings') {
         document.getElementById('admin-panel')?.classList.remove('hide');
       }
+    };
+
+    let authed = false;
+    if (window.BeanbBloomAPI?.Auth?.login) {
+      try {
+        const result = await window.BeanbBloomAPI.Auth.login(username, password);
+        if (result?.role === 'admin' && result.token) {
+          setAdminLoggedIn(true, result.token);
+          authed = true;
+        }
+      } catch (_) {}
+    }
+    if (!authed && username === 'admin' && password === 'admin') {
+      // Local demo fallback when API is offline — still never stores card data
+      setAdminLoggedIn(true, null);
+      authed = true;
+    }
+
+    if (authed) {
+      finishLogin();
+    } else if (statusBox) {
+      statusBox.textContent = 'Invalid credentials.';
     } else {
-      if (statusBox) statusBox.textContent = 'Use admin / admin to enter the dashboard.';
-      else showToast('Use admin / admin to enter the dashboard.', 'info');
+      showToast('Invalid credentials.', 'info');
     }
   });
 
@@ -4222,6 +4336,7 @@ function initAdminFeaturePages(pageType) {
   if (pageType === 'inventory') renderAdminInventoryPage();
   if (pageType === 'analytics') renderAdminAnalyticsPage();
   if (pageType === 'discounts') renderAdminDiscountsPage();
+  if (pageType === 'blogs') renderAdminBlogsPage();
 }
 
 function getOrdersDateFilter() {
@@ -4647,6 +4762,350 @@ function renderAdminAnalyticsPage() {
   `;
 }
 
+function readingMinutesFor(content) {
+  const words = String(content || '').split(/\s+/).filter(Boolean).length;
+  return Math.max(2, Math.ceil(words / 180));
+}
+
+function normalizeBlogPost(post = {}) {
+  return {
+    id: post.id || `blog-${Date.now()}`,
+    slug: post.slug || String(post.title || 'post').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+    title: post.title || 'Untitled',
+    excerpt: post.excerpt || '',
+    content: post.content || '',
+    coverImage: post.coverImage || post.cover_image || DEFAULT_IMAGE_URL,
+    author: post.author || 'Bean & Bloom',
+    category: post.category || 'Brew notes',
+    tags: Array.isArray(post.tags) ? post.tags : [],
+    featured: !!post.featured,
+    published: post.published !== false && post.is_published !== 0 && post.is_published !== false,
+    publishedAt: post.publishedAt || post.published_at || new Date().toISOString(),
+    readingMinutes: post.readingMinutes || readingMinutesFor(post.content)
+  };
+}
+
+function loadBlogs({ includeDrafts = false } = {}) {
+  let list = [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(BLOGS_KEY) || 'null');
+    list = Array.isArray(saved) && saved.length ? saved.map(normalizeBlogPost) : DEFAULT_BLOGS.map(normalizeBlogPost);
+  } catch {
+    list = DEFAULT_BLOGS.map(normalizeBlogPost);
+  }
+  if (!includeDrafts) list = list.filter((post) => post.published);
+  return list.sort((a, b) => new Date(b.publishedAt || 0) - new Date(a.publishedAt || 0));
+}
+
+function saveBlogs(list) {
+  const normalized = (Array.isArray(list) ? list : []).map(normalizeBlogPost);
+  localStorage.setItem(BLOGS_KEY, JSON.stringify(normalized));
+  return normalized;
+}
+
+async function hydrateBlogsFromSql() {
+  if (!window.BeanbBloomAPI?.Blogs?.getAll) return loadBlogs();
+  try {
+    const remote = await window.BeanbBloomAPI.Blogs.getAll(false);
+    if (Array.isArray(remote) && remote.length) {
+      saveBlogs(remote.map(normalizeBlogPost));
+    }
+  } catch (_) {}
+  return loadBlogs();
+}
+
+function renderMarkdownLite(text) {
+  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n');
+  const html = [];
+  let inList = false;
+  const flushList = () => {
+    if (inList) {
+      html.push('</ul>');
+      inList = false;
+    }
+  };
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      flushList();
+      return;
+    }
+    if (/^##\s+/.test(trimmed)) {
+      flushList();
+      html.push(`<h2>${escapeHtml(trimmed.replace(/^##\s+/, ''))}</h2>`);
+      return;
+    }
+    if (/^[-*]\s+/.test(trimmed) || /^\d+\.\s+/.test(trimmed)) {
+      if (!inList) {
+        html.push('<ul>');
+        inList = true;
+      }
+      html.push(`<li>${escapeHtml(trimmed.replace(/^([-*]|\d+\.)\s+/, ''))}</li>`);
+      return;
+    }
+    flushList();
+    html.push(`<p>${escapeHtml(trimmed)}</p>`);
+  });
+  flushList();
+  return html.join('');
+}
+
+function formatBlogDate(value) {
+  const d = new Date(value || Date.now());
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function renderBlogListingPage() {
+  const featuredRoot = document.getElementById('blog-featured');
+  const gridRoot = document.getElementById('blog-grid');
+  if (!featuredRoot && !gridRoot) return;
+
+  const posts = loadBlogs({ includeDrafts: false });
+  const featured = posts.filter((p) => p.featured).slice(0, 3);
+  const lead = featured[0] || posts[0];
+  const secondary = (featured.length > 1 ? featured.slice(1, 3) : posts.slice(1, 3)).filter(Boolean);
+
+  if (featuredRoot) {
+    if (!lead) {
+      featuredRoot.innerHTML = '<p class="muted">Journal stories coming soon.</p>';
+    } else {
+      featuredRoot.innerHTML = `
+        <a class="blog-feature-card" href="blog-post.html?slug=${encodeURIComponent(lead.slug)}">
+          <div class="blog-feature-bg" style="background-image:url('${escapeHtml(optimizeImageUrl(lead.coverImage, 1400, 80))}')"></div>
+          <div class="blog-feature-copy">
+            <p class="eyebrow">${escapeHtml(lead.category)}</p>
+            <h2>${escapeHtml(lead.title)}</h2>
+            <p>${escapeHtml(lead.excerpt)}</p>
+          </div>
+        </a>
+        <div class="blog-feature-stack">
+          ${secondary.map((post) => `
+            <a class="blog-feature-card is-secondary" href="blog-post.html?slug=${encodeURIComponent(post.slug)}">
+              <div class="blog-feature-bg" style="background-image:url('${escapeHtml(optimizeImageUrl(post.coverImage, 900, 75))}')"></div>
+              <div class="blog-feature-copy">
+                <p class="eyebrow">${escapeHtml(post.category)}</p>
+                <h3>${escapeHtml(post.title)}</h3>
+              </div>
+            </a>
+          `).join('')}
+        </div>`;
+    }
+  }
+
+  const filters = document.getElementById('blog-filters');
+  const categories = ['All', ...Array.from(new Set(posts.map((p) => p.category).filter(Boolean)))];
+  let active = 'All';
+
+  const paintGrid = () => {
+    if (!gridRoot) return;
+    const visible = active === 'All' ? posts : posts.filter((p) => p.category === active);
+    gridRoot.innerHTML = visible.map((post) => `
+      <a class="blog-card" href="blog-post.html?slug=${encodeURIComponent(post.slug)}">
+        <div class="blog-card-media" style="background-image:url('${escapeHtml(optimizeImageUrl(post.coverImage, 800, 75))}')"></div>
+        <div class="blog-card-body">
+          <p class="eyebrow">${escapeHtml(post.category)}</p>
+          <h3>${escapeHtml(post.title)}</h3>
+          <p>${escapeHtml(post.excerpt)}</p>
+          <div class="blog-card-meta">
+            <span>${escapeHtml(formatBlogDate(post.publishedAt))}</span>
+            <span>${post.readingMinutes || readingMinutesFor(post.content)} min read</span>
+          </div>
+        </div>
+      </a>
+    `).join('') || '<p class="muted">No stories in this category yet.</p>';
+  };
+
+  if (filters) {
+    filters.innerHTML = categories.map((cat) => `
+      <button type="button" data-blog-filter="${escapeHtml(cat)}" class="${cat === active ? 'is-active' : ''}">${escapeHtml(cat)}</button>
+    `).join('');
+    filters.querySelectorAll('[data-blog-filter]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        active = btn.getAttribute('data-blog-filter') || 'All';
+        filters.querySelectorAll('[data-blog-filter]').forEach((el) => {
+          el.classList.toggle('is-active', el.getAttribute('data-blog-filter') === active);
+        });
+        paintGrid();
+      });
+    });
+  }
+  paintGrid();
+}
+
+function renderBlogPostPage() {
+  const titleEl = document.getElementById('blog-post-title');
+  const bodyEl = document.getElementById('blog-post-body');
+  if (!titleEl || !bodyEl) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const slug = params.get('slug') || '';
+  const posts = loadBlogs({ includeDrafts: false });
+  let post = posts.find((item) => item.slug === slug || item.id === slug);
+
+  const paint = (found) => {
+    if (!found) {
+      titleEl.textContent = 'Story not found';
+      bodyEl.innerHTML = '<p class="muted">This journal entry is unavailable. <a href="blog.html">Back to the journal</a>.</p>';
+      return;
+    }
+    document.title = `${found.title} | Bean & Bloom`;
+    const cat = document.getElementById('blog-post-category');
+    const meta = document.getElementById('blog-post-meta');
+    const cover = document.getElementById('blog-post-cover');
+    if (cat) cat.textContent = found.category;
+    titleEl.textContent = found.title;
+    if (meta) {
+      meta.innerHTML = `
+        <span>${escapeHtml(found.author)}</span>
+        <span>${escapeHtml(formatBlogDate(found.publishedAt))}</span>
+        <span>${found.readingMinutes || readingMinutesFor(found.content)} min read</span>`;
+    }
+    if (cover) cover.style.backgroundImage = `url('${optimizeImageUrl(found.coverImage, 1600, 80)}')`;
+    bodyEl.innerHTML = renderMarkdownLite(found.content);
+    const related = document.getElementById('blog-related');
+    if (related) {
+      const others = posts.filter((item) => item.id !== found.id).slice(0, 3);
+      related.innerHTML = others.map((item) => `
+        <a class="blog-related-link" href="blog-post.html?slug=${encodeURIComponent(item.slug)}">
+          <strong>${escapeHtml(item.title)}</strong>
+          <span>${escapeHtml(item.category)} · ${item.readingMinutes || readingMinutesFor(item.content)} min</span>
+        </a>
+      `).join('') || '<p class="muted">More stories soon.</p>';
+    }
+  };
+
+  paint(post);
+
+  if ((!post || !slug) && window.BeanbBloomAPI?.Blogs?.getBySlug && slug) {
+    window.BeanbBloomAPI.Blogs.getBySlug(slug).then((remote) => {
+      if (!remote) return;
+      const normalized = normalizeBlogPost(remote);
+      const all = loadBlogs({ includeDrafts: true });
+      const idx = all.findIndex((item) => item.id === normalized.id || item.slug === normalized.slug);
+      if (idx >= 0) all[idx] = normalized;
+      else all.unshift(normalized);
+      saveBlogs(all);
+      paint(normalized);
+    }).catch(() => {});
+  }
+}
+
+function renderAdminBlogsPage() {
+  const listRoot = document.getElementById('admin-blogs-list');
+  const form = document.getElementById('blog-form');
+  if (!listRoot || !form) return;
+
+  const fillForm = (post = null) => {
+    document.getElementById('blog-id').value = post?.id || '';
+    document.getElementById('blog-title').value = post?.title || '';
+    document.getElementById('blog-slug').value = post?.slug || '';
+    document.getElementById('blog-category').value = post?.category || 'Brew notes';
+    document.getElementById('blog-author').value = post?.author || 'Bean & Bloom';
+    document.getElementById('blog-cover').value = post?.coverImage || '';
+    document.getElementById('blog-excerpt').value = post?.excerpt || '';
+    document.getElementById('blog-content').value = post?.content || '';
+    document.getElementById('blog-featured').checked = !!post?.featured;
+    document.getElementById('blog-published').checked = post ? !!post.published : true;
+  };
+
+  const refresh = async () => {
+    let posts = loadBlogs({ includeDrafts: true });
+    if (window.BeanbBloomAPI?.Blogs?.getAll && sessionStorage.getItem(ADMIN_TOKEN_KEY)) {
+      try {
+        const remote = await window.BeanbBloomAPI.Blogs.getAll(true);
+        if (Array.isArray(remote)) {
+          posts = saveBlogs(remote.map(normalizeBlogPost));
+        }
+      } catch (_) {}
+    }
+    const meta = document.getElementById('admin-blogs-meta');
+    if (meta) meta.textContent = `${posts.length} post${posts.length === 1 ? '' : 's'} · stored in MySQL when API is connected`;
+    listRoot.innerHTML = posts.map((post) => `
+      <article class="card" style="margin-bottom:.8rem;display:grid;gap:.55rem;">
+        <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+          <div>
+            <h4 style="margin:0 0 .25rem;font-family:var(--font-display);">${escapeHtml(post.title)}</h4>
+            <p class="muted" style="margin:0;font-size:.85rem;">${escapeHtml(post.category)} · ${post.published ? 'Published' : 'Draft'} · ${escapeHtml(post.slug)}</p>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+            <a class="btn secondary" href="blog-post.html?slug=${encodeURIComponent(post.slug)}" target="_blank" rel="noopener">View</a>
+            <button class="btn secondary" type="button" data-edit-blog="${escapeHtml(post.id)}">Edit</button>
+            <button class="btn secondary" type="button" data-delete-blog="${escapeHtml(post.id)}">Delete</button>
+          </div>
+        </div>
+      </article>
+    `).join('') || '<p class="muted">No blog posts yet.</p>';
+
+    listRoot.querySelectorAll('[data-edit-blog]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const post = posts.find((item) => item.id === btn.getAttribute('data-edit-blog'));
+        if (post) {
+          fillForm(post);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      });
+    });
+    listRoot.querySelectorAll('[data-delete-blog]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-delete-blog');
+        if (!confirm('Delete this blog post?')) return;
+        let next = loadBlogs({ includeDrafts: true }).filter((item) => item.id !== id);
+        saveBlogs(next);
+        if (window.BeanbBloomAPI?.Blogs?.remove && sessionStorage.getItem(ADMIN_TOKEN_KEY)) {
+          try { await window.BeanbBloomAPI.Blogs.remove(id); } catch (_) {}
+        }
+        showToast('Post deleted.', 'success');
+        refresh();
+      });
+    });
+  };
+
+  if (!form.dataset.bound) {
+    form.dataset.bound = 'true';
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const payload = normalizeBlogPost({
+        id: document.getElementById('blog-id').value || `blog-${Date.now()}`,
+        title: document.getElementById('blog-title').value.trim(),
+        slug: document.getElementById('blog-slug').value.trim(),
+        category: document.getElementById('blog-category').value.trim() || 'Brew notes',
+        author: document.getElementById('blog-author').value.trim() || 'Bean & Bloom',
+        coverImage: document.getElementById('blog-cover').value.trim() || DEFAULT_IMAGE_URL,
+        excerpt: document.getElementById('blog-excerpt').value.trim(),
+        content: document.getElementById('blog-content').value.trim(),
+        featured: document.getElementById('blog-featured').checked,
+        published: document.getElementById('blog-published').checked,
+        publishedAt: new Date().toISOString()
+      });
+      if (!payload.title || !payload.content) {
+        showToast('Title and content are required.', 'info');
+        return;
+      }
+      const all = loadBlogs({ includeDrafts: true });
+      const idx = all.findIndex((item) => item.id === payload.id);
+      if (idx >= 0) all[idx] = payload;
+      else all.unshift(payload);
+      saveBlogs(all);
+
+      if (window.BeanbBloomAPI?.Blogs && sessionStorage.getItem(ADMIN_TOKEN_KEY)) {
+        try {
+          if (idx >= 0) await window.BeanbBloomAPI.Blogs.update(payload.id, payload);
+          else await window.BeanbBloomAPI.Blogs.create(payload);
+        } catch (err) {
+          showToast(err.message || 'Saved locally; SQL sync failed.', 'info');
+        }
+      }
+      showToast('Blog post saved.', 'success');
+      fillForm(null);
+      refresh();
+    });
+    document.getElementById('blog-reset')?.addEventListener('click', () => fillForm(null));
+  }
+
+  refresh();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.documentElement.classList.add('js');
 
@@ -4664,26 +5123,44 @@ document.addEventListener('DOMContentLoaded', () => {
     catch (err) { console.error(`[Bean & Bloom] ${label} failed:`, err); }
   };
 
-  run('mobile nav', initMobileNav);
-  run('site content', renderPublicSiteContent);
-  run('user nav', renderUserNav);
-  run('categories', renderPublicCategoryGrid);
-  run('shop controls', initShopControls);
-  run('offers', renderOfferStrip);
-  run('featured', renderFeaturedProducts);
-  run('recently viewed', renderRecentlyViewedRail);
-  run('compare bar', renderCompareBar);
-  if (document.getElementById('public-products')) {
-    run('products', () => renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' }));
-  }
-  if (document.getElementById('product-detail')) {
-    run('product detail', renderProductDetail);
-  }
-  run('cafe menu', initCafeMenuFilters);
-  run('deal page', renderDealPage);
-  run('cart count', updateCartCount);
-  run('contact form', initContactForm);
-  run('newsletter', initNewsletterForm);
-  run('reveal animations', initRevealAnimations);
-  run('admin', initAdmin);
+  // Prefer MySQL-backed settings / blogs when the API is reachable
+  const boot = async () => {
+    try { await hydrateSettingsFromSql(); } catch (err) { console.error('[Bean & Bloom] hydrate settings failed:', err); }
+    try { await hydrateBlogsFromSql(); } catch (err) { console.error('[Bean & Bloom] hydrate blogs failed:', err); }
+    run('mobile nav', initMobileNav);
+    run('site content', renderPublicSiteContent);
+    run('user nav', renderUserNav);
+    run('categories', renderPublicCategoryGrid);
+    run('shop controls', initShopControls);
+    run('offers', renderOfferStrip);
+    run('featured', renderFeaturedProducts);
+    run('recently viewed', renderRecentlyViewedRail);
+    run('compare bar', renderCompareBar);
+    if (document.getElementById('public-products')) {
+      run('products', () => renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' }));
+    }
+    if (document.getElementById('product-detail')) {
+      run('product detail', renderProductDetail);
+    }
+    run('cafe menu', initCafeMenuFilters);
+    run('deal page', renderDealPage);
+    run('cart count', updateCartCount);
+    run('contact form', initContactForm);
+    run('newsletter', initNewsletterForm);
+    run('blog listing', renderBlogListingPage);
+    run('blog post', renderBlogPostPage);
+    run('reveal animations', initRevealAnimations);
+    run('admin', initAdmin);
+    // Scrub any legacy plaintext passwords left in local customer dumps
+    run('scrub customers', () => {
+      try {
+        const raw = JSON.parse(localStorage.getItem(CUSTOMERS_KEY) || '[]');
+        if (Array.isArray(raw) && raw.some((c) => c && (c.password || c.cardNumber || c.cvv))) {
+          saveRegisteredCustomers(raw);
+        }
+      } catch (_) {}
+    });
+  };
+
+  boot();
 });

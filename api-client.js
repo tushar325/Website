@@ -3,13 +3,29 @@
  * Handles all communication with the backend server
  */
 
-const _API_BASE = 'http://localhost:3001/api';
+const _API_BASE = (typeof window !== 'undefined' && window.BEAN_BLOOM_API_BASE) || 'http://localhost:3001/api';
+
+function adminAuthHeaders(extra = {}) {
+  const headers = { 'Content-Type': 'application/json', ...extra };
+  try {
+    const token = sessionStorage.getItem('bean-bloom-admin-token');
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+      headers['X-Admin-Token'] = token;
+    }
+  } catch (_) {}
+  return headers;
+}
 
 // Helper function to handle API responses
 async function handleResponse(response) {
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'API request failed');
+    let message = 'API request failed';
+    try {
+      const error = await response.json();
+      message = error.error || message;
+    } catch (_) {}
+    throw new Error(message);
   }
   return response.json();
 }
@@ -29,7 +45,7 @@ const CategoriesAPI = {
   async create(data) {
     const response = await fetch(`${_API_BASE}/categories`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify(data)
     });
     return handleResponse(response);
@@ -38,7 +54,7 @@ const CategoriesAPI = {
   async update(id, data) {
     const response = await fetch(`${_API_BASE}/categories/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify(data)
     });
     return handleResponse(response);
@@ -46,7 +62,8 @@ const CategoriesAPI = {
 
   async delete(id) {
     const response = await fetch(`${_API_BASE}/categories/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: adminAuthHeaders()
     });
     return handleResponse(response);
   }
@@ -77,7 +94,7 @@ const ProductsAPI = {
   async create(data) {
     const response = await fetch(`${_API_BASE}/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify(data)
     });
     return handleResponse(response);
@@ -86,7 +103,7 @@ const ProductsAPI = {
   async update(id, data) {
     const response = await fetch(`${_API_BASE}/products/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify(data)
     });
     return handleResponse(response);
@@ -94,7 +111,8 @@ const ProductsAPI = {
 
   async delete(id) {
     const response = await fetch(`${_API_BASE}/products/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: adminAuthHeaders()
     });
     return handleResponse(response);
   }
@@ -184,7 +202,9 @@ const AuthAPI = {
 // ==================== ORDERS (MySQL + Razorpay meta) ====================
 const OrdersAPI = {
   async getAll() {
-    const response = await fetch(`${_API_BASE}/orders`);
+    const response = await fetch(`${_API_BASE}/orders`, {
+      headers: adminAuthHeaders()
+    });
     return handleResponse(response);
   },
 
@@ -205,7 +225,7 @@ const OrdersAPI = {
   async verifyPayment(id, verified = true) {
     const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}/verify`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify({ verified })
     });
     return handleResponse(response);
@@ -214,7 +234,7 @@ const OrdersAPI = {
   async updateStatus(id, status) {
     const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}/status`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify({ status })
     });
     return handleResponse(response);
@@ -231,7 +251,7 @@ const DiscountsAPI = {
   async create(data) {
     const response = await fetch(`${_API_BASE}/discounts`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify(data)
     });
     return handleResponse(response);
@@ -240,7 +260,7 @@ const DiscountsAPI = {
   async update(id, data) {
     const response = await fetch(`${_API_BASE}/discounts/${encodeURIComponent(id)}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminAuthHeaders(),
       body: JSON.stringify(data)
     });
     return handleResponse(response);
@@ -248,7 +268,62 @@ const DiscountsAPI = {
 
   async remove(id) {
     const response = await fetch(`${_API_BASE}/discounts/${encodeURIComponent(id)}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: adminAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+};
+
+// ==================== SETTINGS (MySQL site_settings) ====================
+const SettingsAPI = {
+  async get() {
+    const response = await fetch(`${_API_BASE}/settings`);
+    return handleResponse(response);
+  },
+  async save(settings) {
+    const response = await fetch(`${_API_BASE}/settings`, {
+      method: 'PUT',
+      headers: adminAuthHeaders(),
+      body: JSON.stringify(settings)
+    });
+    return handleResponse(response);
+  }
+};
+
+// ==================== BLOGS ====================
+const BlogsAPI = {
+  async getAll(all = false) {
+    const url = all ? `${_API_BASE}/blogs?all=1` : `${_API_BASE}/blogs`;
+    const response = await fetch(url, {
+      headers: all ? adminAuthHeaders() : { 'Content-Type': 'application/json' }
+    });
+    return handleResponse(response);
+  },
+  async getBySlug(slug) {
+    const response = await fetch(`${_API_BASE}/blogs/${encodeURIComponent(slug)}`);
+    return handleResponse(response);
+  },
+  async create(data) {
+    const response = await fetch(`${_API_BASE}/blogs`, {
+      method: 'POST',
+      headers: adminAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+  async update(id, data) {
+    const response = await fetch(`${_API_BASE}/blogs/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: adminAuthHeaders(),
+      body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+  },
+  async remove(id) {
+    const response = await fetch(`${_API_BASE}/blogs/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: adminAuthHeaders()
     });
     return handleResponse(response);
   }
@@ -261,5 +336,8 @@ window.BeanbBloomAPI = {
   Cart: CartAPI,
   Auth: AuthAPI,
   Orders: OrdersAPI,
-  Discounts: DiscountsAPI
+  Discounts: DiscountsAPI,
+  Settings: SettingsAPI,
+  Blogs: BlogsAPI,
+  adminAuthHeaders
 };

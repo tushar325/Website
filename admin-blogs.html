@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Blog</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      try {
+        if (sessionStorage.getItem('bean-bloom-admin') === 'true') {
+          document.documentElement.classList.add('admin-authed-html');
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body data-admin-page="blogs">
+  <script>
+    (function () {
+      var authed = false;
+      try { authed = sessionStorage.getItem('bean-bloom-admin') === 'true'; } catch (e) {}
+      if (authed) document.body.classList.add('admin-authed');
+    })();
+  </script>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="admin.html">Bean & Bloom Admin</a>
+      <nav class="nav-links">
+        <a href="index.html">Public site</a>
+        <a href="admin.html">Dashboard</a>
+        <button id="logout-btn" class="btn secondary" type="button" style="display:none;">Log out</button>
+      </nav>
+    </div>
+  </header>
+  <main class="section">
+    <div class="container">
+      <form id="login-form" class="card form-grid">
+        <h3>Admin access</h3>
+        <div class="form-input-group">
+          <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <input id="username" type="text" placeholder="Username" required autocomplete="username">
+        </div>
+        <div class="form-input-group">
+          <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <input id="password" type="password" placeholder="Password" required autocomplete="current-password">
+        </div>
+        <button class="btn" type="submit">Enter dashboard</button>
+        <p class="muted">Demo login: admin / admin</p>
+      </form>
+
+      <div id="admin-panel" class="hide admin-shell">
+        <aside class="admin-sidebar">
+          <nav class="sidebar-nav" aria-label="Admin navigation">
+            <a href="admin.html" class="sidebar-item">Dashboard</a>
+            <a href="admin-analytics.html" class="sidebar-item">Analytics</a>
+            <a href="admin-product-categories.html" class="sidebar-item">Product categories</a>
+            <a href="admin-orders.html" class="sidebar-item">Orders</a>
+            <a href="admin-customers.html" class="sidebar-item">Customers</a>
+            <a href="admin-inventory.html" class="sidebar-item">Inventory</a>
+            <a href="admin-discounts.html" class="sidebar-item">Discounts</a>
+            <a href="admin-blogs.html" class="sidebar-item active">Blog</a>
+            <a href="admin-settings.html" class="sidebar-item">Settings</a>
+          </nav>
+        </aside>
+        <main class="admin-main">
+          <section class="card">
+            <div class="section-head">
+              <div>
+                <h3>Journal posts</h3>
+                <p class="muted">Create and publish stories stored in MySQL. Public site reads published posts only.</p>
+              </div>
+            </div>
+            <form id="blog-form" class="admin-form-grid" style="display:grid;gap:1rem;">
+              <input type="hidden" id="blog-id" value="">
+              <label>Title
+                <input id="blog-title" type="text" required placeholder="Story title">
+              </label>
+              <label>Slug (optional)
+                <input id="blog-slug" type="text" placeholder="auto-from-title">
+              </label>
+              <label>Category
+                <input id="blog-category" type="text" placeholder="Brew guides" value="Brew notes">
+              </label>
+              <label>Author
+                <input id="blog-author" type="text" value="Bean & Bloom">
+              </label>
+              <label class="full-width">Cover image URL
+                <input id="blog-cover" type="url" placeholder="https://…">
+              </label>
+              <label class="full-width">Excerpt
+                <textarea id="blog-excerpt" rows="2" placeholder="Short teaser for the listing page"></textarea>
+              </label>
+              <label class="full-width">Content (Markdown-lite: ## headings, blank lines)
+                <textarea id="blog-content" rows="10" required placeholder="Write the full story…"></textarea>
+              </label>
+              <label class="filter-toggle" style="margin:0;">
+                <input id="blog-featured" type="checkbox">
+                <span>Featured on journal home</span>
+              </label>
+              <label class="filter-toggle" style="margin:0;">
+                <input id="blog-published" type="checkbox" checked>
+                <span>Published</span>
+              </label>
+              <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+                <button class="btn" type="submit">Save post</button>
+                <button class="btn secondary" type="button" id="blog-reset">New post</button>
+              </div>
+            </form>
+          </section>
+          <section class="card">
+            <div class="section-head">
+              <div>
+                <h3>All posts</h3>
+                <p class="muted" id="admin-blogs-meta">Loading…</p>
+              </div>
+            </div>
+            <div id="admin-blogs-list"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <div class="container"><p>© 2026 Admin Dashboard.</p></div>
+  </footer>
+  <script src="api-client.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

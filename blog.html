@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Journal | Bean & Bloom</title>
+  <meta name="description" content="Brew guides, roast notes, and cafe craft from Bean & Bloom — stories for better coffee at home.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
+        <a href="index.html">Home</a>
+        <a href="index.html#products">Shop</a>
+        <a href="blog.html" class="is-active">Blog</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-nav"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="blog-hero">
+      <div class="blog-hero-media" aria-hidden="true"></div>
+      <div class="blog-hero-veil"></div>
+      <div class="container blog-hero-copy">
+        <p class="eyebrow">The journal</p>
+        <h1>Stories for slower mornings and better cups.</h1>
+        <p>Brew guides, roast notes, and the small rituals that make specialty coffee feel at home.</p>
+      </div>
+    </section>
+
+    <section class="section blog-featured-wrap">
+      <div class="container">
+        <div id="blog-featured" class="blog-featured-grid"></div>
+      </div>
+    </section>
+
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="section-head blog-list-head">
+          <div>
+            <h2>All stories</h2>
+            <p class="muted">Read the full journal — from dialing espresso to gifting with intention.</p>
+          </div>
+          <div class="blog-filter-row" id="blog-filters" role="tablist" aria-label="Filter posts"></div>
+        </div>
+        <div id="blog-grid" class="blog-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="index.html">Bean & Bloom</a>
+        <p id="footer-text" data-footer-text>© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html#products">Shop</a>
+        <a href="blog.html">Blog</a>
+        <a href="about.html">Our story</a>
+        <a href="contact.html">Contact</a>
+        <a href="orders.html">My orders</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="api-client.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
