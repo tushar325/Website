@@ -32,10 +32,48 @@
     <section class="section">
       <div class="container">
         <div class="section-head">
-          <h1 id="category-title">Category</h1>
-          <p id="category-description">Browse our handpicked selection for this category.</p>
+          <div>
+            <h1 id="category-title">Category</h1>
+            <p id="category-description">Browse our handpicked selection for this category.</p>
+          </div>
+          <a class="btn secondary" href="index.html#products">All products</a>
         </div>
-        <div id="public-products" class="grid grid-3 product-grid"></div>
+        <div class="shop-layout">
+          <aside class="shop-filters card">
+            <h3 style="margin-top:0;">Filters</h3>
+            <div class="field">
+              <label for="filter-price-min">Min price (₹)</label>
+              <input id="filter-price-min" type="number" min="0" step="1" placeholder="0">
+            </div>
+            <div class="field">
+              <label for="filter-price-max">Max price (₹)</label>
+              <input id="filter-price-max" type="number" min="0" step="1" placeholder="500">
+            </div>
+            <label class="compare-check" style="display:flex;gap:.5rem;align-items:center;margin:0 0 1rem;">
+              <input id="filter-in-stock" type="checkbox"> In stock only
+            </label>
+            <button class="btn secondary" type="button" id="shop-clear-filters" style="width:100%;margin:0;">Clear filters</button>
+          </aside>
+          <div class="shop-results">
+            <div class="shop-controls">
+              <label class="search-field">
+                <span class="visually-hidden">Search</span>
+                <input id="product-search" type="search" placeholder="Search in this category…" autocomplete="off">
+              </label>
+              <label class="sort-field">
+                <span class="visually-hidden">Sort</span>
+                <select id="product-sort">
+                  <option value="featured">Featured</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                  <option value="name">Name A–Z</option>
+                </select>
+              </label>
+            </div>
+            <p class="shop-result-meta muted" id="shop-result-meta"></p>
+            <div id="public-products" class="grid product-grid product-grid-dense" data-show-all="true"></div>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -59,56 +97,16 @@
     document.addEventListener('DOMContentLoaded', () => {
       const categoryParam = new URLSearchParams(window.location.search).get('category')?.trim();
       const title = document.getElementById('category-title');
-
-      if (title && categoryParam) {
-        title.textContent = categoryParam;
-      }
-
-      const root = document.getElementById('public-products');
-      if (root && categoryParam) {
-        let products = loadProducts();
-        products = products.filter(p => p.category && p.category.toLowerCase() === categoryParam.toLowerCase());
-
-        root.innerHTML = '';
-        if (!products.length) {
-          root.innerHTML = '<div class="card"><p class="muted">No products in this category yet.</p></div>';
-        } else {
-          products.forEach(product => {
-            const card = document.createElement('article');
-            card.className = 'product-card';
-            card.dataset.productId = product.id;
-            card.innerHTML = `
-              <img src="${escapeHtml(optimizeImageUrl(product.imageUrl || DEFAULT_IMAGE_URL, 520, 70))}" alt="${escapeHtml(product.name)}" class="product-image" loading="lazy">
-              ${product.featured ? '<span class="badge">Featured</span>' : `<span class="badge">${escapeHtml(product.category)}</span>`}
-              <h3>${escapeHtml(product.name)}</h3>
-              <p class="muted">${escapeHtml(product.description || '')}</p>
-              <div class="product-meta">
-                <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
-                <div class="product-actions">
-                  <button class="btn secondary" type="button" data-add-to-cart="${product.id}">Add to cart</button>
-                </div>
-              </div>
-            `;
-
-            const addButton = card.querySelector('[data-add-to-cart]');
-            if (addButton) {
-              addButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const added = addToCart(product.id);
-                if (added) showToast(`${product.name} added to cart.`, 'success');
-              });
-            }
-
-            card.addEventListener('click', (e) => {
-              if (!e.target.closest('[data-add-to-cart]')) {
-                window.location.href = `product.html?id=${encodeURIComponent(product.id)}`;
-              }
-            });
-
-            root.appendChild(card);
-          });
-        }
-      }
+      if (title && categoryParam) title.textContent = categoryParam;
+      document.body.dataset.seoTitle = `${categoryParam || 'Shop'} | Bean & Bloom`;
+      applySeoMeta();
+      // Keep category filter via URL while using shared shop controls
+      const original = renderPublicProducts;
+      window.renderPublicProducts = function (options = {}) {
+        original({ ...options, showAll: true, categoryFilter: categoryParam || '' });
+      };
+      initShopControls();
+      renderPublicProducts({ showAll: true, categoryFilter: categoryParam || '' });
     });
   </script>
 </body>

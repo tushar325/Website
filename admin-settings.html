@@ -103,6 +103,26 @@
               </div>
 
               <div class="settings-card">
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>SEO</h3>
+                <p class="muted" style="margin:0 0 1rem;">Controls default title, description, social preview, robots, and JSON-LD for public pages.</p>
+                <div class="settings-grid">
+                  <div class="field" style="grid-column:1/-1;"><label>Default page title</label><input id="s-seo-title" type="text" placeholder="Brand | Specialty Coffee Cafe & Shop"></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Meta description</label><textarea id="s-seo-description" rows="2" placeholder="Shop specialty coffee..."></textarea></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Keywords (comma-separated)</label><input id="s-seo-keywords" type="text"></div>
+                  <div class="field"><label>Open Graph image URL</label><input id="s-seo-og" type="url" placeholder="https://..."></div>
+                  <div class="field"><label>Canonical base URL</label><input id="s-seo-canonical" type="url" placeholder="https://beanandbloom.example"></div>
+                  <div class="field"><label>Robots</label>
+                    <select id="s-seo-robots">
+                      <option value="index,follow">index,follow</option>
+                      <option value="noindex,nofollow">noindex,nofollow</option>
+                      <option value="index,nofollow">index,nofollow</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Twitter / X handle</label><input id="s-seo-twitter" type="text" placeholder="@beanandbloom"></div>
+                </div>
+              </div>
+
+              <div class="settings-card">
                 <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>Hero section</h3>
                 <div class="settings-grid cols-1">
                   <div class="field"><label>Eyebrow text</label><input id="s-hero-eyebrow" type="text"></div>
@@ -331,6 +351,14 @@
     function populateSettingsForm(s) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('s-siteName', s.siteName); set('s-footerText', s.footerText);
+      const seo = s.seo || {};
+      set('s-seo-title', seo.defaultTitle);
+      set('s-seo-description', seo.defaultDescription);
+      set('s-seo-keywords', seo.keywords);
+      set('s-seo-og', seo.ogImage);
+      set('s-seo-canonical', seo.canonicalBase);
+      set('s-seo-robots', seo.robots || 'index,follow');
+      set('s-seo-twitter', seo.twitterHandle);
       set('s-hero-eyebrow', s.hero.eyebrow); set('s-hero-headline', s.hero.headline);
       set('s-hero-subtext', s.hero.subtext);
       set('s-hero-cta1Label', s.hero.cta1Label); set('s-hero-cta1Url', s.hero.cta1Url);
@@ -392,6 +420,15 @@
       const checked = id => !!document.getElementById(id)?.checked;
       return {
         siteName: get('s-siteName'), footerText: get('s-footerText'),
+        seo: {
+          defaultTitle: get('s-seo-title'),
+          defaultDescription: get('s-seo-description'),
+          keywords: get('s-seo-keywords'),
+          ogImage: get('s-seo-og'),
+          canonicalBase: get('s-seo-canonical'),
+          robots: get('s-seo-robots') || 'index,follow',
+          twitterHandle: get('s-seo-twitter')
+        },
         hero: {
           eyebrow: get('s-hero-eyebrow'), headline: get('s-hero-headline'), subtext: get('s-hero-subtext'),
           cta1Label: get('s-hero-cta1Label'), cta1Url: get('s-hero-cta1Url'),

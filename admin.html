@@ -75,10 +75,6 @@
             </div>
             <div class="stats-grid">
               <article class="stat-card">
-                <p class="stat-label">Total categories</p>
-                <strong id="metric-categories">0</strong>
-              </article>
-              <article class="stat-card">
                 <p class="stat-label">Total products</p>
                 <strong id="metric-products">0</strong>
               </article>
@@ -87,12 +83,16 @@
                 <strong id="metric-featured">0</strong>
               </article>
               <article class="stat-card">
-                <p class="stat-label">Cart items</p>
-                <strong id="metric-cart">0</strong>
+                <p class="stat-label">Orders (all time)</p>
+                <strong id="metric-orders">0</strong>
               </article>
               <article class="stat-card">
-                <p class="stat-label">Cart value</p>
-                <strong id="metric-cart-value">₹0.00</strong>
+                <p class="stat-label">Revenue</p>
+                <strong id="metric-revenue">₹0.00</strong>
+              </article>
+              <article class="stat-card">
+                <p class="stat-label">Low stock (≤5)</p>
+                <strong id="metric-low-stock">0</strong>
               </article>
               <article class="stat-card">
                 <p class="stat-label">Average price</p>
@@ -101,64 +101,40 @@
             </div>
           </section>
 
-          <section class="card admin-category-grid-card">
+          <section class="card">
             <div class="section-head">
               <div>
-                <h3>Categories</h3>
-                <p class="muted">Open a category to manage products, or add a new one.</p>
+                <h3>Quick actions</h3>
+                <p class="muted">Manage catalog and commerce from dedicated pages — categories live under Product categories.</p>
               </div>
             </div>
-            <div id="admin-category-grid" class="admin-category-grid"></div>
+            <div class="stats-grid">
+              <a class="stat-card" href="admin-product-categories.html" style="text-decoration:none;color:inherit;">
+                <p class="stat-label">Catalog</p>
+                <strong style="font-size:1rem;">Product categories →</strong>
+              </a>
+              <a class="stat-card" href="admin-orders.html" style="text-decoration:none;color:inherit;">
+                <p class="stat-label">Fulfillment</p>
+                <strong style="font-size:1rem;">Orders & verify →</strong>
+              </a>
+              <a class="stat-card" href="admin-analytics.html" style="text-decoration:none;color:inherit;">
+                <p class="stat-label">Insights</p>
+                <strong style="font-size:1rem;">Analytics →</strong>
+              </a>
+              <a class="stat-card" href="admin-discounts.html" style="text-decoration:none;color:inherit;">
+                <p class="stat-label">Promotions</p>
+                <strong style="font-size:1rem;">Discounts →</strong>
+              </a>
+              <a class="stat-card" href="admin-inventory.html" style="text-decoration:none;color:inherit;">
+                <p class="stat-label">Stock</p>
+                <strong style="font-size:1rem;">Inventory →</strong>
+              </a>
+              <a class="stat-card" href="admin-settings.html" style="text-decoration:none;color:inherit;">
+                <p class="stat-label">Growth</p>
+                <strong style="font-size:1rem;">SEO & settings →</strong>
+              </a>
+            </div>
           </section>
-
-          <section id="admin-product-panel" class="card hide">
-            <div class="section-head">
-              <div>
-                <h3>Products in <span id="selected-category-name"></span></h3>
-                <p class="muted">Edit existing items or add a new product under the selected category.</p>
-              </div>
-              <button class="btn secondary" id="show-add-product" type="button">Add product</button>
-            </div>
-
-            <div id="product-form-container" class="card hide">
-              <h4 id="product-form-title">Add product</h4>
-              <form id="product-form" class="form-grid admin-form-grid">
-              <input id="editing-id" type="hidden">
-              <label>Product name
-                <input id="name" required>
-              </label>
-              <label>Price
-                <input id="price" type="number" step="0.01" required>
-              </label>
-              <label>Category
-                <select id="category-select"></select>
-              </label>
-              <label>New category
-                <input id="new-category" placeholder="Create a new category">
-              </label>
-              <label>Image URL
-                <input id="image-url" placeholder="https://example.com/image.jpg">
-              </label>
-              <label>Additional image URLs
-                <textarea id="image-urls" placeholder="Add multiple image URLs separated by commas or new lines"></textarea>
-              </label>
-              <label>Description
-                <textarea id="description" placeholder="Describe the product"></textarea>
-              </label>
-              <label>Detailed description
-                <textarea id="long-description" placeholder="Write a detailed product story, specs, and highlights"></textarea>
-              </label>
-              <label><input id="featured" type="checkbox" checked> Show on public homepage</label>
-              <div class="inline-actions">
-                <button class="btn" type="submit">Save product</button>
-                <button class="btn secondary" id="cancel-product" type="button">Cancel</button>
-              </div>
-            </form>
-          </div>
-
-          <div id="product-list" class="list"></div>
-          <p id="status" class="muted">Select a category to start editing products.</p>
-        </section>
       </main>
       </div>
     </div>

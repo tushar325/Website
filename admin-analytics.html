@@ -52,7 +52,7 @@
       <div id="admin-panel" class="hide">
         <div class="section-head">
           <h2>Analytics</h2>
-          <p class="muted">Revenue, payment mix, and top sellers from live order data.</p>
+          <p class="muted">Commerce insights — revenue trends, conversion health, and catalog performance.</p>
         </div>
         <div class="admin-shell">
           <aside class="admin-sidebar">
@@ -68,8 +68,32 @@
             </nav>
           </aside>
           <main class="admin-main">
-
-          <div id="admin-analytics-panel"></div>
+            <div class="card date-filter-bar" style="margin-bottom:1.2rem;">
+              <div class="section-head" style="margin-bottom:.8rem;">
+                <div>
+                  <h3 style="margin:0;">Date range</h3>
+                  <p class="muted" style="margin:.25rem 0 0;">Filter all analytics charts and KPIs.</p>
+                </div>
+                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                  <button class="btn secondary" type="button" data-range-preset="7" style="margin:0;">7 days</button>
+                  <button class="btn secondary" type="button" data-range-preset="30" style="margin:0;">30 days</button>
+                  <button class="btn secondary" type="button" data-range-preset="90" style="margin:0;">90 days</button>
+                  <button class="btn secondary" type="button" data-range-preset="all" style="margin:0;">All time</button>
+                </div>
+              </div>
+              <div class="form-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;align-items:end;">
+                <div class="field" style="margin:0;">
+                  <label for="analytics-date-from">From</label>
+                  <input id="analytics-date-from" type="date">
+                </div>
+                <div class="field" style="margin:0;">
+                  <label for="analytics-date-to">To</label>
+                  <input id="analytics-date-to" type="date">
+                </div>
+                <button class="btn" type="button" id="analytics-apply-range" style="margin:0;">Apply</button>
+              </div>
+            </div>
+            <div id="admin-analytics-panel"></div>
           </main>
         </div>
       </div>
