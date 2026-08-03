@@ -180,6 +180,7 @@ function ensureAdminAccess() {
   const logoutBtn = document.getElementById('logout-btn');
 
   if (isAdminLoggedIn()) {
+    document.body.classList.add('admin-authed');
     if (loginForm) loginForm.classList.add('hide');
     if (adminPanel) adminPanel.classList.remove('hide');
     if (logoutBtn) {
@@ -188,13 +189,15 @@ function ensureAdminAccess() {
         logoutBtn.dataset.bound = '1';
         logoutBtn.addEventListener('click', () => {
           setAdminLoggedIn(false);
-          window.location.href = 'admin.html';
+          document.body.classList.remove('admin-authed');
+          window.location.replace('admin.html');
         });
       }
     }
     return true;
   }
 
+  document.body.classList.remove('admin-authed');
   if (loginForm && adminPanel) {
     loginForm.classList.remove('hide');
     adminPanel.classList.add('hide');
@@ -205,7 +208,7 @@ function ensureAdminAccess() {
   const file = (location.pathname.split('/').pop() || 'admin.html').replace(/[^\w.-]/g, '');
   const search = location.search || '';
   const next = /^admin[\w.-]*\.html$/.test(file) ? `${file}${search}` : 'admin.html';
-  window.location.href = `admin.html?next=${encodeURIComponent(next)}`;
+  window.location.replace(`admin.html?next=${encodeURIComponent(next)}`);
   return false;
 }
 
@@ -1920,6 +1923,7 @@ function initAdmin() {
   let selectedCategory = null;
 
   function showPanel(visible) {
+    document.body.classList.toggle('admin-authed', !!visible);
     adminPanel.classList.toggle('hide', !visible);
     loginForm.classList.toggle('hide', visible);
     if (logoutBtn) logoutBtn.style.display = visible ? 'inline-block' : 'none';
@@ -2019,6 +2023,7 @@ function initAdmin() {
     if (isDashboardPage || isCategoriesPage) {
       renderAdminCategoryGrid(null);
     }
+    initAdminFeaturePages(adminPageType);
   }
 
   // Category page specific functions
@@ -2265,6 +2270,7 @@ function initAdmin() {
         if (productList) renderAdminProducts();
       }
       renderAdminMetrics();
+      initAdminFeaturePages(adminPageType);
       if (statusBox) statusBox.textContent = 'Admin access granted.';
       if (adminPageType === 'settings') {
         document.getElementById('admin-panel')?.classList.remove('hide');
