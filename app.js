@@ -21,7 +21,7 @@ const BLOGS_SEED_VERSION = 2;
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
   footerText: '© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.',
-  contentVersion: 5,
+  contentVersion: 6,
   theme: 'forest-brass',
   hero: {
     eyebrow: 'Online specialty coffee shop',
@@ -39,7 +39,7 @@ const DEFAULT_SETTINGS = {
     eyebrow: 'Limited offer', title: 'Weekend Brunch Blend + Ceramic Mug',
     description: 'A mellow house blend paired with our signature mug — made for slow Saturday mornings at home.',
     price: '34.99', badge: 'Limited weekend set', ctaLabel: 'View special', ctaUrl: 'deal.html',
-    imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
     productIds: [
       'seed-beans-blends-5',
       'seed-merchandise-1',
@@ -264,7 +264,9 @@ function loadSettings() {
         if (!Array.isArray(merged.productIds) || !merged.productIds.length) {
           merged.productIds = (DEFAULT_SETTINGS.deal.productIds || []).slice();
         }
-        if (!merged.imageUrl) merged.imageUrl = DEFAULT_SETTINGS.deal.imageUrl;
+        if (!merged.imageUrl || /photo-1514228742587-6b1558fcf93a/i.test(merged.imageUrl)) {
+          merged.imageUrl = DEFAULT_SETTINGS.deal.imageUrl;
+        }
         return merged;
       })(),
       testimonials: refreshContent
@@ -1309,10 +1311,22 @@ function renderPublicSiteContent() {
     dealCta.href = s.deal.ctaUrl === '#products' ? 'deal.html' : s.deal.ctaUrl;
   }
   const dealImg = document.getElementById('deal-image');
-  if (dealImg) {
-    const dealImageUrl = s.deal.imageUrl || DEFAULT_SETTINGS.deal.imageUrl || '';
+  const dealImgEl = document.getElementById('deal-image-el');
+  const dealImageUrl = optimizeImageUrl(
+    s.deal?.imageUrl || DEFAULT_SETTINGS.deal.imageUrl || DEFAULT_IMAGE_URL,
+    900,
+    78
+  );
+  if (dealImgEl) {
+    dealImgEl.src = dealImageUrl;
+    dealImgEl.alt = s.deal?.title || 'Weekend offer';
+    dealImgEl.onerror = () => {
+      dealImgEl.onerror = null;
+      dealImgEl.src = DEFAULT_IMAGE_URL;
+    };
+  } else if (dealImg) {
     const safeUrl = String(dealImageUrl).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    dealImg.style.backgroundImage = safeUrl ? `url("${safeUrl}")` : '';
+    dealImg.style.backgroundImage = safeUrl ? `url("${safeUrl}")` : `url("${DEFAULT_IMAGE_URL}")`;
     dealImg.style.backgroundSize = 'cover';
     dealImg.style.backgroundPosition = 'center';
   }
@@ -1561,12 +1575,12 @@ const seedCatalog = {
     { name: 'Grind Catch Mat', price: 15.0, description: 'Silicone mat that catches grinder mess.', imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80' }
   ],
   'Cold Brew': [
-    { name: 'Classic Cold Brew Bottle', price: 22.0, description: 'Easy steep bottle for smooth overnight brew.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Classic Cold Brew Bottle', price: 22.0, description: 'Easy steep bottle for smooth overnight brew.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
     { name: 'Nitro Chill Concentrate', price: 15.99, description: 'Rich cold brew concentrate for milk-based drinks.', imageUrl: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80' },
     { name: 'Citrus Cold Brew Blend', price: 17.25, description: 'Bright blend tuned for cold extraction.', imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80' },
     { name: 'Cold Brew Filter Pack', price: 11.5, description: 'Disposable filters for clean and quick prep.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Iced Coffee Starter Kit', price: 34.0, description: 'Starter bundle for cafe-style iced coffee at home.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Toddy-Style Brewer', price: 48.0, description: 'Large batch cold brew system for home fridges.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Toddy-Style Brewer', price: 48.0, description: 'Large batch cold brew system for home fridges.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
     { name: 'Vanilla Cold Foam Kit', price: 19.5, description: 'Whipper-friendly syrup and recipe card for cold foam.', imageUrl: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80' },
     { name: 'Ready-to-Drink Can 4-Pack', price: 14.0, description: 'Nitro-style cold brew cans for on-the-go.', imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80' },
     { name: 'Ice Cube Tray Sphere', price: 12.0, description: 'Slow-melt spheres that keep iced drinks cold.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
@@ -1594,7 +1608,7 @@ const seedCatalog = {
     { name: 'Cafe Sandwich Box', price: 8.99, description: 'Fresh vegetable sandwich box for quick lunches.', imageUrl: 'https://images.unsplash.com/photo-1484723091739-30a097e8f929?auto=format&fit=crop&w=900&q=80' }
   ],
   'Gift Boxes': [
-    { name: 'Starter Gift Box', price: 39.99, description: 'Intro box with beans, mug, and brew guide.', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Starter Gift Box', price: 39.99, description: 'Intro box with beans, mug, and brew guide.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Premium Roast Bundle', price: 64.0, description: 'Three premium roasts and tasting notes booklet.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Barista Essentials Box', price: 79.99, description: 'Tools and accessories for aspiring home baristas.', imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=900&q=80' },
     { name: 'Festival Hamper', price: 89.5, description: 'Seasonal hamper with coffee, tea, and snacks.', imageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80' },
@@ -1608,21 +1622,21 @@ const seedCatalog = {
     { name: 'Decaf Smooth Pods', price: 16.25, description: 'Decaffeinated capsules with full coffee flavor.', imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80' }
   ],
   'Merchandise': [
-    { name: 'Bean & Bloom Ceramic Mug', price: 18.0, description: 'Signature ceramic mug with matte finish.', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Travel Tumbler 450ml', price: 24.99, description: 'Insulated tumbler to keep coffee hot for hours.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Bean & Bloom Ceramic Mug', price: 18.0, description: 'Signature ceramic mug with matte finish.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Travel Tumbler 450ml', price: 24.99, description: 'Insulated tumbler to keep coffee hot for hours.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
     { name: 'Canvas Tote Bag', price: 14.5, description: 'Reusable tote bag with coffee-themed print.', imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80' },
     { name: 'Coffee Journal', price: 12.99, description: 'Tasting notes journal for brewing experiments.', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' },
     { name: 'Sticker Pack', price: 6.5, description: 'Set of waterproof coffee-themed stickers.', imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80' },
     { name: 'Barista Apron', price: 32.0, description: 'Waxed canvas apron with tool pocket.', imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Enamel Camp Mug', price: 16.5, description: 'Speckled enamel mug for patio mornings.', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Enamel Camp Mug', price: 16.5, description: 'Speckled enamel mug for patio mornings.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Brew Cap Soft', price: 19.0, description: 'Soft cotton cap with embroidered bean mark.', imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80' },
     { name: 'Desk Mat Brew', price: 22.0, description: 'Cork desk mat sized for kettle and dripper.', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Gift Card Sleeve', price: 9.0, description: 'Physical gift card in reusable kraft sleeve.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Gift Card Sleeve', price: 9.0, description: 'Physical gift card in reusable kraft sleeve.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' }
   ],
   'Accessories': [
     { name: 'Bean Storage Canister', price: 27.0, description: 'Airtight canister with CO2 valve for fresh beans.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Coffee Scoop Set', price: 9.5, description: 'Two stainless scoops with long handles.', imageUrl: 'https://images.unsplash.com/photo-1517971071642-34a2f8df4d36?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Reusable Straw Pack', price: 8.0, description: 'Steel straws for iced lattes and cold brew.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Reusable Straw Pack', price: 8.0, description: 'Steel straws for iced lattes and cold brew.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
     { name: 'Drip Tray Mat', price: 11.0, description: 'Absorbent mat for espresso drip trays.', imageUrl: 'https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=900&q=80' },
     { name: 'Label Maker Kit', price: 14.5, description: 'Write-on labels for roast dates and grind settings.', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' },
     { name: 'Counter Organizer Tray', price: 21.0, description: 'Bamboo tray for syrups, spoons, and filters.', imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=900&q=80' },
@@ -1633,7 +1647,7 @@ const seedCatalog = {
   ],
   'Ready to Drink': [
     { name: 'Sparkling Espresso Can', price: 4.25, description: 'Lightly sparkling espresso tonic style can.', imageUrl: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Oat Latte Bottle', price: 5.5, description: 'Chilled oat latte ready from the fridge.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Oat Latte Bottle', price: 5.5, description: 'Chilled oat latte ready from the fridge.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
     { name: 'Mocha Frappe Cup', price: 6.25, description: 'Blended mocha cup for afternoon pick-me-ups.', imageUrl: 'https://images.unsplash.com/photo-1485808191679-5f86510681a2?auto=format&fit=crop&w=900&q=80' },
     { name: 'Black Cold Brew Pint', price: 5.0, description: 'Unsweetened cold brew pint for sharing.', imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80' },
     { name: 'Matcha Oat Cooler', price: 5.75, description: 'Ceremonial-grade matcha with oat milk.', imageUrl: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=900&q=80' },
@@ -1674,7 +1688,7 @@ const categoryFallbackImages = {
   'Bakery & Snacks': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80',
   'Gift Boxes': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80',
   'Coffee Capsules': 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=900&q=80',
-  'Merchandise': 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80',
+  'Merchandise': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
   'Accessories': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
   'Ready to Drink': 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80'
 };
