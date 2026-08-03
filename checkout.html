@@ -148,7 +148,7 @@
       const usableMethods = methods.filter((m) => m.id !== 'razorpay' || razorpayReady);
 
       if (!usableMethods.length) {
-        payContainer.innerHTML = '<p class="muted">No payment methods are enabled. Ask the cafe admin to turn on Razorpay and/or Cash on Delivery in Settings.</p>';
+        payContainer.innerHTML = '<p class="muted">No payment methods are enabled. Ask the store admin to turn on Razorpay and/or Cash on Delivery in Settings.</p>';
         placeBtn.disabled = true;
       } else {
         payContainer.innerHTML = usableMethods.map((m, index) => `
@@ -175,7 +175,7 @@
         });
         if (method === 'cod') {
           placeBtn.textContent = 'Place COD order';
-          gatewayNote.textContent = 'Pay in cash when your order is delivered or when you pick up at the cafe.';
+          gatewayNote.textContent = 'Pay in cash when your order is delivered.';
         } else {
           placeBtn.textContent = 'Pay with Razorpay';
           gatewayNote.textContent = 'You will complete payment in Razorpay Checkout (cards, UPI, net banking, wallets).';
@@ -294,7 +294,7 @@
         : `Order ID: ${orderId} · Razorpay · Payment ID: ${paymentMeta.razorpayPaymentId || 'pending'} · ${address.name} · ${address.city}`;
       if (typeof showToast === 'function') {
         showToast(isCod
-          ? 'COD order placed. Pay when your order arrives or at pickup.'
+          ? 'COD order placed. Pay when your order is delivered.'
           : 'Order placed. Admin will verify the Razorpay payment.', 'success');
       }
     }

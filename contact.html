@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Visit | Bean & Bloom</title>
-  <meta name="description" content="Visit Bean & Bloom in Faridabad — hours, directions, and contact for events or coffee inquiries.">
+  <title>Contact | Bean & Bloom</title>
+  <meta name="description" content="Contact Bean & Bloom for order help, product questions, or WhatsApp support.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,9 +19,9 @@
       </button>
       <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
+        <a href="index.html#products">Shop</a>
         <a href="about.html">About</a>
-        <a href="menu.html">Menu</a>
-        <a href="contact.html" class="is-active">Visit</a>
+        <a href="contact.html" class="is-active">Contact</a>
         <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
         <span id="user-nav"></span>
       </nav>
@@ -31,9 +31,13 @@
   <main>
     <section class="page-hero">
       <div class="container">
-        <span class="eyebrow">Visit us</span>
-        <h1>Find us on Market Street.</h1>
-        <p>We’re open daily for espresso, bakery, and take-home beans. Drop in, book a tasting table, or send a note for events and catering.</p>
+        <span class="eyebrow">Support</span>
+        <h1>We’re here to help.</h1>
+        <p>Questions about products, shipping, or an order? Message us on WhatsApp or send a note — we reply within one business day.</p>
+        <p style="margin-top:1rem;">
+          <a class="btn" id="contact-whatsapp" href="#" target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
+          <a class="btn secondary" href="index.html#products">Browse shop</a>
+        </p>
       </div>
     </section>
 
@@ -41,12 +45,12 @@
       <div class="container contact-layout">
         <div class="contact-facts">
           <article class="card contact-fact">
-            <strong>Address</strong>
-            <p class="muted" id="contact-address">88 Market Street, Downtown<br>Faridabad, Haryana 121002</p>
+            <strong>Fulfillment</strong>
+            <p class="muted" id="contact-address">Warehouse &amp; fulfillment<br>Faridabad, Haryana 121002</p>
           </article>
           <article class="card contact-fact">
-            <strong>Hours</strong>
-            <p class="muted" id="contact-hours">Mon–Fri 7am–7pm<br>Sat 8am–8pm · Sun 8am–6pm</p>
+            <strong>Support hours</strong>
+            <p class="muted" id="contact-hours">Support · Mon – Fri · 9:00 am – 6:00 pm<br>Support · Saturday · 10:00 am – 4:00 pm</p>
           </article>
           <article class="card contact-fact">
             <strong>Contact</strong>
@@ -55,28 +59,29 @@
           <iframe
             class="map-embed"
             id="contact-map"
-            title="Bean & Bloom location map"
+            title="Bean & Bloom map"
             loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            src="https://maps.google.com/maps?q=Faridabad%20Market&t=&z=14&ie=UTF8&iwloc=&output=embed">
+            hidden
+            referrerpolicy="no-referrer-when-downgrade">
           </iframe>
         </div>
 
         <article class="card">
           <h2>Send a message</h2>
-          <p class="muted">Questions about catering, private tastings, or wholesale beans? We’ll reply within one business day.</p>
+          <p class="muted">Order help, product advice, wholesale, or feedback — we’ll get back soon.</p>
           <form class="form-grid" id="contact-form" style="margin-top:1.2rem;">
             <label>Name
               <input id="contact-name" placeholder="Your name" required>
             </label>
             <label>Email
-              <input id="contact-email" type="email" placeholder="you@example.com" required>
+              <input id="contact-email-input" type="email" placeholder="you@example.com" required>
             </label>
             <label>Topic
               <select id="contact-topic">
                 <option value="general">General question</option>
-                <option value="catering">Catering / events</option>
-                <option value="wholesale">Wholesale beans</option>
+                <option value="order">Order support</option>
+                <option value="product">Product advice</option>
+                <option value="wholesale">Wholesale</option>
                 <option value="feedback">Feedback</option>
               </select>
             </label>
@@ -95,12 +100,13 @@
     <div class="container footer-grid">
       <div>
         <a class="brand" href="index.html">Bean & Bloom</a>
-        <p>© 2026 Bean & Bloom. We’d love to welcome you.</p>
+        <p data-footer-text>© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.</p>
       </div>
       <div class="footer-links">
-        <a href="menu.html">Menu</a>
-        <a href="about.html">Our story</a>
         <a href="index.html#products">Shop</a>
+        <a href="about.html">Our story</a>
+        <a href="contact.html">Contact</a>
+        <a href="orders.html">My orders</a>
       </div>
     </div>
   </footer>

@@ -12,46 +12,47 @@ const COMPARE_KEY = 'bean-bloom-compare';
 
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
-  footerText: '© 2026 Bean & Bloom. Specialty coffee, calm spaces, and warm welcomes in Faridabad.',
+  footerText: '© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.',
+  contentVersion: 4,
   hero: {
-    eyebrow: 'Specialty cafe & shop · Faridabad',
-    headline: 'Handcrafted coffee for the bar and the kitchen counter.',
-    subtext: 'Espresso, fresh bakery, seasonal beans, and brew gear — from our Market Street cafe to your morning ritual.',
+    eyebrow: 'Online specialty coffee shop',
+    headline: 'Handcrafted coffee and brew gear, delivered.',
+    subtext: 'Shop espresso beans, seasonal lots, bakery favorites, and home brewing tools — ordered online with secure checkout.',
     cta1Label: 'Shop the collection', cta1Url: '#products',
-    cta2Label: 'View cafe menu', cta2Url: 'menu.html',
+    cta2Label: 'Featured picks', cta2Url: '#featured',
     tile1Badge: 'House favorite', tile1Title: 'Signature Espresso', tile1Desc: 'Bold, velvety, and dialed in every morning.',
     tile2Badge: 'Take home', tile2Title: 'Golden Morning Brew', tile2Desc: 'Bright single-origin for pour-over and drip.'
   },
-  categorySection: { title: 'Shop by category', subtext: 'Cafe drinks, bakery, beans, and gear — browse what we pour and what we send home.' },
-  featuredSection: { title: 'Featured picks', subtext: 'Staff favorites from the bar and the shelf.' },
-  shopSection: { title: 'Shop the collection', subtext: 'Browse every bean, drink, bakery item, and brew tool in the cafe shop.' },
+  categorySection: { title: 'Shop by category', subtext: 'Beans, drinks, bakery, and gear — browse the full online catalog.' },
+  featuredSection: { title: 'Featured picks', subtext: 'Staff favorites ready to ship.' },
+  shopSection: { title: 'Shop the collection', subtext: 'Browse every bean, drink, bakery item, and brew tool in the store.' },
   deal: {
-    eyebrow: 'Cafe special', title: 'Weekend Brunch Blend + Ceramic Mug',
-    description: 'A mellow house blend paired with our signature mug — made for slow Saturday mornings at home or at the cafe counter.',
+    eyebrow: 'Limited offer', title: 'Weekend Brunch Blend + Ceramic Mug',
+    description: 'A mellow house blend paired with our signature mug — made for slow Saturday mornings at home.',
     price: '34.99', badge: 'Limited weekend set', ctaLabel: 'View special', ctaUrl: 'deal.html', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80'
   },
   testimonials: [
     {
-      quote: 'My weekday stop for a ristretto and a quiet table. The beans I take home taste just as good.',
+      quote: 'Beans arrived fresh and the pour-over guide on the product page was spot on.',
       author: 'Aarav Mehta, Designer',
       avatarUrl: 'https://randomuser.me/api/portraits/men/75.jpg'
     },
     {
-      quote: 'Friendly baristas, honest recommendations, and bakery that actually sells out by afternoon.',
+      quote: 'Checkout was smooth with COD. Reordered the house blend within a week.',
       author: 'Ishita Sharma, Founder',
       avatarUrl: 'https://randomuser.me/api/portraits/women/65.jpg'
     },
     {
-      quote: 'Ordered a gift box online and picked up espresso gear in-store the same week. Seamless.',
+      quote: 'Gift box packaging looked premium and the gear recommendations were helpful.',
       author: 'Rohan Verma, Consultant',
       avatarUrl: 'https://randomuser.me/api/portraits/men/42.jpg'
     }
   ],
   promoStrip: [
-    { title: 'Local delivery', desc: 'Same-day bakery in Faridabad' },
-    { title: 'Cafe pickup', desc: 'Order online, collect at the bar' },
+    { title: 'Fast delivery', desc: 'Tracked shipping on every order' },
+    { title: 'Secure checkout', desc: 'Razorpay & Cash on Delivery' },
     { title: 'Fresh roast', desc: 'Small-batch beans each week' },
-    { title: 'Barista help', desc: 'Grind & brew advice anytime' }
+    { title: 'WhatsApp support', desc: 'Chat with us anytime' }
   ],
   payments: {
     currency: 'INR',
@@ -60,43 +61,53 @@ const DEFAULT_SETTINGS = {
     codEnabled: true
   },
   cafe: {
-    addressLine: '88 Market Street, Downtown',
+    addressLine: 'Warehouse & fulfillment',
     city: 'Faridabad',
     state: 'Haryana',
     pincode: '121002',
     phone: '+91 55501 42234',
     email: 'hello@beanandbloom.com',
-    hoursWeekday: 'Mon – Fri · 7:00 am – 7:00 pm',
-    hoursSaturday: 'Saturday · 8:00 am – 8:00 pm',
-    hoursSunday: 'Sunday · 8:00 am – 6:00 pm',
-    mapQuery: 'Faridabad Market',
-    visitEyebrow: 'Cafe hours',
-    visitHeadline: 'Come in for a cup, leave with a ritual.',
-    visitSubtext: 'Open daily for espresso, pour-overs, bakery, and take-home beans. Remote-work tables available until mid-afternoon.'
+    hoursWeekday: 'Support · Mon – Fri · 9:00 am – 6:00 pm',
+    hoursSaturday: 'Support · Saturday · 10:00 am – 4:00 pm',
+    hoursSunday: 'Support · Sunday · Closed',
+    mapQuery: '',
+    visitEyebrow: '',
+    visitHeadline: '',
+    visitSubtext: ''
+  },
+  whatsapp: {
+    enabled: true,
+    number: '915550142234',
+    message: 'Hi Bean & Bloom! I have a question about a product / order.',
+    floatButton: true
+  },
+  catalog: {
+    sizes: ['250g', '500g', '1kg'],
+    types: ['Whole bean', 'Ground']
   },
   about: {
     eyebrow: 'Our story',
-    headline: 'Roasted with care. Served with calm.',
-    intro: 'Bean & Bloom began as a neighborhood espresso counter and grew into a specialty cafe and shop for people who want better coffee at the bar and at home.',
-    body1: 'We source seasonal lots, roast in small batches, and train every barista on dial-in, milk texture, and hospitality. The goal is simple: a cup that feels intentional, whether you stay for twenty minutes or take beans home for the week.',
-    body2: 'Alongside drinks, our shop carries brew gear, gift boxes, and bakery made fresh each morning — so one stop covers your cafe visit and your home setup.',
+    headline: 'Roasted with care. Shipped with care.',
+    intro: 'Bean & Bloom is an online specialty coffee shop for people who want better coffee at home — beans, bakery favorites, and brew gear in one store.',
+    body1: 'We source seasonal lots, roast in small batches, and pack orders for delivery with the same attention we give every cup. The goal is simple: coffee that feels intentional from checkout to first brew.',
+    body2: 'Shop espresso blends, single origins, gift boxes, and brewing tools — with clear product details, size and type options, and secure online payment.',
     value1Title: 'Thoughtful sourcing',
     value1Desc: 'We work with importers who share farm details, processing notes, and roast-ready profiles we can stand behind.',
-    value2Title: 'Warm service',
-    value2Desc: 'Ask for a recommendation, a grind setting, or a quieter table — the team is here to make the visit easy.',
-    value3Title: 'Cafe + home',
-    value3Desc: 'Drink in, take away, or shop beans and tools for mornings that start the same way ours do.'
+    value2Title: 'Helpful support',
+    value2Desc: 'Message us on WhatsApp or email for grind advice, order help, or product recommendations.',
+    value3Title: 'Built for home',
+    value3Desc: 'Every listing is written for home brewing — so you know what to buy, how to brew, and what to expect.'
   },
   newsletter: {
     eyebrow: 'Stay in the loop',
-    headline: 'Weekly roast notes & cafe specials',
-    subtext: 'No spam — just brew guides, seasonal drinks, and early access to limited bags.'
+    headline: 'Weekly roast notes & store specials',
+    subtext: 'No spam — just brew guides, seasonal drops, and early access to limited bags.'
   },
-  menuCategories: ['Espresso', 'Bakery & Snacks', 'Tea & Infusions', 'Cold Brew'],
+  menuCategories: [],
   seo: {
-    defaultTitle: 'Bean & Bloom | Specialty Coffee Cafe & Shop',
-    defaultDescription: 'Shop specialty coffee, brew gear, bakery, and cafe essentials from Bean & Bloom Faridabad. Order online for delivery or cafe pickup.',
-    keywords: 'specialty coffee, Faridabad cafe, espresso beans, pour over, cold brew, coffee gifts',
+    defaultTitle: 'Bean & Bloom | Specialty Coffee Online Shop',
+    defaultDescription: 'Shop specialty coffee, brew gear, and bakery favorites from Bean & Bloom. Order online with Razorpay or Cash on Delivery.',
+    keywords: 'specialty coffee online, espresso beans, pour over, cold brew, coffee gifts, brew gear',
     ogImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
     canonicalBase: '',
     robots: 'index,follow',
@@ -137,33 +148,55 @@ function loadSettings() {
       settingsCache = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
       return settingsCache;
     }
+    const refreshContent = Number(saved.contentVersion || 0) < Number(DEFAULT_SETTINGS.contentVersion || 0);
     // Deep merge to add any new keys from DEFAULT_SETTINGS
     settingsCache = {
       ...DEFAULT_SETTINGS, ...saved,
-      hero: { ...DEFAULT_SETTINGS.hero, ...(saved.hero || {}) },
-      categorySection: { ...DEFAULT_SETTINGS.categorySection, ...(saved.categorySection || {}) },
-      featuredSection: { ...DEFAULT_SETTINGS.featuredSection, ...(saved.featuredSection || {}) },
-      shopSection: { ...DEFAULT_SETTINGS.shopSection, ...(saved.shopSection || {}) },
-      deal: { ...DEFAULT_SETTINGS.deal, ...(saved.deal || {}) },
-      testimonials: Array.isArray(saved.testimonials)
-        ? saved.testimonials.map((item, index) => ({
-            ...DEFAULT_SETTINGS.testimonials[index % DEFAULT_SETTINGS.testimonials.length],
-            ...(item || {})
-          }))
-        : DEFAULT_SETTINGS.testimonials,
-      promoStrip: saved.promoStrip || DEFAULT_SETTINGS.promoStrip,
+      contentVersion: Math.max(Number(saved.contentVersion || 0), Number(DEFAULT_SETTINGS.contentVersion || 0)),
+      hero: refreshContent ? { ...DEFAULT_SETTINGS.hero } : { ...DEFAULT_SETTINGS.hero, ...(saved.hero || {}) },
+      categorySection: refreshContent ? { ...DEFAULT_SETTINGS.categorySection } : { ...DEFAULT_SETTINGS.categorySection, ...(saved.categorySection || {}) },
+      featuredSection: refreshContent ? { ...DEFAULT_SETTINGS.featuredSection } : { ...DEFAULT_SETTINGS.featuredSection, ...(saved.featuredSection || {}) },
+      shopSection: refreshContent ? { ...DEFAULT_SETTINGS.shopSection } : { ...DEFAULT_SETTINGS.shopSection, ...(saved.shopSection || {}) },
+      deal: refreshContent ? { ...DEFAULT_SETTINGS.deal } : { ...DEFAULT_SETTINGS.deal, ...(saved.deal || {}) },
+      testimonials: refreshContent
+        ? DEFAULT_SETTINGS.testimonials
+        : (Array.isArray(saved.testimonials)
+          ? saved.testimonials.map((item, index) => ({
+              ...DEFAULT_SETTINGS.testimonials[index % DEFAULT_SETTINGS.testimonials.length],
+              ...(item || {})
+            }))
+          : DEFAULT_SETTINGS.testimonials),
+      promoStrip: refreshContent ? DEFAULT_SETTINGS.promoStrip : (saved.promoStrip || DEFAULT_SETTINGS.promoStrip),
       payments: { ...DEFAULT_SETTINGS.payments, ...(saved.payments || {}) },
-      cafe: { ...DEFAULT_SETTINGS.cafe, ...(saved.cafe || {}) },
-      about: { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
-      newsletter: { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
-      seo: { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}) },
+      cafe: refreshContent ? { ...DEFAULT_SETTINGS.cafe, ...(saved.cafe || {}), ...{
+        visitEyebrow: DEFAULT_SETTINGS.cafe.visitEyebrow,
+        visitHeadline: DEFAULT_SETTINGS.cafe.visitHeadline,
+        visitSubtext: DEFAULT_SETTINGS.cafe.visitSubtext,
+        hoursWeekday: DEFAULT_SETTINGS.cafe.hoursWeekday,
+        hoursSaturday: DEFAULT_SETTINGS.cafe.hoursSaturday,
+        hoursSunday: DEFAULT_SETTINGS.cafe.hoursSunday,
+        mapQuery: DEFAULT_SETTINGS.cafe.mapQuery
+      } } : { ...DEFAULT_SETTINGS.cafe, ...(saved.cafe || {}) },
+      whatsapp: { ...DEFAULT_SETTINGS.whatsapp, ...(saved.whatsapp || {}) },
+      catalog: {
+        sizes: Array.isArray(saved.catalog?.sizes) && saved.catalog.sizes.length
+          ? saved.catalog.sizes.map(String).filter(Boolean)
+          : DEFAULT_SETTINGS.catalog.sizes.slice(),
+        types: Array.isArray(saved.catalog?.types) && saved.catalog.types.length
+          ? saved.catalog.types.map(String).filter(Boolean)
+          : DEFAULT_SETTINGS.catalog.types.slice()
+      },
+      about: refreshContent ? { ...DEFAULT_SETTINGS.about } : { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
+      newsletter: refreshContent ? { ...DEFAULT_SETTINGS.newsletter } : { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
+      seo: refreshContent ? { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}), defaultTitle: DEFAULT_SETTINGS.seo.defaultTitle, defaultDescription: DEFAULT_SETTINGS.seo.defaultDescription, keywords: DEFAULT_SETTINGS.seo.keywords } : { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}) },
       productPage: saved.productPageVersion >= 3
         ? { ...DEFAULT_SETTINGS.productPage, ...(saved.productPage || {}) }
         : { ...DEFAULT_SETTINGS.productPage },
       productPageVersion: saved.productPageVersion >= 3 ? saved.productPageVersion : DEFAULT_SETTINGS.productPageVersion,
-      menuCategories: Array.isArray(saved.menuCategories) && saved.menuCategories.length
-        ? saved.menuCategories
-        : DEFAULT_SETTINGS.menuCategories
+      menuCategories: refreshContent
+        ? DEFAULT_SETTINGS.menuCategories.slice()
+        : (Array.isArray(saved.menuCategories) ? saved.menuCategories : DEFAULT_SETTINGS.menuCategories),
+      footerText: refreshContent ? DEFAULT_SETTINGS.footerText : (saved.footerText || DEFAULT_SETTINGS.footerText)
     };
     return settingsCache;
   } catch {
@@ -426,7 +459,7 @@ function getEnabledPaymentMethods(pay = getPaymentSettings()) {
       id: 'cod',
       icon: PAYMENT_METHOD_META.cod.icon,
       label: PAYMENT_METHOD_META.cod.label,
-      sub: 'Pay in cash when your order arrives or at cafe pickup'
+      sub: 'Pay in cash when your order is delivered'
     });
   }
   return methods;
@@ -436,7 +469,172 @@ function getPaymentAvailabilityCopy() {
   const methods = getEnabledPaymentMethods();
   if (!methods.length) return 'Checkout unavailable';
   const bits = methods.map((m) => (m.id === 'cod' ? 'COD' : 'Razorpay'));
-  return `${bits.join(' · ')} · Cafe pickup available`;
+  return bits.join(' · ');
+}
+
+function getCatalogOptions() {
+  const catalog = loadSettings().catalog || DEFAULT_SETTINGS.catalog;
+  return {
+    sizes: Array.isArray(catalog.sizes) ? catalog.sizes.map(String).filter(Boolean) : DEFAULT_SETTINGS.catalog.sizes.slice(),
+    types: Array.isArray(catalog.types) ? catalog.types.map(String).filter(Boolean) : DEFAULT_SETTINGS.catalog.types.slice()
+  };
+}
+
+function normalizeWhatsAppNumber(value) {
+  return String(value || '').replace(/\D+/g, '');
+}
+
+function getWhatsAppSettings() {
+  return { ...DEFAULT_SETTINGS.whatsapp, ...(loadSettings().whatsapp || {}) };
+}
+
+function buildWhatsAppUrl(extraMessage = '') {
+  const wa = getWhatsAppSettings();
+  const number = normalizeWhatsAppNumber(wa.number);
+  if (!number) return '';
+  const text = [wa.message, extraMessage].filter(Boolean).join('\n');
+  return `https://wa.me/${number}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
+}
+
+function renderWhatsAppWidget() {
+  document.getElementById('whatsapp-float')?.remove();
+  if (document.body?.dataset?.adminPage) return;
+  const wa = getWhatsAppSettings();
+  if (wa.enabled === false || wa.floatButton === false) return;
+  const href = buildWhatsAppUrl();
+  if (!href) return;
+  const link = document.createElement('a');
+  link.id = 'whatsapp-float';
+  link.className = 'whatsapp-float';
+  link.href = href;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.setAttribute('aria-label', 'Chat on WhatsApp');
+  link.innerHTML = '<span aria-hidden="true">💬</span><span>WhatsApp</span>';
+  document.body.appendChild(link);
+}
+
+function readCheckedOptionValues(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} input[type="checkbox"]:checked`))
+    .map((input) => String(input.value || '').trim())
+    .filter(Boolean);
+}
+
+function readVariantMatrixFromDom(existingDetails = {}) {
+  const rows = Array.from(document.querySelectorAll('#product-variant-matrix [data-variant-row]'));
+  if (!rows.length) return [];
+  return rows.map((row, index) => {
+    const size = row.getAttribute('data-size') || '';
+    const type = row.getAttribute('data-type') || '';
+    const price = Number(row.querySelector('[data-variant-price]')?.value || 0) || 0;
+    const stock = Number.isFinite(Number(row.querySelector('[data-variant-stock]')?.value))
+      ? Number(row.querySelector('[data-variant-stock]')?.value)
+      : 0;
+    const existing = (existingDetails.variants || []).find((v) =>
+      String(v.size || v.weight || '') === size && String(v.type || v.grind || '') === type
+    );
+    return {
+      id: existing?.id || `var-${index + 1}`,
+      label: [size, type].filter(Boolean).join(' · ') || `Option ${index + 1}`,
+      size,
+      weight: size,
+      type,
+      grind: type,
+      price,
+      stock
+    };
+  });
+}
+
+function renderProductOptionChecks(selectedSizes = [], selectedTypes = []) {
+  const sizeRoot = document.getElementById('product-size-checks');
+  const typeRoot = document.getElementById('product-type-checks');
+  if (!sizeRoot && !typeRoot) return;
+  const catalog = getCatalogOptions();
+  const selectedSizeSet = new Set((selectedSizes || []).map(String));
+  const selectedTypeSet = new Set((selectedTypes || []).map(String));
+  if (sizeRoot) {
+    sizeRoot.innerHTML = catalog.sizes.length
+      ? catalog.sizes.map((size) => `
+          <label class="option-check">
+            <input type="checkbox" value="${escapeHtml(size)}" ${selectedSizeSet.has(size) ? 'checked' : ''}>
+            <span>${escapeHtml(size)}</span>
+          </label>`).join('')
+      : '<p class="muted" style="margin:0;font-size:.85rem;">Add sizes in Admin → Settings → Product options.</p>';
+  }
+  if (typeRoot) {
+    typeRoot.innerHTML = catalog.types.length
+      ? catalog.types.map((type) => `
+          <label class="option-check">
+            <input type="checkbox" value="${escapeHtml(type)}" ${selectedTypeSet.has(type) ? 'checked' : ''}>
+            <span>${escapeHtml(type)}</span>
+          </label>`).join('')
+      : '<p class="muted" style="margin:0;font-size:.85rem;">Add types in Admin → Settings → Product options.</p>';
+  }
+}
+
+function renderProductVariantMatrix(selectedSizes = [], selectedTypes = [], existingVariants = [], basePrice = 0) {
+  const root = document.getElementById('product-variant-matrix');
+  if (!root) return;
+  const sizes = (selectedSizes || []).filter(Boolean);
+  const types = (selectedTypes || []).filter(Boolean);
+  const combos = [];
+  if (sizes.length && types.length) {
+    sizes.forEach((size) => types.forEach((type) => combos.push({ size, type })));
+  } else if (sizes.length) {
+    sizes.forEach((size) => combos.push({ size, type: '' }));
+  } else if (types.length) {
+    types.forEach((type) => combos.push({ size: '', type }));
+  }
+  if (!combos.length) {
+    root.innerHTML = '<p class="muted" style="margin:0;font-size:.88rem;">Select at least one size or type to set combination prices.</p>';
+    return;
+  }
+  const findExisting = (size, type) => (existingVariants || []).find((v) =>
+    String(v.size || v.weight || '') === size && String(v.type || v.grind || '') === type
+  );
+  root.innerHTML = `
+    <div class="variant-matrix-table">
+      <div class="variant-matrix-head"><span>Combination</span><span>Price (₹)</span><span>Stock</span></div>
+      ${combos.map(({ size, type }) => {
+        const existing = findExisting(size, type);
+        const label = [size, type].filter(Boolean).join(' · ');
+        const price = existing?.price != null ? existing.price : basePrice;
+        const stock = existing?.stock != null ? existing.stock : 10;
+        return `
+          <div class="variant-matrix-row" data-variant-row data-size="${escapeHtml(size)}" data-type="${escapeHtml(type)}">
+            <strong>${escapeHtml(label)}</strong>
+            <input type="number" min="0" step="0.01" data-variant-price value="${escapeHtml(price)}" aria-label="Price for ${escapeHtml(label)}">
+            <input type="number" min="0" step="1" data-variant-stock value="${escapeHtml(stock)}" aria-label="Stock for ${escapeHtml(label)}">
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function syncProductOptionEditors(existingVariants = null, basePrice = null) {
+  const sizes = readCheckedOptionValues('product-size-checks');
+  const types = readCheckedOptionValues('product-type-checks');
+  const sizeInput = document.getElementById('product-option-sizes');
+  const typeInput = document.getElementById('product-option-types');
+  if (sizeInput) sizeInput.value = sizes.join(', ');
+  if (typeInput) typeInput.value = types.join(', ');
+  const currentVariants = existingVariants || readVariantMatrixFromDom({});
+  const price = basePrice != null
+    ? Number(basePrice)
+    : Number(document.getElementById('product-price')?.value || 0);
+  renderProductVariantMatrix(sizes, types, currentVariants, price);
+}
+
+function bindProductOptionEditors() {
+  const sizeRoot = document.getElementById('product-size-checks');
+  const typeRoot = document.getElementById('product-type-checks');
+  if (!sizeRoot && !typeRoot) return;
+  if (sizeRoot?.dataset.bound === 'true') return;
+  if (sizeRoot) sizeRoot.dataset.bound = 'true';
+  if (typeRoot) typeRoot.dataset.bound = 'true';
+  const onChange = () => syncProductOptionEditors();
+  sizeRoot?.addEventListener('change', onChange);
+  typeRoot?.addEventListener('change', onChange);
 }
 
 function loadDiscounts() {
@@ -919,22 +1117,12 @@ function renderPublicSiteContent() {
       </article>`).join('');
   }
 
-  // Cafe / visit / contact
+  // Contact / support
   const cafe = s.cafe || DEFAULT_SETTINGS.cafe;
-  const fullAddress = [cafe.addressLine, cafe.city, cafe.state, cafe.pincode].filter(Boolean).join(', ');
-  setEl('visit-eyebrow', cafe.visitEyebrow);
-  setEl('visit-headline', cafe.visitHeadline);
-  setEl('visit-subtext', cafe.visitSubtext);
-  setEl('hours-weekday', cafe.hoursWeekday);
-  setEl('hours-saturday', cafe.hoursSaturday);
-  setEl('hours-sunday', cafe.hoursSunday);
-  setEl('hours-location', fullAddress || cafe.city);
-  setEl('contact-address', [cafe.addressLine, `${cafe.city}${cafe.state ? `, ${cafe.state}` : ''} ${cafe.pincode || ''}`.trim()].filter(Boolean).join('\n'));
   const contactAddressEl = document.getElementById('contact-address');
   if (contactAddressEl) {
     contactAddressEl.innerHTML = `${escapeHtml(cafe.addressLine || '')}<br>${escapeHtml([cafe.city, cafe.state, cafe.pincode].filter(Boolean).join(', '))}`;
   }
-  setEl('contact-hours', [cafe.hoursWeekday, cafe.hoursSaturday, cafe.hoursSunday].filter(Boolean).join('\n'));
   const contactHoursEl = document.getElementById('contact-hours');
   if (contactHoursEl) {
     contactHoursEl.innerHTML = [cafe.hoursWeekday, cafe.hoursSaturday, cafe.hoursSunday]
@@ -945,9 +1133,26 @@ function renderPublicSiteContent() {
   setEl('contact-email', cafe.email);
   setEl('contact-phone', cafe.phone);
   const mapFrame = document.getElementById('contact-map');
-  if (mapFrame && cafe.mapQuery) {
-    mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(cafe.mapQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+  if (mapFrame) {
+    if (cafe.mapQuery) {
+      mapFrame.hidden = false;
+      mapFrame.src = `https://maps.google.com/maps?q=${encodeURIComponent(cafe.mapQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+    } else {
+      mapFrame.hidden = true;
+      mapFrame.removeAttribute('src');
+    }
   }
+  const waLink = document.getElementById('contact-whatsapp');
+  if (waLink) {
+    const href = buildWhatsAppUrl();
+    if (href && getWhatsAppSettings().enabled !== false) {
+      waLink.href = href;
+      waLink.hidden = false;
+    } else {
+      waLink.hidden = true;
+    }
+  }
+  renderWhatsAppWidget();
 
   // About page
   const about = s.about || DEFAULT_SETTINGS.about;
@@ -1367,8 +1572,8 @@ function buildSeedProductDetails(category, item, index) {
   details.subtitle = item.description || '';
   details.sku = `BB-${toSlug(category).slice(0, 6).toUpperCase()}-${String(index + 1).padStart(2, '0')}`;
   details.badges = index === 0 ? ['Bestseller', 'Staff Pick'] : index === 1 ? ['New'] : [];
-  details.features = ['Cafe-quality finish', 'Ready for home or gift', 'Razorpay, COD & cafe pickup'];
-  details.highlights = [item.description || 'Selected by Bean & Bloom baristas.'];
+  details.features = ['Specialty-grade finish', 'Ready for home or gift', 'Razorpay & COD checkout'];
+  details.highlights = [item.description || 'Selected by Bean & Bloom.'];
   details.shipping = {
     estimatedDays: '2–4 days in Faridabad',
     charges: 'Calculated at checkout',
@@ -1384,7 +1589,7 @@ function buildSeedProductDetails(category, item, index) {
     storage: 'Cool, dry place away from direct sunlight'
   };
   details.faq = [
-    { q: 'Can I pick this up at the cafe?', a: 'Yes — choose cafe pickup at checkout and collect from our Market Street counter.' },
+    { q: 'How do I pay?', a: 'Checkout supports Razorpay (cards, UPI, wallets) and Cash on Delivery where enabled.' },
     { q: 'How fresh is the coffee?', a: 'Beans are roasted in small batches each week. Roast timing is listed when available on the bag.' }
   ];
   if (/bean|blend|espresso|pour|cold brew|coffee|capsule/i.test(category)) {
@@ -1493,45 +1698,46 @@ function normalizeProduct(product) {
 
 function collectProductDetailsFromAdminForm(existingDetails = {}) {
   const val = (id) => document.getElementById(id)?.value ?? '';
-  const optionSizes = parseLines(val('product-option-sizes'));
-  const optionTypes = parseLines(val('product-option-types'));
-  const variants = String(val('product-variants') || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .map((line, index) => {
-      const parts = line.split('|').map((part) => part.trim());
-      // Preferred: size | type | price | stock
-      // Legacy: label | price | stock | grind
-      const looksStructured = parts.length >= 3 && Number.isFinite(Number(parts[2]));
-      if (looksStructured || optionSizes.length || optionTypes.length) {
-        const size = parts[0] || '';
-        const type = parts[1] || '';
-        const price = Number(parts[2]) || 0;
-        const stock = Number.isFinite(Number(parts[3])) ? Number(parts[3]) : 0;
+  const optionSizes = readCheckedOptionValues('product-size-checks');
+  const optionTypes = readCheckedOptionValues('product-type-checks');
+  let variants = readVariantMatrixFromDom(existingDetails);
+  if (!variants.length) {
+    variants = String(val('product-variants') || '')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line, index) => {
+        const parts = line.split('|').map((part) => part.trim());
+        const looksStructured = parts.length >= 3 && Number.isFinite(Number(parts[2]));
+        if (looksStructured || optionSizes.length || optionTypes.length) {
+          const size = parts[0] || '';
+          const type = parts[1] || '';
+          const price = Number(parts[2]) || 0;
+          const stock = Number.isFinite(Number(parts[3])) ? Number(parts[3]) : 0;
+          return {
+            id: existingDetails.variants?.[index]?.id || `var-${index + 1}`,
+            label: [size, type].filter(Boolean).join(' · ') || `Option ${index + 1}`,
+            size,
+            weight: size,
+            type,
+            grind: type,
+            price,
+            stock
+          };
+        }
+        const [label, price, stock, grind] = parts;
         return {
           id: existingDetails.variants?.[index]?.id || `var-${index + 1}`,
-          label: [size, type].filter(Boolean).join(' · ') || `Option ${index + 1}`,
-          size,
-          weight: size,
-          type,
-          grind: type,
-          price,
-          stock
+          label: label || `Option ${index + 1}`,
+          size: label || '',
+          weight: label || '',
+          type: grind || '',
+          grind: grind || '',
+          price: Number(price) || 0,
+          stock: Number.isFinite(Number(stock)) ? Number(stock) : 0
         };
-      }
-      const [label, price, stock, grind] = parts;
-      return {
-        id: existingDetails.variants?.[index]?.id || `var-${index + 1}`,
-        label: label || `Option ${index + 1}`,
-        size: label || '',
-        weight: label || '',
-        type: grind || '',
-        grind: grind || '',
-        price: Number(price) || 0,
-        stock: Number.isFinite(Number(stock)) ? Number(stock) : 0
-      };
-    });
+      });
+  }
   const faq = String(val('product-faq') || '')
     .split('\n')
     .map((line) => line.trim())
@@ -1661,6 +1867,14 @@ function populateProductDetailsAdminForm(product = {}) {
   set('product-option-sizes', (details.optionSizes || []).join(', '));
   set('product-option-types', (details.optionTypes || []).join(', '));
   set('product-variants', (details.variants || []).map((v) => `${v.size || ''} | ${v.type || v.grind || ''} | ${v.price} | ${v.stock}`).join('\n'));
+  renderProductOptionChecks(details.optionSizes || [], details.optionTypes || []);
+  renderProductVariantMatrix(
+    details.optionSizes || [],
+    details.optionTypes || [],
+    details.variants || [],
+    Number(product.price || details.compareAtPrice || 0)
+  );
+  bindProductOptionEditors();
   set('product-nut-serving', details.nutrition.servingSize);
   set('product-nut-calories', details.nutrition.calories);
   set('product-nut-protein', details.nutrition.protein);
@@ -2133,7 +2347,7 @@ function renderCartFromAPI(cartData) {
         <p class="muted">${escapeHtml(item.category_name || 'Coffee')}</p>
         <div class="cart-item-meta">
           <span>Bean & Bloom cafe & shop</span>
-          <span>Pickup or delivery</span>
+          <span>Home delivery</span>
         </div>
         <div class="cart-item-controls">
           <div class="quantity-control">
@@ -2284,7 +2498,7 @@ function renderCart() {
         <p class="muted">${escapeHtml(item.variantLabel || item.category || 'Coffee')}${item.variantLabel && item.category ? ` · ${escapeHtml(item.category)}` : ''}</p>
         <div class="cart-item-meta">
           <span>${formatCurrencyAmount(Number(item.price))} each</span>
-          <span>Pickup or delivery</span>
+          <span>Home delivery</span>
         </div>
         <div class="cart-item-controls">
           <div class="quantity-control">
@@ -2474,10 +2688,10 @@ function renderOfferStrip() {
     desc: d.type === 'store' ? 'Store-wide' : d.type === 'category' ? `On ${d.category}` : 'Selected product',
     value: d.valueType === 'fixed' ? formatCurrencyAmount(d.value) : `${d.value}% off`
   })) : [
-    { title: 'Cafe pickup', desc: 'Order online, collect at the bar', value: 'Free' },
+    { title: 'Fast delivery', desc: 'Tracked shipping on every order', value: 'Ship' },
+    { title: 'Secure pay', desc: 'Razorpay & Cash on Delivery', value: 'Pay' },
     { title: 'Fresh roast', desc: 'Small-batch beans each week', value: 'New' },
-    { title: 'Bank offer', desc: 'Extra savings on Razorpay UPI', value: 'UPI' },
-    { title: 'Gift ready', desc: 'Hamper wraps available in-store', value: 'Gift' }
+    { title: 'WhatsApp help', desc: 'Chat with us anytime', value: 'Chat' }
   ];
   root.innerHTML = offers.map((o) => `
     <article class="offer-chip">
@@ -2603,13 +2817,23 @@ function renderPublicProducts(options = {}) {
       : `Showing ${shownLabel} products`;
   }
   const moreWrap = document.getElementById('shop-load-more-wrap');
-  if (moreWrap) moreWrap.hidden = remaining <= 0;
   const moreBtn = document.getElementById('shop-load-more');
-  if (moreBtn) moreBtn.textContent = remaining > 0 ? `More products (${remaining} left)` : 'More products';
+  const showMore = remaining > 0 && products.length > 0;
+  if (moreWrap) {
+    moreWrap.hidden = !showMore;
+    moreWrap.style.display = showMore ? '' : 'none';
+  }
+  if (moreBtn) {
+    moreBtn.disabled = !showMore;
+    moreBtn.textContent = showMore ? `More products (${remaining} left)` : 'More products';
+  }
 
   if (!products.length) {
     root.innerHTML = '<div class="card"><p class="muted">No products match your filters. Try clearing search or widening the price range.</p></div>';
-    if (moreWrap) moreWrap.hidden = true;
+    if (moreWrap) {
+      moreWrap.hidden = true;
+      moreWrap.style.display = 'none';
+    }
     return;
   }
   root.innerHTML = visibleProducts.map((product) => renderProductCardHtml(product)).join('');
@@ -2756,8 +2980,8 @@ async function renderProductDetail() {
           <div class="pp-trust-row">
             <span>${getEnabledPaymentMethods().some((m) => m.id === 'razorpay') ? 'Secure Razorpay' : 'Secure checkout'}</span>
             ${getEnabledPaymentMethods().some((m) => m.id === 'cod') ? '<span>Cash on Delivery</span>' : ''}
-            <span>Cafe pickup</span>
-            <span>${escapeHtml(details.shipping.estimatedDays || 'Fast local delivery')}</span>
+            <span>Home delivery</span>
+            <span>${escapeHtml(details.shipping.estimatedDays || 'Fast shipping')}</span>
           </div>
         </div>
       </div>
@@ -2909,7 +3133,7 @@ async function renderProductDetail() {
       <div class="container pp-footer-cta-inner">
         <div>
           <h2>${escapeHtml(details.footerCtaMessage || `Ready for ${product.name}?`)}</h2>
-          <p class="muted">Razorpay, Cash on Delivery, or cafe pickup in Faridabad.</p>
+          <p class="muted">Razorpay or Cash on Delivery — shipped to your door.</p>
         </div>
         <div class="pp-footer-cta-actions">
           <button class="btn" type="button" id="footer-add-cart" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
@@ -3810,7 +4034,7 @@ async function initContactForm() {
   if (!form) return;
 
   const nameInput = document.getElementById('contact-name');
-  const emailInput = document.getElementById('contact-email');
+  const emailInput = document.getElementById('contact-email-input') || document.getElementById('contact-email');
   const messageInput = document.getElementById('contact-message');
   const topicInput = document.getElementById('contact-topic');
   const status = document.getElementById('contact-status');

@@ -234,22 +234,62 @@
               </div>
 
               <div class="settings-card">
-                <h3>Cafe location & hours</h3>
-                <p class="muted" style="margin:0 0 1rem;">Controls the homepage visit strip and the Visit/Contact page.</p>
+                <h3>Store contact</h3>
+                <p class="muted" style="margin:0 0 1rem;">Shown on the Contact page for customer support (not a physical visit storefront).</p>
                 <div class="settings-grid">
-                  <div class="field"><label>Address line</label><input id="s-cafe-address" type="text"></div>
+                  <div class="field"><label>Fulfillment / address line</label><input id="s-cafe-address" type="text"></div>
                   <div class="field"><label>City</label><input id="s-cafe-city" type="text"></div>
                   <div class="field"><label>State</label><input id="s-cafe-state" type="text"></div>
                   <div class="field"><label>Pincode</label><input id="s-cafe-pincode" type="text"></div>
                   <div class="field"><label>Phone</label><input id="s-cafe-phone" type="text"></div>
                   <div class="field"><label>Email</label><input id="s-cafe-email" type="email"></div>
-                  <div class="field"><label>Weekday hours</label><input id="s-cafe-hours-weekday" type="text"></div>
-                  <div class="field"><label>Saturday hours</label><input id="s-cafe-hours-sat" type="text"></div>
-                  <div class="field"><label>Sunday hours</label><input id="s-cafe-hours-sun" type="text"></div>
-                  <div class="field"><label>Map search query</label><input id="s-cafe-map" type="text" placeholder="Faridabad Market"></div>
-                  <div class="field"><label>Visit eyebrow</label><input id="s-cafe-visit-eyebrow" type="text"></div>
-                  <div class="field"><label>Visit headline</label><input id="s-cafe-visit-headline" type="text"></div>
-                  <div class="field" style="grid-column:1/-1;"><label>Visit subtext</label><textarea id="s-cafe-visit-subtext" rows="2"></textarea></div>
+                  <div class="field"><label>Support hours (weekday)</label><input id="s-cafe-hours-weekday" type="text"></div>
+                  <div class="field"><label>Support hours (Saturday)</label><input id="s-cafe-hours-sat" type="text"></div>
+                  <div class="field"><label>Support hours (Sunday)</label><input id="s-cafe-hours-sun" type="text"></div>
+                  <div class="field" style="grid-column:1/-1;"><label>Map search query (optional)</label><input id="s-cafe-map" type="text" placeholder="Leave blank to hide map"></div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>WhatsApp</h3>
+                <p class="muted" style="margin:0 0 1rem;">Floating chat button on the storefront and Contact page CTA.</p>
+                <div class="settings-grid">
+                  <div class="field" style="grid-column:1/-1;">
+                    <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;">
+                      <input id="s-wa-enabled" type="checkbox" checked style="width:auto;margin:0;accent-color:var(--accent);">
+                      Enable WhatsApp
+                    </label>
+                  </div>
+                  <div class="field" style="grid-column:1/-1;">
+                    <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;">
+                      <input id="s-wa-float" type="checkbox" checked style="width:auto;margin:0;accent-color:var(--accent);">
+                      Show floating WhatsApp button
+                    </label>
+                  </div>
+                  <div class="field">
+                    <label for="s-wa-number">WhatsApp number</label>
+                    <input id="s-wa-number" type="text" placeholder="91XXXXXXXXXX">
+                    <p style="font-size:.82rem;color:var(--muted);margin:.45rem 0 0;">Digits only with country code (example: 919876543210).</p>
+                  </div>
+                  <div class="field" style="grid-column:1/-1;">
+                    <label for="s-wa-message">Default message</label>
+                    <textarea id="s-wa-message" rows="2" placeholder="Hi! I have a question..."></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>Product options catalog</h3>
+                <p class="muted" style="margin:0 0 1rem;">These values become the multi-select checkboxes when editing a product’s sizes and types.</p>
+                <div class="settings-grid">
+                  <div class="field" style="grid-column:1/-1;">
+                    <label for="s-catalog-sizes">Sizes (comma or new line)</label>
+                    <textarea id="s-catalog-sizes" rows="3" placeholder="250g, 500g, 1kg"></textarea>
+                  </div>
+                  <div class="field" style="grid-column:1/-1;">
+                    <label for="s-catalog-types">Types (comma or new line)</label>
+                    <textarea id="s-catalog-types" rows="3" placeholder="Whole bean, Ground"></textarea>
+                  </div>
                 </div>
               </div>
 
@@ -271,9 +311,8 @@
               </div>
 
               <div class="settings-card">
-                <h3>Menu & newsletter</h3>
+                <h3>Newsletter</h3>
                 <div class="settings-grid">
-                  <div class="field" style="grid-column:1/-1;"><label>Cafe menu categories (comma-separated)</label><input id="s-menu-categories" type="text" placeholder="Espresso, Bakery & Snacks, Tea & Infusions, Cold Brew"></div>
                   <div class="field"><label>Newsletter eyebrow</label><input id="s-news-eyebrow" type="text"></div>
                   <div class="field"><label>Newsletter headline</label><input id="s-news-headline" type="text"></div>
                   <div class="field" style="grid-column:1/-1;"><label>Newsletter subtext</label><textarea id="s-news-subtext" rows="2"></textarea></div>
@@ -295,7 +334,7 @@
                       <input id="s-cod-enabled" type="checkbox" checked style="width:auto;margin:0;accent-color:var(--accent);">
                       Enable Cash on Delivery (COD)
                     </label>
-                    <p style="font-size:.82rem;color:var(--muted);margin:.45rem 0 0;">Customer pays in cash on delivery or at cafe pickup. Order stays Confirmed until you mark it Paid/Delivered.</p>
+                    <p style="font-size:.82rem;color:var(--muted);margin:.45rem 0 0;">Customer pays in cash when the order is delivered. Order stays Confirmed until you mark it Paid/Delivered.</p>
                   </div>
                   <div class="field">
                     <label for="s-rzp-key">Razorpay Key ID (public)</label>
@@ -422,9 +461,16 @@
       set('s-cafe-hours-sat', cafe.hoursSaturday);
       set('s-cafe-hours-sun', cafe.hoursSunday);
       set('s-cafe-map', cafe.mapQuery);
-      set('s-cafe-visit-eyebrow', cafe.visitEyebrow);
-      set('s-cafe-visit-headline', cafe.visitHeadline);
-      set('s-cafe-visit-subtext', cafe.visitSubtext);
+
+      const wa = s.whatsapp || {};
+      chk('s-wa-enabled', wa.enabled !== false);
+      chk('s-wa-float', wa.floatButton !== false);
+      set('s-wa-number', wa.number);
+      set('s-wa-message', wa.message);
+
+      const catalog = s.catalog || {};
+      set('s-catalog-sizes', (catalog.sizes || []).join(', '));
+      set('s-catalog-types', (catalog.types || []).join(', '));
 
       const about = s.about || {};
       set('s-about-eyebrow', about.eyebrow);
@@ -443,7 +489,6 @@
       set('s-news-eyebrow', newsletter.eyebrow);
       set('s-news-headline', newsletter.headline);
       set('s-news-subtext', newsletter.subtext);
-      set('s-menu-categories', (s.menuCategories || []).join(', '));
 
       const pp = s.productPage || {};
       const ppMap = {
@@ -515,9 +560,19 @@
           hoursSaturday: get('s-cafe-hours-sat'),
           hoursSunday: get('s-cafe-hours-sun'),
           mapQuery: get('s-cafe-map'),
-          visitEyebrow: get('s-cafe-visit-eyebrow'),
-          visitHeadline: get('s-cafe-visit-headline'),
-          visitSubtext: get('s-cafe-visit-subtext')
+          visitEyebrow: '',
+          visitHeadline: '',
+          visitSubtext: ''
+        },
+        whatsapp: {
+          enabled: checked('s-wa-enabled'),
+          floatButton: checked('s-wa-float'),
+          number: get('s-wa-number').replace(/\D+/g, ''),
+          message: get('s-wa-message')
+        },
+        catalog: {
+          sizes: get('s-catalog-sizes').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean),
+          types: get('s-catalog-types').split(/[\n,]+/).map((item) => item.trim()).filter(Boolean)
         },
         about: {
           eyebrow: get('s-about-eyebrow'),
@@ -537,7 +592,8 @@
           headline: get('s-news-headline'),
           subtext: get('s-news-subtext')
         },
-        menuCategories: get('s-menu-categories').split(',').map((item) => item.trim()).filter(Boolean),
+        menuCategories: [],
+        contentVersion: 4,
         shopSection: current.shopSection || { title: 'Shop the collection', subtext: '' },
         productPageVersion: 3,
         productPage: {
