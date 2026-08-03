@@ -2938,10 +2938,9 @@ body[data-admin-page] #login-form.card {
   font-weight: 600;
 }
 .auth-terms {
-  display: grid;
-  grid-template-columns: auto 1fr;
+  display: flex;
+  align-items: flex-start;
   gap: 0.65rem;
-  align-items: start;
   margin: 0.35rem 0 1.05rem;
   padding: 0.85rem 0.95rem;
   border-radius: 14px;
@@ -2949,7 +2948,7 @@ body[data-admin-page] #login-form.card {
   border: 1px solid var(--border);
 }
 .auth-terms input {
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
   width: 1.05rem;
   height: 1.05rem;
   accent-color: var(--accent);
@@ -2958,14 +2957,16 @@ body[data-admin-page] #login-form.card {
 .auth-terms label {
   margin: 0;
   font-size: 0.9rem;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--muted);
-  text-wrap: pretty;
+  display: inline;
+  white-space: normal;
 }
 .auth-terms a {
   color: var(--accent);
   font-weight: 700;
-  white-space: nowrap;
+  display: inline;
+  white-space: normal;
 }
 .auth-terms a:hover { text-decoration: underline; }
 .auth-divider {
@@ -3141,7 +3142,6 @@ body[data-admin-page] #login-form.card {
   .auth-card { padding: 1.6rem 1.2rem 1.4rem; border-radius: 22px; }
   .auth-benefits { grid-template-columns: 1fr; }
   .auth-remember { flex-direction: column; align-items: flex-start; }
-  .auth-terms a { white-space: normal; }
 }
 
 /* Toast */
