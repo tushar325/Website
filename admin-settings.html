@@ -149,6 +149,31 @@
               </div>
 
               <div class="settings-card">
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Product page sections</h3>
+                <p class="muted" style="margin:0 0 1rem;">Enable or disable customer-facing blocks on product detail pages. Section content still comes from each product’s details.</p>
+                <div class="settings-grid cols-3" id="product-page-toggles">
+                  <label class="compare-check"><input id="s-pp-hero" type="checkbox"> Hero / purchase</label>
+                  <label class="compare-check"><input id="s-pp-overview" type="checkbox"> Overview</label>
+                  <label class="compare-check"><input id="s-pp-ingredients" type="checkbox"> Ingredients</label>
+                  <label class="compare-check"><input id="s-pp-coffeeInfo" type="checkbox"> Coffee info</label>
+                  <label class="compare-check"><input id="s-pp-flavorProfile" type="checkbox"> Flavor profile</label>
+                  <label class="compare-check"><input id="s-pp-brewingGuide" type="checkbox"> Brewing guide</label>
+                  <label class="compare-check"><input id="s-pp-variants" type="checkbox"> Variants</label>
+                  <label class="compare-check"><input id="s-pp-nutrition" type="checkbox"> Nutrition</label>
+                  <label class="compare-check"><input id="s-pp-certifications" type="checkbox"> Certifications</label>
+                  <label class="compare-check"><input id="s-pp-packaging" type="checkbox"> Packaging</label>
+                  <label class="compare-check"><input id="s-pp-shipping" type="checkbox"> Shipping</label>
+                  <label class="compare-check"><input id="s-pp-reviews" type="checkbox"> Reviews</label>
+                  <label class="compare-check"><input id="s-pp-related" type="checkbox"> Related products</label>
+                  <label class="compare-check"><input id="s-pp-faq" type="checkbox"> FAQ</label>
+                  <label class="compare-check"><input id="s-pp-mediaGallery" type="checkbox"> Media gallery</label>
+                  <label class="compare-check"><input id="s-pp-labels" type="checkbox"> Labels / badges</label>
+                  <label class="compare-check"><input id="s-pp-stickyBar" type="checkbox"> Sticky purchase bar</label>
+                  <label class="compare-check"><input id="s-pp-footerCta" type="checkbox"> Footer CTA</label>
+                </div>
+              </div>
+
+              <div class="settings-card">
                 <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>Section headings</h3>
                 <div class="settings-grid">
                   <div class="field"><label>Categories section title</label><input id="s-catTitle" type="text"></div>
@@ -413,11 +438,38 @@
       set('s-news-subtext', newsletter.subtext);
       set('s-menu-categories', (s.menuCategories || []).join(', '));
 
+      const pp = s.productPage || {};
+      const ppMap = {
+        's-pp-hero': 'hero',
+        's-pp-overview': 'overview',
+        's-pp-ingredients': 'ingredients',
+        's-pp-coffeeInfo': 'coffeeInfo',
+        's-pp-flavorProfile': 'flavorProfile',
+        's-pp-brewingGuide': 'brewingGuide',
+        's-pp-variants': 'variants',
+        's-pp-nutrition': 'nutrition',
+        's-pp-certifications': 'certifications',
+        's-pp-packaging': 'packaging',
+        's-pp-shipping': 'shipping',
+        's-pp-reviews': 'reviews',
+        's-pp-related': 'related',
+        's-pp-faq': 'faq',
+        's-pp-mediaGallery': 'mediaGallery',
+        's-pp-labels': 'labels',
+        's-pp-stickyBar': 'stickyBar',
+        's-pp-footerCta': 'footerCta'
+      };
+      Object.entries(ppMap).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = pp[key] !== false;
+      });
+
     }
 
     function collectSettingsFromForm() {
       const get = id => (document.getElementById(id)?.value || '').trim();
       const checked = id => !!document.getElementById(id)?.checked;
+      const current = (typeof loadSettings === 'function' ? loadSettings() : {}) || {};
       return {
         siteName: get('s-siteName'), footerText: get('s-footerText'),
         seo: {
@@ -479,6 +531,27 @@
           subtext: get('s-news-subtext')
         },
         menuCategories: get('s-menu-categories').split(',').map((item) => item.trim()).filter(Boolean),
+        shopSection: current.shopSection || { title: 'Shop the collection', subtext: '' },
+        productPage: {
+          hero: checked('s-pp-hero'),
+          overview: checked('s-pp-overview'),
+          ingredients: checked('s-pp-ingredients'),
+          coffeeInfo: checked('s-pp-coffeeInfo'),
+          flavorProfile: checked('s-pp-flavorProfile'),
+          brewingGuide: checked('s-pp-brewingGuide'),
+          variants: checked('s-pp-variants'),
+          nutrition: checked('s-pp-nutrition'),
+          certifications: checked('s-pp-certifications'),
+          packaging: checked('s-pp-packaging'),
+          shipping: checked('s-pp-shipping'),
+          reviews: checked('s-pp-reviews'),
+          related: checked('s-pp-related'),
+          faq: checked('s-pp-faq'),
+          mediaGallery: checked('s-pp-mediaGallery'),
+          labels: checked('s-pp-labels'),
+          stickyBar: checked('s-pp-stickyBar'),
+          footerCta: checked('s-pp-footerCta')
+        },
         payments: {
           currency: 'INR',
           razorpayEnabled: checked('s-rzp-enabled'),

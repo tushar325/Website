@@ -137,6 +137,139 @@
                   <input id="product-featured" type="checkbox">
                   <label for="product-featured" style="margin: 0; font-weight: 700; color: var(--text);">Mark as featured</label>
                 </div>
+                <details class="product-details-admin" open>
+                  <summary style="cursor:pointer;font-weight:700;color:var(--text);">Product page details</summary>
+                  <div>
+                    <label for="product-subtitle" style="display:block;font-weight:700;margin-bottom:.4rem;">Subtitle / tagline</label>
+                    <input id="product-subtitle" type="text" placeholder="Short tagline under the title">
+                  </div>
+                  <div>
+                    <label for="product-sku" style="display:block;font-weight:700;margin-bottom:.4rem;">SKU</label>
+                    <input id="product-sku" type="text" placeholder="BB-BEANS-01">
+                  </div>
+                  <div>
+                    <label for="product-compare-price" style="display:block;font-weight:700;margin-bottom:.4rem;">Compare-at price (₹)</label>
+                    <input id="product-compare-price" type="number" step="0.01" min="0" placeholder="Optional strikethrough price">
+                  </div>
+                  <div>
+                    <label for="product-badges" style="display:block;font-weight:700;margin-bottom:.4rem;">Badges (comma or new line)</label>
+                    <textarea id="product-badges" rows="2" placeholder="New, Bestseller, Organic"></textarea>
+                  </div>
+                  <div>
+                    <label for="product-video-url" style="display:block;font-weight:700;margin-bottom:.4rem;">Video embed URL</label>
+                    <input id="product-video-url" type="url" placeholder="https://www.youtube.com/embed/...">
+                  </div>
+                  <div>
+                    <label for="product-features" style="display:block;font-weight:700;margin-bottom:.4rem;">Key features (one per line)</label>
+                    <textarea id="product-features" rows="3" placeholder="Cafe-quality finish"></textarea>
+                  </div>
+                  <div>
+                    <label for="product-highlights" style="display:block;font-weight:700;margin-bottom:.4rem;">Highlights (one per line)</label>
+                    <textarea id="product-highlights" rows="3"></textarea>
+                  </div>
+                  <h5>Ingredients</h5>
+                  <div>
+                    <label for="product-ingredients-list" style="display:block;font-weight:700;margin-bottom:.4rem;">Ingredients list</label>
+                    <textarea id="product-ingredients-list" rows="2"></textarea>
+                  </div>
+                  <div>
+                    <label for="product-allergens" style="display:block;font-weight:700;margin-bottom:.4rem;">Allergens</label>
+                    <input id="product-allergens" type="text">
+                  </div>
+                  <div>
+                    <label for="product-additives" style="display:block;font-weight:700;margin-bottom:.4rem;">Additives</label>
+                    <input id="product-additives" type="text">
+                  </div>
+                  <div>
+                    <label for="product-organic-note" style="display:block;font-weight:700;margin-bottom:.4rem;">Organic / natural note</label>
+                    <input id="product-organic-note" type="text">
+                  </div>
+                  <h5>Coffee information</h5>
+                  <div class="grid grid-2" style="gap:.8rem;">
+                    <div><label for="product-coffee-variety" style="display:block;font-weight:700;margin-bottom:.4rem;">Variety</label><input id="product-coffee-variety" type="text"></div>
+                    <div><label for="product-coffee-origin" style="display:block;font-weight:700;margin-bottom:.4rem;">Origin</label><input id="product-coffee-origin" type="text"></div>
+                    <div><label for="product-coffee-region" style="display:block;font-weight:700;margin-bottom:.4rem;">Region / farm</label><input id="product-coffee-region" type="text"></div>
+                    <div><label for="product-coffee-roast" style="display:block;font-weight:700;margin-bottom:.4rem;">Roast level</label><input id="product-coffee-roast" type="text"></div>
+                    <div><label for="product-coffee-process" style="display:block;font-weight:700;margin-bottom:.4rem;">Processing</label><input id="product-coffee-process" type="text"></div>
+                    <div><label for="product-coffee-harvest" style="display:block;font-weight:700;margin-bottom:.4rem;">Harvest year</label><input id="product-coffee-harvest" type="text"></div>
+                    <div style="grid-column:1/-1;"><label for="product-coffee-roast-date" style="display:block;font-weight:700;margin-bottom:.4rem;">Roast date</label><input id="product-coffee-roast-date" type="text"></div>
+                  </div>
+                  <h5>Flavor profile</h5>
+                  <div class="grid grid-2" style="gap:.8rem;">
+                    <div style="grid-column:1/-1;"><label for="product-flavor-notes" style="display:block;font-weight:700;margin-bottom:.4rem;">Flavor notes</label><input id="product-flavor-notes" type="text"></div>
+                    <div><label for="product-flavor-aroma" style="display:block;font-weight:700;margin-bottom:.4rem;">Aroma</label><input id="product-flavor-aroma" type="text"></div>
+                    <div><label for="product-flavor-body" style="display:block;font-weight:700;margin-bottom:.4rem;">Body</label><input id="product-flavor-body" type="text"></div>
+                    <div><label for="product-flavor-acidity" style="display:block;font-weight:700;margin-bottom:.4rem;">Acidity</label><input id="product-flavor-acidity" type="text"></div>
+                    <div><label for="product-flavor-sweetness" style="display:block;font-weight:700;margin-bottom:.4rem;">Sweetness</label><input id="product-flavor-sweetness" type="text"></div>
+                    <div><label for="product-flavor-bitterness" style="display:block;font-weight:700;margin-bottom:.4rem;">Bitterness</label><input id="product-flavor-bitterness" type="text"></div>
+                    <div><label for="product-flavor-finish" style="display:block;font-weight:700;margin-bottom:.4rem;">Finish</label><input id="product-flavor-finish" type="text"></div>
+                    <div><label for="product-flavor-caffeine" style="display:block;font-weight:700;margin-bottom:.4rem;">Caffeine</label><input id="product-flavor-caffeine" type="text"></div>
+                    <div><label for="product-flavor-roast-meter" style="display:block;font-weight:700;margin-bottom:.4rem;">Roast meter (0–100)</label><input id="product-flavor-roast-meter" type="number" min="0" max="100"></div>
+                  </div>
+                  <h5>Brewing guide</h5>
+                  <div>
+                    <label for="product-brew-methods" style="display:block;font-weight:700;margin-bottom:.4rem;">Methods (comma or new line)</label>
+                    <textarea id="product-brew-methods" rows="2"></textarea>
+                  </div>
+                  <div class="grid grid-2" style="gap:.8rem;">
+                    <div><label for="product-brew-ratio" style="display:block;font-weight:700;margin-bottom:.4rem;">Ratio</label><input id="product-brew-ratio" type="text"></div>
+                    <div><label for="product-brew-temp" style="display:block;font-weight:700;margin-bottom:.4rem;">Temperature</label><input id="product-brew-temp" type="text"></div>
+                    <div><label for="product-brew-time" style="display:block;font-weight:700;margin-bottom:.4rem;">Brew time</label><input id="product-brew-time" type="text"></div>
+                    <div><label for="product-brew-grind" style="display:block;font-weight:700;margin-bottom:.4rem;">Grind size</label><input id="product-brew-grind" type="text"></div>
+                    <div style="grid-column:1/-1;"><label for="product-brew-tips" style="display:block;font-weight:700;margin-bottom:.4rem;">Tips</label><textarea id="product-brew-tips" rows="2"></textarea></div>
+                  </div>
+                  <h5>Variants (one per line: label | price | stock | grind)</h5>
+                  <div>
+                    <textarea id="product-variants" rows="3" placeholder="250g Whole bean | 18 | 20 | Whole bean"></textarea>
+                  </div>
+                  <h5>Nutrition</h5>
+                  <div class="grid grid-2" style="gap:.8rem;">
+                    <div><label for="product-nut-serving" style="display:block;font-weight:700;margin-bottom:.4rem;">Serving size</label><input id="product-nut-serving" type="text"></div>
+                    <div><label for="product-nut-calories" style="display:block;font-weight:700;margin-bottom:.4rem;">Calories</label><input id="product-nut-calories" type="text"></div>
+                    <div><label for="product-nut-protein" style="display:block;font-weight:700;margin-bottom:.4rem;">Protein</label><input id="product-nut-protein" type="text"></div>
+                    <div><label for="product-nut-fat" style="display:block;font-weight:700;margin-bottom:.4rem;">Fat</label><input id="product-nut-fat" type="text"></div>
+                    <div><label for="product-nut-carbs" style="display:block;font-weight:700;margin-bottom:.4rem;">Carbs</label><input id="product-nut-carbs" type="text"></div>
+                    <div><label for="product-nut-sugar" style="display:block;font-weight:700;margin-bottom:.4rem;">Sugar</label><input id="product-nut-sugar" type="text"></div>
+                    <div><label for="product-nut-sodium" style="display:block;font-weight:700;margin-bottom:.4rem;">Sodium</label><input id="product-nut-sodium" type="text"></div>
+                    <div><label for="product-nut-caffeine" style="display:block;font-weight:700;margin-bottom:.4rem;">Caffeine</label><input id="product-nut-caffeine" type="text"></div>
+                  </div>
+                  <div>
+                    <label for="product-certifications" style="display:block;font-weight:700;margin-bottom:.4rem;">Certifications</label>
+                    <textarea id="product-certifications" rows="2" placeholder="Organic, Fair Trade, Vegan"></textarea>
+                  </div>
+                  <h5>Packaging</h5>
+                  <div class="grid grid-2" style="gap:.8rem;">
+                    <div><label for="product-pack-size" style="display:block;font-weight:700;margin-bottom:.4rem;">Package size</label><input id="product-pack-size" type="text"></div>
+                    <div><label for="product-pack-material" style="display:block;font-weight:700;margin-bottom:.4rem;">Material</label><input id="product-pack-material" type="text"></div>
+                    <div><label for="product-pack-valve" style="display:block;font-weight:700;margin-bottom:.4rem;">Freshness valve</label><input id="product-pack-valve" type="text"></div>
+                    <div><label for="product-pack-shelf" style="display:block;font-weight:700;margin-bottom:.4rem;">Shelf life</label><input id="product-pack-shelf" type="text"></div>
+                    <div style="grid-column:1/-1;"><label for="product-pack-storage" style="display:block;font-weight:700;margin-bottom:.4rem;">Storage</label><input id="product-pack-storage" type="text"></div>
+                  </div>
+                  <h5>Shipping</h5>
+                  <div class="grid grid-2" style="gap:.8rem;">
+                    <div><label for="product-ship-days" style="display:block;font-weight:700;margin-bottom:.4rem;">Estimated delivery</label><input id="product-ship-days" type="text"></div>
+                    <div><label for="product-ship-charges" style="display:block;font-weight:700;margin-bottom:.4rem;">Shipping charges</label><input id="product-ship-charges" type="text"></div>
+                    <div><label for="product-ship-free" style="display:block;font-weight:700;margin-bottom:.4rem;">Free shipping over</label><input id="product-ship-free" type="text"></div>
+                    <div><label for="product-ship-return" style="display:block;font-weight:700;margin-bottom:.4rem;">Return policy</label><input id="product-ship-return" type="text"></div>
+                    <div style="grid-column:1/-1;"><label for="product-ship-refund" style="display:block;font-weight:700;margin-bottom:.4rem;">Refund policy</label><input id="product-ship-refund" type="text"></div>
+                  </div>
+                  <h5>FAQ (one per line: Question | Answer)</h5>
+                  <div>
+                    <textarea id="product-faq" rows="3" placeholder="Can I pick up? | Yes, choose cafe pickup at checkout."></textarea>
+                  </div>
+                  <div>
+                    <label for="product-related-ids" style="display:block;font-weight:700;margin-bottom:.4rem;">Related product IDs</label>
+                    <textarea id="product-related-ids" rows="2" placeholder="seed-espresso-1, seed-beans-blends-2"></textarea>
+                  </div>
+                  <div>
+                    <label for="product-fbt-ids" style="display:block;font-weight:700;margin-bottom:.4rem;">Frequently bought together IDs</label>
+                    <textarea id="product-fbt-ids" rows="2"></textarea>
+                  </div>
+                  <div>
+                    <label for="product-footer-cta" style="display:block;font-weight:700;margin-bottom:.4rem;">Footer CTA message</label>
+                    <input id="product-footer-cta" type="text" placeholder="Ready for your next brew?">
+                  </div>
+                </details>
                 <div style="display: flex; gap: 0.8rem;">
                   <button class="btn" type="submit">Save product</button>
                   <button id="cancel-product-form" class="btn secondary" type="button">Cancel</button>
