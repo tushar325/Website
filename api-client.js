@@ -1,9 +1,15 @@
 /**
- * Bean & Bloom API Client
- * Handles all communication with the backend server
+ * Bean & Bloom API Client — fast, abortable, local-first friendly.
+ * All network calls hard-timeout so a down backend never freezes the UI.
  */
 
 const _API_BASE = (typeof window !== 'undefined' && window.BEAN_BLOOM_API_BASE) || 'http://localhost:3001/api';
+const FETCH_TIMEOUT_MS = 900;
+const HEALTH_TTL_MS = 15000;
+
+let _apiOnline = null;
+let _apiOnlineCheckedAt = 0;
+let _healthPromise = null;
 
 function adminAuthHeaders(extra = {}) {
   const headers = { 'Content-Type': 'application/json', ...extra };
@@ -17,162 +23,118 @@ function adminAuthHeaders(extra = {}) {
   return headers;
 }
 
-// Helper function to handle API responses
-async function handleResponse(response) {
-  if (!response.ok) {
-    let message = 'API request failed';
-    try {
-      const error = await response.json();
-      message = error.error || message;
-    } catch (_) {}
-    throw new Error(message);
+async function apiFetch(path, options = {}) {
+  const timeout = Number(options.timeout ?? FETCH_TIMEOUT_MS);
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), timeout) : null;
+  try {
+    const response = await fetch(`${_API_BASE}${path}`, {
+      ...options,
+      headers: options.headers || { 'Content-Type': 'application/json' },
+      signal: controller ? controller.signal : undefined,
+      cache: options.cache || 'no-store'
+    });
+    if (!response.ok) {
+      let message = 'API request failed';
+      try {
+        const error = await response.json();
+        message = error.error || message;
+      } catch (_) {}
+      const err = new Error(message);
+      err.status = response.status;
+      throw err;
+    }
+    if (response.status === 204) return null;
+    return response.json();
+  } finally {
+    if (timer) clearTimeout(timer);
   }
-  return response.json();
+}
+
+async function probeApiHealth(force = false) {
+  const now = Date.now();
+  if (!force && _apiOnline !== null && now - _apiOnlineCheckedAt < HEALTH_TTL_MS) {
+    return _apiOnline;
+  }
+  if (_healthPromise) return _healthPromise;
+  _healthPromise = (async () => {
+    try {
+      await apiFetch('/health', { method: 'GET', timeout: 500, headers: {} });
+      _apiOnline = true;
+    } catch (_) {
+      _apiOnline = false;
+    }
+    _apiOnlineCheckedAt = Date.now();
+    _healthPromise = null;
+    return _apiOnline;
+  })();
+  return _healthPromise;
+}
+
+function markApiOffline() {
+  _apiOnline = false;
+  _apiOnlineCheckedAt = Date.now();
+}
+
+async function whenOnline(fn) {
+  const online = await probeApiHealth();
+  if (!online) return null;
+  try {
+    return await fn();
+  } catch (err) {
+    if (err?.name === 'AbortError' || /failed|network|fetch/i.test(String(err?.message || ''))) {
+      markApiOffline();
+    }
+    throw err;
+  }
 }
 
 // ==================== CATEGORIES ====================
 const CategoriesAPI = {
-  async getAll() {
-    const response = await fetch(`${_API_BASE}/categories`);
-    return handleResponse(response);
-  },
-
-  async getById(id) {
-    const response = await fetch(`${_API_BASE}/categories/${id}`);
-    return handleResponse(response);
-  },
-
-  async create(data) {
-    const response = await fetch(`${_API_BASE}/categories`, {
-      method: 'POST',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-
-  async update(id, data) {
-    const response = await fetch(`${_API_BASE}/categories/${id}`, {
-      method: 'PUT',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-
-  async delete(id) {
-    const response = await fetch(`${_API_BASE}/categories/${id}`, {
-      method: 'DELETE',
-      headers: adminAuthHeaders()
-    });
-    return handleResponse(response);
-  }
+  getAll: () => whenOnline(() => apiFetch('/categories')),
+  getById: (id) => whenOnline(() => apiFetch(`/categories/${id}`)),
+  create: (data) => apiFetch('/categories', { method: 'POST', headers: adminAuthHeaders(), body: JSON.stringify(data) }),
+  update: (id, data) => apiFetch(`/categories/${id}`, { method: 'PUT', headers: adminAuthHeaders(), body: JSON.stringify(data) }),
+  delete: (id) => apiFetch(`/categories/${id}`, { method: 'DELETE', headers: adminAuthHeaders() })
 };
 
 // ==================== PRODUCTS ====================
 const ProductsAPI = {
-  async getAll() {
-    const response = await fetch(`${_API_BASE}/products`);
-    return handleResponse(response);
-  },
-
-  async getById(id) {
-    const response = await fetch(`${_API_BASE}/products/${id}`);
-    return handleResponse(response);
-  },
-
-  async getByCategory(categoryId) {
-    const response = await fetch(`${_API_BASE}/products/category/${categoryId}`);
-    return handleResponse(response);
-  },
-
-  async getFeatured() {
-    const response = await fetch(`${_API_BASE}/products/featured`);
-    return handleResponse(response);
-  },
-
-  async create(data) {
-    const response = await fetch(`${_API_BASE}/products`, {
-      method: 'POST',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-
-  async update(id, data) {
-    const response = await fetch(`${_API_BASE}/products/${id}`, {
-      method: 'PUT',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-
-  async delete(id) {
-    const response = await fetch(`${_API_BASE}/products/${id}`, {
-      method: 'DELETE',
-      headers: adminAuthHeaders()
-    });
-    return handleResponse(response);
-  }
+  getAll: () => whenOnline(() => apiFetch('/products')),
+  getById: (id) => whenOnline(() => apiFetch(`/products/${id}`)),
+  getByCategory: (categoryId) => whenOnline(() => apiFetch(`/products/category/${categoryId}`)),
+  getFeatured: () => whenOnline(() => apiFetch('/products/featured')),
+  create: (data) => apiFetch('/products', { method: 'POST', headers: adminAuthHeaders(), body: JSON.stringify(data) }),
+  update: (id, data) => apiFetch(`/products/${id}`, { method: 'PUT', headers: adminAuthHeaders(), body: JSON.stringify(data) }),
+  delete: (id) => apiFetch(`/products/${id}`, { method: 'DELETE', headers: adminAuthHeaders() })
 };
 
 // ==================== CART ====================
 const CartAPI = {
-  async getAll() {
-    const response = await fetch(`${API_BASE}/cart`);
-    return handleResponse(response);
-  },
-
-  async add(productId, quantity = 1) {
-    const response = await fetch(`${_API_BASE}/cart`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, quantity })
-    });
-    return handleResponse(response);
-  },
-
-  async update(productId, quantity) {
-    const response = await fetch(`${_API_BASE}/cart/${productId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ quantity })
-    });
-    return handleResponse(response);
-  },
-
-  async remove(productId) {
-    const response = await fetch(`${_API_BASE}/cart/${productId}`, {
-      method: 'DELETE'
-    });
-    return handleResponse(response);
-  },
-
-  async clear() {
-    const response = await fetch(`${_API_BASE}/cart`, {
-      method: 'DELETE'
-    });
-    return handleResponse(response);
-  },
-
-  /**
-   * Get total cart value (fetched from database)
-   * Returns: { items: [], totalValue: number, itemCount: number }
-   */
+  getAll: () => whenOnline(() => apiFetch('/cart')),
+  add: (productId, quantity = 1) => apiFetch('/cart', {
+    method: 'POST',
+    headers: adminAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ product_id: productId, quantity })
+  }),
+  update: (productId, quantity) => apiFetch(`/cart/${productId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ quantity })
+  }),
+  remove: (productId) => apiFetch(`/cart/${productId}`, { method: 'DELETE' }),
+  clear: () => apiFetch('/cart', { method: 'DELETE' }),
   async getCartValue() {
     try {
-      const response = await fetch(`${_API_BASE}/cart`);
-      const data = await handleResponse(response);
+      const data = await whenOnline(() => apiFetch('/cart'));
+      if (!data) return { items: [], totalValue: 0, itemCount: 0 };
       return {
         items: data.items,
-        totalValue: data.totalValue, // From database
+        totalValue: data.totalValue,
         itemCount: data.itemCount,
         timestamp: new Date().toISOString()
       };
-    } catch (error) {
-      console.error('Error fetching cart value:', error);
+    } catch (_) {
       return { items: [], totalValue: 0, itemCount: 0 };
     }
   }
@@ -180,156 +142,72 @@ const CartAPI = {
 
 // ==================== AUTH ====================
 const AuthAPI = {
-  async login(username, password) {
-    const response = await fetch(`${_API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    return handleResponse(response);
-  },
-
-  async register(username, password, role = 'customer') {
-    const response = await fetch(`${_API_BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, role })
-    });
-    return handleResponse(response);
-  }
+  login: (username, password) => apiFetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+    timeout: 2500
+  }),
+  register: (username, password, role = 'customer') => apiFetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, role }),
+    timeout: 2500
+  })
 };
 
-// ==================== ORDERS (MySQL + Razorpay meta) ====================
+// ==================== ORDERS ====================
 const OrdersAPI = {
-  async getAll() {
-    const response = await fetch(`${_API_BASE}/orders`, {
-      headers: adminAuthHeaders()
-    });
-    return handleResponse(response);
-  },
-
-  async getById(id) {
-    const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}`);
-    return handleResponse(response);
-  },
-
-  async create(order) {
-    const response = await fetch(`${_API_BASE}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order)
-    });
-    return handleResponse(response);
-  },
-
-  async verifyPayment(id, verified = true) {
-    const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}/verify`, {
-      method: 'PATCH',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify({ verified })
-    });
-    return handleResponse(response);
-  },
-
-  async updateStatus(id, status) {
-    const response = await fetch(`${_API_BASE}/orders/${encodeURIComponent(id)}/status`, {
-      method: 'PATCH',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify({ status })
-    });
-    return handleResponse(response);
-  }
+  getAll: () => apiFetch('/orders', { headers: adminAuthHeaders() }),
+  getById: (id) => whenOnline(() => apiFetch(`/orders/${encodeURIComponent(id)}`)),
+  create: (order) => apiFetch('/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(order),
+    timeout: 4000
+  }),
+  verifyPayment: (id, verified = true) => apiFetch(`/orders/${encodeURIComponent(id)}/verify`, {
+    method: 'PATCH',
+    headers: adminAuthHeaders(),
+    body: JSON.stringify({ verified })
+  }),
+  updateStatus: (id, status) => apiFetch(`/orders/${encodeURIComponent(id)}/status`, {
+    method: 'PATCH',
+    headers: adminAuthHeaders(),
+    body: JSON.stringify({ status })
+  })
 };
 
 // ==================== DISCOUNTS ====================
 const DiscountsAPI = {
-  async getAll() {
-    const response = await fetch(`${_API_BASE}/discounts`);
-    return handleResponse(response);
-  },
-
-  async create(data) {
-    const response = await fetch(`${_API_BASE}/discounts`, {
-      method: 'POST',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-
-  async update(id, data) {
-    const response = await fetch(`${_API_BASE}/discounts/${encodeURIComponent(id)}`, {
-      method: 'PUT',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-
-  async remove(id) {
-    const response = await fetch(`${_API_BASE}/discounts/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: adminAuthHeaders()
-    });
-    return handleResponse(response);
-  }
+  getAll: () => whenOnline(() => apiFetch('/discounts')),
+  create: (data) => apiFetch('/discounts', { method: 'POST', headers: adminAuthHeaders(), body: JSON.stringify(data) }),
+  update: (id, data) => apiFetch(`/discounts/${encodeURIComponent(id)}`, { method: 'PUT', headers: adminAuthHeaders(), body: JSON.stringify(data) }),
+  remove: (id) => apiFetch(`/discounts/${encodeURIComponent(id)}`, { method: 'DELETE', headers: adminAuthHeaders() })
 };
 
-// ==================== SETTINGS (MySQL site_settings) ====================
+// ==================== SETTINGS ====================
 const SettingsAPI = {
-  async get() {
-    const response = await fetch(`${_API_BASE}/settings`);
-    return handleResponse(response);
-  },
-  async save(settings) {
-    const response = await fetch(`${_API_BASE}/settings`, {
-      method: 'PUT',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(settings)
-    });
-    return handleResponse(response);
-  }
+  get: () => whenOnline(() => apiFetch('/settings')),
+  save: (settings) => apiFetch('/settings', {
+    method: 'PUT',
+    headers: adminAuthHeaders(),
+    body: JSON.stringify(settings),
+    timeout: 2500
+  })
 };
 
 // ==================== BLOGS ====================
 const BlogsAPI = {
-  async getAll(all = false) {
-    const url = all ? `${_API_BASE}/blogs?all=1` : `${_API_BASE}/blogs`;
-    const response = await fetch(url, {
-      headers: all ? adminAuthHeaders() : { 'Content-Type': 'application/json' }
-    });
-    return handleResponse(response);
-  },
-  async getBySlug(slug) {
-    const response = await fetch(`${_API_BASE}/blogs/${encodeURIComponent(slug)}`);
-    return handleResponse(response);
-  },
-  async create(data) {
-    const response = await fetch(`${_API_BASE}/blogs`, {
-      method: 'POST',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-  async update(id, data) {
-    const response = await fetch(`${_API_BASE}/blogs/${encodeURIComponent(id)}`, {
-      method: 'PUT',
-      headers: adminAuthHeaders(),
-      body: JSON.stringify(data)
-    });
-    return handleResponse(response);
-  },
-  async remove(id) {
-    const response = await fetch(`${_API_BASE}/blogs/${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-      headers: adminAuthHeaders()
-    });
-    return handleResponse(response);
-  }
+  getAll: (all = false) => whenOnline(() => apiFetch(all ? '/blogs?all=1' : '/blogs', {
+    headers: all ? adminAuthHeaders() : { 'Content-Type': 'application/json' }
+  })),
+  getBySlug: (slug) => whenOnline(() => apiFetch(`/blogs/${encodeURIComponent(slug)}`)),
+  create: (data) => apiFetch('/blogs', { method: 'POST', headers: adminAuthHeaders(), body: JSON.stringify(data), timeout: 2500 }),
+  update: (id, data) => apiFetch(`/blogs/${encodeURIComponent(id)}`, { method: 'PUT', headers: adminAuthHeaders(), body: JSON.stringify(data), timeout: 2500 }),
+  remove: (id) => apiFetch(`/blogs/${encodeURIComponent(id)}`, { method: 'DELETE', headers: adminAuthHeaders() })
 };
 
-// Export all APIs
 window.BeanbBloomAPI = {
   Categories: CategoriesAPI,
   Products: ProductsAPI,
@@ -339,5 +217,9 @@ window.BeanbBloomAPI = {
   Discounts: DiscountsAPI,
   Settings: SettingsAPI,
   Blogs: BlogsAPI,
-  adminAuthHeaders
+  adminAuthHeaders,
+  probeApiHealth,
+  isLikelyOnline: () => _apiOnline === true,
+  FETCH_TIMEOUT_MS,
+  API_BASE: _API_BASE
 };
