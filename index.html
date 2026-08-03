@@ -44,6 +44,15 @@
       </div>
     </section>
 
+    <section class="trust-strip">
+      <div class="container trust-strip-inner">
+        <span>Secure Razorpay checkout</span>
+        <span>Cafe pickup in Faridabad</span>
+        <span>Fresh roast weekly</span>
+        <span>Easy returns on gear</span>
+      </div>
+    </section>
+
     <section class="section category-block reveal">
       <div class="container">
         <div class="section-head">
@@ -54,6 +63,16 @@
       </div>
     </section>
 
+    <section class="section reveal" style="padding-bottom:0;">
+      <div class="container">
+        <div id="offer-strip" class="offer-strip"></div>
+      </div>
+    </section>
+
+    <section class="section reveal" id="trending">
+      <div class="container" id="trending-rail"></div>
+    </section>
+
     <section class="section products-section reveal" id="products">
       <div class="container">
         <div class="section-head">
@@ -61,25 +80,49 @@
             <h2 id="featured-section-title"></h2>
             <p id="featured-section-sub"></p>
           </div>
-          <div class="shop-controls">
-            <label class="search-field">
-              <span class="visually-hidden">Search products</span>
-              <input id="product-search" type="search" placeholder="Search beans, drinks, gear…" autocomplete="off">
+        </div>
+        <div class="shop-layout">
+          <aside class="shop-filters card">
+            <h3 style="margin-top:0;">Filters</h3>
+            <div class="field">
+              <label for="filter-price-min">Min price (₹)</label>
+              <input id="filter-price-min" type="number" min="0" step="1" placeholder="0">
+            </div>
+            <div class="field">
+              <label for="filter-price-max">Max price (₹)</label>
+              <input id="filter-price-max" type="number" min="0" step="1" placeholder="500">
+            </div>
+            <label class="compare-check" style="display:flex;gap:.5rem;align-items:center;margin:0 0 1rem;">
+              <input id="filter-in-stock" type="checkbox"> In stock only
             </label>
-            <label class="sort-field">
-              <span class="visually-hidden">Sort products</span>
-              <select id="product-sort">
-                <option value="featured">Featured</option>
-                <option value="price-asc">Price: low to high</option>
-                <option value="price-desc">Price: high to low</option>
-                <option value="name">Name A–Z</option>
-              </select>
-            </label>
+            <button class="btn secondary" type="button" id="shop-clear-filters" style="width:100%;margin:0;">Clear filters</button>
+          </aside>
+          <div class="shop-results">
+            <div class="shop-controls">
+              <label class="search-field">
+                <span class="visually-hidden">Search products</span>
+                <input id="product-search" type="search" placeholder="Search beans, drinks, gear…" autocomplete="off">
+              </label>
+              <label class="sort-field">
+                <span class="visually-hidden">Sort products</span>
+                <select id="product-sort">
+                  <option value="featured">Featured</option>
+                  <option value="price-asc">Price: low to high</option>
+                  <option value="price-desc">Price: high to low</option>
+                  <option value="name">Name A–Z</option>
+                </select>
+              </label>
+            </div>
+            <div id="shop-category-chips" class="shop-chip-row"></div>
+            <p class="shop-result-meta muted" id="shop-result-meta"></p>
+            <div id="public-products" class="grid product-grid product-grid-dense" data-show-all="true"></div>
           </div>
         </div>
-        <p class="shop-result-meta muted" id="shop-result-meta"></p>
-        <div id="public-products" class="grid grid-3 product-grid"></div>
       </div>
+    </section>
+
+    <section class="section reveal">
+      <div class="container" id="recently-viewed-rail"></div>
     </section>
 
     <section class="section best-deal reveal">

@@ -1,11 +1,14 @@
-const STORAGE_KEY = 'bean-bloom-products-v1';
-const CATEGORY_STORAGE_KEY = 'bean-bloom-categories-v1';
+const STORAGE_KEY = 'bean-bloom-products-v2';
+const CATEGORY_STORAGE_KEY = 'bean-bloom-categories-v2';
 const DEFAULT_IMAGE_URL = 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=900&q=80';
 const USER_SESSION_KEY = 'bean-bloom-user-session';
 const SETTINGS_KEY = 'bean-bloom-site-settings';
 const ORDERS_KEY = 'bean-bloom-orders'; // per-user: bean-bloom-orders-{userId}
 const ADDRESS_KEY = 'bean-bloom-address'; // per-user: bean-bloom-address-{userId}
 const DISCOUNTS_KEY = 'bean-bloom-discounts-v1';
+const RECENTLY_VIEWED_KEY = 'bean-bloom-recently-viewed';
+const WISHLIST_KEY = 'bean-bloom-wishlist';
+const COMPARE_KEY = 'bean-bloom-compare';
 
 const DEFAULT_SETTINGS = {
   siteName: 'Bean & Bloom',
@@ -87,7 +90,16 @@ const DEFAULT_SETTINGS = {
     headline: 'Weekly roast notes & cafe specials',
     subtext: 'No spam — just brew guides, seasonal drinks, and early access to limited bags.'
   },
-  menuCategories: ['Espresso', 'Bakery & Snacks', 'Tea & Infusions', 'Cold Brew']
+  menuCategories: ['Espresso', 'Bakery & Snacks', 'Tea & Infusions', 'Cold Brew'],
+  seo: {
+    defaultTitle: 'Bean & Bloom | Specialty Coffee Cafe & Shop',
+    defaultDescription: 'Shop specialty coffee, brew gear, bakery, and cafe essentials from Bean & Bloom Faridabad. Order online for delivery or cafe pickup.',
+    keywords: 'specialty coffee, Faridabad cafe, espresso beans, pour over, cold brew, coffee gifts',
+    ogImage: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+    canonicalBase: '',
+    robots: 'index,follow',
+    twitterHandle: '@beanandbloom'
+  }
 };
 
 let settingsCache = null;
@@ -120,6 +132,7 @@ function loadSettings() {
       cafe: { ...DEFAULT_SETTINGS.cafe, ...(saved.cafe || {}) },
       about: { ...DEFAULT_SETTINGS.about, ...(saved.about || {}) },
       newsletter: { ...DEFAULT_SETTINGS.newsletter, ...(saved.newsletter || {}) },
+      seo: { ...DEFAULT_SETTINGS.seo, ...(saved.seo || {}) },
       menuCategories: Array.isArray(saved.menuCategories) && saved.menuCategories.length
         ? saved.menuCategories
         : DEFAULT_SETTINGS.menuCategories
@@ -223,6 +236,112 @@ function loadAllOrders() {
     } catch {}
   }
   return orders.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
+
+
+function filterOrdersByDateRange(orders, fromValue, toValue) {
+  const list = Array.isArray(orders) ? orders : [];
+  const from = fromValue ? new Date(`${fromValue}T00:00:00`) : null;
+  const to = toValue ? new Date(`${toValue}T23:59:59.999`) : null;
+  return list.filter((order) => {
+    const d = new Date(order.date || 0);
+    if (Number.isNaN(d.getTime())) return false;
+    if (from && d < from) return false;
+    if (to && d > to) return false;
+    return true;
+  });
+}
+
+function toInputDate(date) {
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function setDateRangePreset(fromId, toId, days) {
+  const to = new Date();
+  const from = new Date();
+  const fromEl = document.getElementById(fromId);
+  const toEl = document.getElementById(toId);
+  if (days === 'all') {
+    if (fromEl) fromEl.value = '';
+    if (toEl) toEl.value = '';
+    return;
+  }
+  from.setDate(to.getDate() - (Number(days) || 30) + 1);
+  if (fromEl) fromEl.value = toInputDate(from);
+  if (toEl) toEl.value = toInputDate(to);
+}
+
+function buildBarChart(rows, { maxBars = 14 } = {}) {
+  const data = (rows || []).slice(-maxBars);
+  const max = Math.max(...data.map((row) => Number(row.value) || 0), 1);
+  if (!data.length) return '<p class="muted">No data in this range.</p>';
+  return `<div class="analytics-bars" role="img" aria-label="Bar chart">${data.map((row) => {
+    const height = Math.max(6, Math.round((Number(row.value) || 0) / max * 100));
+    return `<div class="analytics-bar-col" title="${escapeHtml(row.label)}: ${escapeHtml(String(row.display || row.value))}"><div class="analytics-bar" style="height:${height}%"></div><span>${escapeHtml(row.short || row.label)}</span></div>`;
+  }).join('')}</div>`;
+}
+
+function buildProgressRows(entries) {
+  const list = entries || [];
+  const max = Math.max(...list.map((row) => Number(row.value) || 0), 1);
+  if (!list.length) return '<p class="muted">No data yet.</p>';
+  return list.map((row) => {
+    const pct = Math.round((Number(row.value) || 0) / max * 100);
+    return `<div class="analytics-progress-row"><div class="summary-row" style="margin-bottom:.25rem;"><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.display || String(row.value))}</strong></div><div class="analytics-progress-track"><div class="analytics-progress-fill" style="width:${pct}%"></div></div></div>`;
+  }).join('');
+}
+
+function loadWishlist() {
+  try { const list = JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]'); return Array.isArray(list) ? list.map(String) : []; } catch { return []; }
+}
+function saveWishlist(ids) { localStorage.setItem(WISHLIST_KEY, JSON.stringify(Array.from(new Set(ids.map(String))))); }
+function toggleWishlist(productId) {
+  const id = String(productId || ''); if (!id) return false;
+  const list = loadWishlist();
+  const next = list.includes(id) ? list.filter((item) => item !== id) : [id, ...list].slice(0, 60);
+  saveWishlist(next); return next.includes(id);
+}
+function loadRecentlyViewed() {
+  try { const list = JSON.parse(localStorage.getItem(RECENTLY_VIEWED_KEY) || '[]'); return Array.isArray(list) ? list.map(String) : []; } catch { return []; }
+}
+function pushRecentlyViewed(productId) {
+  const id = String(productId || ''); if (!id) return;
+  localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify([id, ...loadRecentlyViewed().filter((item) => item !== id)].slice(0, 12)));
+}
+function loadCompareList() {
+  try { const list = JSON.parse(localStorage.getItem(COMPARE_KEY) || '[]'); return Array.isArray(list) ? list.map(String) : []; } catch { return []; }
+}
+function toggleCompare(productId) {
+  const id = String(productId || ''); if (!id) return loadCompareList();
+  let list = loadCompareList();
+  if (list.includes(id)) list = list.filter((item) => item !== id);
+  else {
+    if (list.length >= 3) { showToast('Compare up to 3 products at a time.', 'info'); return list; }
+    list = [...list, id];
+  }
+  localStorage.setItem(COMPARE_KEY, JSON.stringify(list));
+  renderCompareBar();
+  return list;
+}
+function renderCompareBar() {
+  let bar = document.getElementById('compare-bar');
+  const ids = loadCompareList();
+  if (!ids.length) { if (bar) bar.remove(); return; }
+  const products = loadProducts().filter((p) => ids.includes(String(p.id)));
+  if (!bar) { bar = document.createElement('div'); bar.id = 'compare-bar'; bar.className = 'compare-bar'; document.body.appendChild(bar); }
+  bar.innerHTML = `<div class="compare-bar-inner"><strong>Compare (${products.length}/3)</strong><div class="compare-bar-items">${products.map((p) => `<span>${escapeHtml(p.name)}</span>`).join('')}</div><div class="compare-bar-actions"><button class="btn" type="button" id="compare-open-btn" ${products.length < 2 ? 'disabled' : ''}>Compare</button><button class="btn secondary" type="button" id="compare-clear-btn">Clear</button></div></div>`;
+  document.getElementById('compare-clear-btn')?.addEventListener('click', () => { localStorage.setItem(COMPARE_KEY, '[]'); renderCompareBar(); renderPublicProducts(); });
+  document.getElementById('compare-open-btn')?.addEventListener('click', () => openCompareModal(products));
+}
+function openCompareModal(products) {
+  let modal = document.getElementById('compare-modal');
+  if (!modal) { modal = document.createElement('div'); modal.id = 'compare-modal'; modal.className = 'compare-modal'; document.body.appendChild(modal); }
+  modal.innerHTML = `<div class="compare-modal-card"><div class="section-head"><h3 style="margin:0;">Compare products</h3><button class="btn secondary" type="button" id="compare-close-btn" style="margin:0;">Close</button></div><div class="compare-table">${['Name','Category','Price','Stock','Description'].map((label, idx) => `<div class="compare-row"><strong>${label}</strong>${products.map((p) => { const values=[p.name,p.category||'—',formatCurrencyAmount(Number(p.price)),Number(p.stock)>0?`${p.stock} left`:'Out of stock',p.description||'—']; return `<span>${escapeHtml(values[idx])}</span>`; }).join('')}</div>`).join('')}</div></div>`;
+  modal.classList.add('show');
+  document.getElementById('compare-close-btn')?.addEventListener('click', () => modal.classList.remove('show'));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('show'); });
 }
 
 function updateStoredOrder(orderId, updater) {
@@ -483,15 +602,49 @@ function initNewsletterForm() {
 function initShopControls() {
   const search = document.getElementById('product-search');
   const sort = document.getElementById('product-sort');
-  if (!search && !sort) return;
+  const priceMin = document.getElementById('filter-price-min');
+  const priceMax = document.getElementById('filter-price-max');
+  const inStock = document.getElementById('filter-in-stock');
+  const categoryChips = document.getElementById('shop-category-chips');
+  const clearBtn = document.getElementById('shop-clear-filters');
   const rerender = () => {
     renderPublicProducts({
       searchQuery: search?.value || '',
-      sortBy: sort?.value || 'featured'
+      sortBy: sort?.value || 'featured',
+      priceMin: priceMin?.value,
+      priceMax: priceMax?.value,
+      inStockOnly: !!inStock?.checked,
+      categoryChip: document.querySelector('[data-shop-category].is-active')?.getAttribute('data-shop-category') || ''
     });
   };
+  if (categoryChips && !categoryChips.dataset.bound) {
+    categoryChips.dataset.bound = 'true';
+    categoryChips.innerHTML = ['All', ...loadCategories()].map((cat, i) => `<button type="button" class="shop-chip${i === 0 ? ' is-active' : ''}" data-shop-category="${cat === 'All' ? '' : escapeHtml(cat)}">${escapeHtml(cat)}</button>`).join('');
+    categoryChips.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-shop-category]');
+      if (!btn) return;
+      categoryChips.querySelectorAll('.shop-chip').forEach((el) => el.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      rerender();
+    });
+  }
+  if (!search && !sort && !categoryChips && !priceMin) return;
   search?.addEventListener('input', rerender);
   sort?.addEventListener('change', rerender);
+  priceMin?.addEventListener('change', rerender);
+  priceMax?.addEventListener('change', rerender);
+  inStock?.addEventListener('change', rerender);
+  clearBtn?.addEventListener('click', () => {
+    if (search) search.value = '';
+    if (sort) sort.value = 'featured';
+    if (priceMin) priceMin.value = '';
+    if (priceMax) priceMax.value = '';
+    if (inStock) inStock.checked = false;
+    categoryChips?.querySelectorAll('.shop-chip').forEach((el, i) => el.classList.toggle('is-active', i === 0));
+    rerender();
+  });
+  const q = new URLSearchParams(window.location.search).get('q');
+  if (q && search) search.value = q;
 }
 
 function renderCafeMenu(activeFilter = 'all') {
@@ -568,8 +721,46 @@ function initCafeMenuFilters() {
   });
 }
 
+function applySeoMeta(settings = loadSettings()) {
+  const seo = { ...DEFAULT_SETTINGS.seo, ...(settings.seo || {}) };
+  const pageTitleOverride = document.body?.dataset?.seoTitle;
+  const pageDescOverride = document.body?.dataset?.seoDescription;
+  const title = pageTitleOverride || seo.defaultTitle || settings.siteName || 'Bean & Bloom';
+  const description = pageDescOverride || seo.defaultDescription || '';
+  if (title) document.title = title;
+  const ensureMeta = (selector, attrs) => {
+    let el = document.head.querySelector(selector);
+    if (!el) { el = document.createElement('meta'); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); document.head.appendChild(el); }
+    return el;
+  };
+  ensureMeta('meta[name="description"]', { name: 'description' }).setAttribute('content', description);
+  ensureMeta('meta[name="keywords"]', { name: 'keywords' }).setAttribute('content', seo.keywords || '');
+  ensureMeta('meta[name="robots"]', { name: 'robots' }).setAttribute('content', seo.robots || 'index,follow');
+  ensureMeta('meta[property="og:title"]', { property: 'og:title' }).setAttribute('content', title);
+  ensureMeta('meta[property="og:description"]', { property: 'og:description' }).setAttribute('content', description);
+  ensureMeta('meta[property="og:type"]', { property: 'og:type' }).setAttribute('content', 'website');
+  if (seo.ogImage) ensureMeta('meta[property="og:image"]', { property: 'og:image' }).setAttribute('content', seo.ogImage);
+  ensureMeta('meta[name="twitter:card"]', { name: 'twitter:card' }).setAttribute('content', 'summary_large_image');
+  if (seo.twitterHandle) ensureMeta('meta[name="twitter:site"]', { name: 'twitter:site' }).setAttribute('content', seo.twitterHandle);
+  let canonical = document.head.querySelector('link[rel="canonical"]');
+  if (!canonical) { canonical = document.createElement('link'); canonical.setAttribute('rel', 'canonical'); document.head.appendChild(canonical); }
+  const base = String(seo.canonicalBase || '').replace(/\/$/, '');
+  const pathName = window.location.pathname.split('/').pop() || 'index.html';
+  canonical.setAttribute('href', base ? `${base}/${pathName}${window.location.search}` : window.location.href.split('#')[0]);
+  let ld = document.getElementById('seo-jsonld');
+  if (!ld) { ld = document.createElement('script'); ld.type = 'application/ld+json'; ld.id = 'seo-jsonld'; document.head.appendChild(ld); }
+  ld.textContent = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      { '@type': 'Organization', name: settings.siteName || 'Bean & Bloom', url: base || undefined, image: seo.ogImage || undefined },
+      { '@type': 'WebSite', name: settings.siteName || 'Bean & Bloom', url: base || undefined, potentialAction: { '@type': 'SearchAction', target: `${base || ''}/index.html?q={search_term_string}`, 'query-input': 'required name=search_term_string' } }
+    ]
+  });
+}
+
 function renderPublicSiteContent() {
   const s = loadSettings();
+  applySeoMeta(s);
 
   // Brand name
   document.querySelectorAll('.brand').forEach(el => { if (el.closest('.site-header') || el.closest('.site-footer')) el.textContent = s.siteName; });
@@ -757,7 +948,9 @@ const defaultCategories = [
   'Bakery & Snacks',
   'Gift Boxes',
   'Coffee Capsules',
-  'Merchandise'
+  'Merchandise',
+  'Accessories',
+  'Ready to Drink'
 ];
 
 const seedCatalog = {
@@ -766,42 +959,72 @@ const seedCatalog = {
     { name: 'Double Ristretto', price: 4.9, description: 'Short pull espresso with intense aroma and sweetness.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Hazelnut Espresso', price: 5.1, description: 'Nutty and smooth espresso with toasted hazelnut notes.', imageUrl: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?auto=format&fit=crop&w=900&q=80' },
     { name: 'Vanilla Bean Shot', price: 4.8, description: 'Classic espresso balanced with warm vanilla flavor.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Midnight Espresso', price: 5.3, description: 'Dark roast profile with cocoa finish and rich crema.', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Midnight Espresso', price: 5.3, description: 'Dark roast profile with cocoa finish and rich crema.', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Cortado Classic', price: 5.2, description: 'Equal parts espresso and steamed milk for a soft finish.', imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Affogato Shot', price: 5.75, description: 'Espresso poured over a scoop of vanilla gelato.', imageUrl: 'https://images.unsplash.com/photo-1485808191679-5f86510681a2?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Spice Market Espresso', price: 5.4, description: 'Cardamom-kissed espresso with warm bakery spice.', imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688b33a69?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Honeycomb Flat White', price: 5.6, description: 'Microfoam milk with a touch of honeycomb syrup.', imageUrl: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Single Origin Flight', price: 8.5, description: 'Three tasting shots from rotating farm lots.', imageUrl: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=900&q=80' }
   ],
   'Espresso Gear': [
     { name: 'Precision Tamper', price: 39.99, description: 'Balanced stainless-steel tamper for even extraction.', imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=900&q=80' },
     { name: 'Milk Frothing Pitcher', price: 24.5, description: 'Barista pitcher with sharp spout for latte art.', imageUrl: 'https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=900&q=80' },
     { name: 'Bottomless Portafilter', price: 54.0, description: 'Improve shot diagnostics with a naked portafilter.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' },
     { name: 'Knock Box Pro', price: 29.99, description: 'Compact puck knock box with anti-slip base.', imageUrl: 'https://images.unsplash.com/photo-1517971071642-34a2f8df4d36?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Distribution Tool', price: 34.75, description: 'Level and distribute grounds for consistent shots.', imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688b33a69?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Distribution Tool', price: 34.75, description: 'Level and distribute grounds for consistent shots.', imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688b33a69?auto=format&fit=crop&w=900&q=80' },
+    { name: 'WDT Needle Tool', price: 22.5, description: 'Weiss Distribution Technique needles for clump-free pucks.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Puck Screen 58mm', price: 18.0, description: 'Stainless screen for cleaner shower and even flow.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Tamping Mat', price: 16.5, description: 'Corner mat that protects counters during tamping.', imageUrl: 'https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Group Head Gasket Kit', price: 12.99, description: 'Spare gaskets and screws for common home machines.', imageUrl: 'https://images.unsplash.com/photo-1517971071642-34a2f8df4d36?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Calibrated Spring Tamper', price: 64.0, description: 'Consistent 30 lb pressure every tamp.', imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688b33a69?auto=format&fit=crop&w=900&q=80' }
   ],
   'Beans & Blends': [
     { name: 'Golden Morning Brew', price: 18.0, description: 'Bright floral single-origin roast for daily brewing.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
     { name: 'Monsoon Malabar Blend', price: 19.5, description: 'Earthy Indian blend with low acidity and heavy body.', imageUrl: 'https://images.unsplash.com/photo-1494314671902-399b18174975?auto=format&fit=crop&w=900&q=80' },
     { name: 'Coastal House Blend', price: 17.5, description: 'Balanced medium roast ideal for drip and French press.', imageUrl: 'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?auto=format&fit=crop&w=900&q=80' },
     { name: 'Dark Cocoa Roast', price: 20.0, description: 'Deep chocolate profile with smoky undertones.', imageUrl: 'https://images.unsplash.com/photo-1453614512568-c4024d13c247?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Weekend Brunch Blend', price: 16.99, description: 'Smooth and mellow crowd favorite for long mornings.', imageUrl: 'https://images.unsplash.com/photo-1507914372368-b2b085b925a1?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Weekend Brunch Blend', price: 16.99, description: 'Smooth and mellow crowd favorite for long mornings.', imageUrl: 'https://images.unsplash.com/photo-1507914372368-b2b085b925a1?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Ethiopia Yirgacheffe', price: 21.5, description: 'Jasmine and citrus washed lot for filter brewing.', imageUrl: 'https://images.unsplash.com/photo-1447933601403-0c6688b33a69?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Colombia Huila Reserve', price: 20.75, description: 'Caramel sweetness with red apple acidity.', imageUrl: 'https://images.unsplash.com/photo-1453614512568-c4024d13c247?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Kenya AA Lot', price: 23.0, description: 'Blackcurrant brightness and syrupy body.', imageUrl: 'https://images.unsplash.com/photo-1494314671902-399b18174975?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Decaf Swiss Water', price: 18.5, description: 'Chemical-free decaf that keeps chocolate notes.', imageUrl: 'https://images.unsplash.com/photo-1497515114629-f71d768fd07c?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Espresso Lab Blend', price: 19.25, description: 'Cafe dial-in blend for milk drinks and straight shots.', imageUrl: 'https://images.unsplash.com/photo-1507914372368-b2b085b925a1?auto=format&fit=crop&w=900&q=80' }
   ],
   'Coffee Machines': [
     { name: 'AeroPress Coffee Maker', price: 89.99, description: 'Compact brewer for smooth coffee at home.', imageUrl: 'https://images.unsplash.com/photo-1517971071642-34a2f8df4d36?auto=format&fit=crop&w=900&q=80' },
     { name: 'SteamPro Espresso Machine', price: 349.0, description: 'Semi-automatic machine with integrated pressure gauge.', imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=900&q=80' },
     { name: 'BeanMaster Grinder Combo', price: 279.5, description: 'All-in-one brewer and burr grinder combo.', imageUrl: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?auto=format&fit=crop&w=900&q=80' },
     { name: 'K15 Compact Brewer', price: 129.99, description: 'Single-serve compact machine for fast brewing.', imageUrl: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Classic French Press Set', price: 69.0, description: 'Thermal press setup for robust and full-bodied cups.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Classic French Press Set', price: 69.0, description: 'Thermal press setup for robust and full-bodied cups.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Manual Lever Mini', price: 429.0, description: 'Compact spring lever for craft espresso at home.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Smart Drip Brewer', price: 159.0, description: 'App-assisted drip with bloom and pulse profiles.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Travel Immersion Press', price: 42.0, description: 'Packable immersion press for trips and desks.', imageUrl: 'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Office Pod Machine', price: 189.0, description: 'Quiet capsule machine for shared cafe corners.', imageUrl: 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Moka Pot Induction', price: 38.5, description: 'Induction-ready aluminum moka for stovetop espresso.', imageUrl: 'https://images.unsplash.com/photo-1512568400610-62da28bc8a13?auto=format&fit=crop&w=900&q=80' }
   ],
   'Barista Tools': [
     { name: 'Barista Tool Kit', price: 49.99, description: 'Essential accessories for espresso and milk prep.', imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80' },
     { name: 'Latte Art Pen Set', price: 19.99, description: 'Creative pen set for latte art details.', imageUrl: 'https://images.unsplash.com/photo-1481833761820-0509d3217039?auto=format&fit=crop&w=900&q=80' },
     { name: 'Scale and Timer Duo', price: 42.0, description: 'Precision scale with brew timer for repeatable recipes.', imageUrl: 'https://images.unsplash.com/photo-1521302080391-cb77d1d9159a?auto=format&fit=crop&w=900&q=80' },
     { name: 'Cleaning Brush Pack', price: 14.99, description: 'Multi-size brushes for machine and grinder upkeep.', imageUrl: 'https://images.unsplash.com/photo-1461988320302-91bde64fc8e4?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Shot Glass Duo', price: 16.5, description: 'Dual espresso measuring glasses with markings.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Shot Glass Duo', price: 16.5, description: 'Dual espresso measuring glasses with markings.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Milk Thermometer', price: 11.5, description: 'Clip-on thermometer for latte milk windows.', imageUrl: 'https://images.unsplash.com/photo-1521302080391-cb77d1d9159a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Bar Cloth Twin Pack', price: 9.99, description: 'Absorbent microfiber cloths for steam wand wipe-downs.', imageUrl: 'https://images.unsplash.com/photo-1461988320302-91bde64fc8e4?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Blind Filter Basket', price: 8.5, description: 'Backflush basket for espresso machine cleaning.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Cupping Spoon Set', price: 21.0, description: 'Two deep cupping spoons for tasting flights.', imageUrl: 'https://images.unsplash.com/photo-1481833761820-0509d3217039?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Grind Catch Mat', price: 15.0, description: 'Silicone mat that catches grinder mess.', imageUrl: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=900&q=80' }
   ],
   'Cold Brew': [
     { name: 'Classic Cold Brew Bottle', price: 22.0, description: 'Easy steep bottle for smooth overnight brew.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
     { name: 'Nitro Chill Concentrate', price: 15.99, description: 'Rich cold brew concentrate for milk-based drinks.', imageUrl: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80' },
     { name: 'Citrus Cold Brew Blend', price: 17.25, description: 'Bright blend tuned for cold extraction.', imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80' },
     { name: 'Cold Brew Filter Pack', price: 11.5, description: 'Disposable filters for clean and quick prep.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Iced Coffee Starter Kit', price: 34.0, description: 'Starter bundle for cafe-style iced coffee at home.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Iced Coffee Starter Kit', price: 34.0, description: 'Starter bundle for cafe-style iced coffee at home.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Toddy-Style Brewer', price: 48.0, description: 'Large batch cold brew system for home fridges.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Vanilla Cold Foam Kit', price: 19.5, description: 'Whipper-friendly syrup and recipe card for cold foam.', imageUrl: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Ready-to-Drink Can 4-Pack', price: 14.0, description: 'Nitro-style cold brew cans for on-the-go.', imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Ice Cube Tray Sphere', price: 12.0, description: 'Slow-melt spheres that keep iced drinks cold.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Oat Milk Cold Brew Bundle', price: 28.0, description: 'Concentrate plus barista oat milk pairing.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' }
   ],
   'Pour Over': [
     { name: 'Ceramic V60 Dripper', price: 27.0, description: 'Classic dripper for bright and nuanced brews.', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80' },
@@ -843,7 +1066,36 @@ const seedCatalog = {
     { name: 'Travel Tumbler 450ml', price: 24.99, description: 'Insulated tumbler to keep coffee hot for hours.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
     { name: 'Canvas Tote Bag', price: 14.5, description: 'Reusable tote bag with coffee-themed print.', imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80' },
     { name: 'Coffee Journal', price: 12.99, description: 'Tasting notes journal for brewing experiments.', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' },
-    { name: 'Sticker Pack', price: 6.5, description: 'Set of waterproof coffee-themed stickers.', imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80' }
+    { name: 'Sticker Pack', price: 6.5, description: 'Set of waterproof coffee-themed stickers.', imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Barista Apron', price: 32.0, description: 'Waxed canvas apron with tool pocket.', imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Enamel Camp Mug', price: 16.5, description: 'Speckled enamel mug for patio mornings.', imageUrl: 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Brew Cap Soft', price: 19.0, description: 'Soft cotton cap with embroidered bean mark.', imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Desk Mat Brew', price: 22.0, description: 'Cork desk mat sized for kettle and dripper.', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Gift Card Sleeve', price: 9.0, description: 'Physical gift card in reusable kraft sleeve.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' }
+  ],
+  'Accessories': [
+    { name: 'Bean Storage Canister', price: 27.0, description: 'Airtight canister with CO2 valve for fresh beans.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Coffee Scoop Set', price: 9.5, description: 'Two stainless scoops with long handles.', imageUrl: 'https://images.unsplash.com/photo-1517971071642-34a2f8df4d36?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Reusable Straw Pack', price: 8.0, description: 'Steel straws for iced lattes and cold brew.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Drip Tray Mat', price: 11.0, description: 'Absorbent mat for espresso drip trays.', imageUrl: 'https://images.unsplash.com/photo-1459755486867-b55449bb39ff?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Label Maker Kit', price: 14.5, description: 'Write-on labels for roast dates and grind settings.', imageUrl: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Counter Organizer Tray', price: 21.0, description: 'Bamboo tray for syrups, spoons, and filters.', imageUrl: 'https://images.unsplash.com/photo-1498804103079-a6351b050096?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Brew Timer Cube', price: 13.0, description: 'Flip cube timer for bloom and steep stages.', imageUrl: 'https://images.unsplash.com/photo-1521302080391-cb77d1d9159a?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Syrup Sampler Trio', price: 17.5, description: 'Vanilla, caramel, and hazelnut cafe syrups.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Milk Jug Thermometer Clip', price: 7.5, description: 'Clip that holds your milk thermometer upright.', imageUrl: 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Filter Paper Organizer', price: 12.25, description: 'Wall-friendly holder for V60 and Chemex papers.', imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80' }
+  ],
+  'Ready to Drink': [
+    { name: 'Sparkling Espresso Can', price: 4.25, description: 'Lightly sparkling espresso tonic style can.', imageUrl: 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Oat Latte Bottle', price: 5.5, description: 'Chilled oat latte ready from the fridge.', imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1f0d5?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Mocha Frappe Cup', price: 6.25, description: 'Blended mocha cup for afternoon pick-me-ups.', imageUrl: 'https://images.unsplash.com/photo-1485808191679-5f86510681a2?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Black Cold Brew Pint', price: 5.0, description: 'Unsweetened cold brew pint for sharing.', imageUrl: 'https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Matcha Oat Cooler', price: 5.75, description: 'Ceremonial-grade matcha with oat milk.', imageUrl: 'https://images.unsplash.com/photo-1470337458703-46ad1756a187?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Chai Concentrate Bottle', price: 7.5, description: 'Spiced chai concentrate for home lattes.', imageUrl: 'https://images.unsplash.com/photo-1594631661960-348f8f0fbe89?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Protein Coffee Shake', price: 6.9, description: 'Coffee protein shake for post-workout mornings.', imageUrl: 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Seasonal Special Can', price: 4.75, description: 'Rotating seasonal flavor — ask barista for this week.', imageUrl: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Kids Cocoa Cup', price: 3.5, description: 'Warm cocoa for cafe visits with little ones.', imageUrl: 'https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?auto=format&fit=crop&w=900&q=80' },
+    { name: 'Iced Americano Bottle', price: 4.5, description: 'Long black style iced americano to go.', imageUrl: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80' }
   ]
 };
 
@@ -875,7 +1127,9 @@ const categoryFallbackImages = {
   'Bakery & Snacks': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80',
   'Gift Boxes': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=900&q=80',
   'Coffee Capsules': 'https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=900&q=80',
-  'Merchandise': 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80'
+  'Merchandise': 'https://images.unsplash.com/photo-1514228742587-6b1558fcf93a?auto=format&fit=crop&w=900&q=80',
+  'Accessories': 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80',
+  'Ready to Drink': 'https://images.unsplash.com/photo-1464305795204-6f5bbfc7fb81?auto=format&fit=crop&w=900&q=80'
 };
 
 function mergeSeedProducts(existingProducts) {
@@ -1622,84 +1876,90 @@ function renderPublicCategoryGrid() {
   });
 }
 
+
+function renderRecentlyViewedRail() {
+  const root = document.getElementById('recently-viewed-rail');
+  if (!root) return;
+  const products = loadRecentlyViewed().map((id) => loadProducts().find((p) => String(p.id) === id)).filter(Boolean);
+  if (!products.length) { root.innerHTML = ''; return; }
+  root.innerHTML = `<div class="section-head"><div><h2>Recently viewed</h2><p class="muted">Pick up where you left off.</p></div></div><div class="product-rail">${products.map((product) => renderProductCardHtml(product, { compact: true })).join('')}</div>`;
+  bindProductCardActions(root);
+}
+function renderTrendingRail() {
+  const root = document.getElementById('trending-rail');
+  if (!root) return;
+  const products = loadProducts().filter((p) => p.featured).slice(0, 8);
+  root.innerHTML = `<div class="section-head"><div><h2>Trending now</h2><p class="muted">Staff picks and popular cafe staples.</p></div><a class="btn secondary" href="#products">Browse all</a></div><div class="product-rail">${products.map((product) => renderProductCardHtml(product, { compact: true })).join('')}</div>`;
+  bindProductCardActions(root);
+}
+function renderOfferStrip() {
+  const root = document.getElementById('offer-strip');
+  if (!root) return;
+  const discounts = getActiveDiscounts().slice(0, 4);
+  const offers = discounts.length ? discounts.map((d) => ({ title: d.name, desc: d.type === 'store' ? 'Store-wide' : d.type === 'category' ? `On ${d.category}` : 'Selected product', value: d.valueType === 'fixed' ? formatCurrencyAmount(d.value) : `${d.value}% off` })) : [
+    { title: 'Cafe pickup', desc: 'Order online, collect at the bar', value: 'Free' },
+    { title: 'Fresh roast', desc: 'Small-batch beans each week', value: 'New' },
+    { title: 'Bank offer', desc: 'Extra savings on Razorpay UPI', value: 'UPI' },
+    { title: 'Gift ready', desc: 'Hamper wraps available in-store', value: 'Gift' }
+  ];
+  root.innerHTML = offers.map((o) => `<article class="offer-chip"><strong>${escapeHtml(o.value)}</strong><div><span>${escapeHtml(o.title)}</span><small>${escapeHtml(o.desc)}</small></div></article>`).join('');
+}
+function renderProductCardHtml(product, options = {}) {
+  const wished = loadWishlist().includes(String(product.id));
+  const compared = loadCompareList().includes(String(product.id));
+  const stock = Number(product.stock);
+  const imageSrc = product.imageUrl ? escapeHtml(optimizeImageUrl(product.imageUrl, 520, 70)) : DEFAULT_IMAGE_URL;
+  return `<article class="product-card${options.compact ? ' product-card-compact' : ''}" data-product-id="${escapeHtml(product.id)}"><button class="wishlist-btn${wished ? ' is-active' : ''}" type="button" data-wishlist="${escapeHtml(product.id)}" aria-label="Wishlist">${wished ? '♥' : '♡'}</button><img class="product-image" src="${imageSrc}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async"><span class="badge">${escapeHtml(product.category || 'Coffee')}</span>${stock <= 5 ? `<span class="stock-pill">${stock <= 0 ? 'Sold out' : 'Only few left'}</span>` : ''}<h3>${escapeHtml(product.name)}</h3><p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p><div class="product-meta"><div><div class="price">${formatCurrencyAmount(Number(product.price))}</div><label class="compare-check"><input type="checkbox" data-compare="${escapeHtml(product.id)}" ${compared ? 'checked' : ''}> Compare</label></div><div class="product-actions"><button class="btn secondary add-to-kart" type="button" data-buy="${escapeHtml(product.id)}" ${stock <= 0 ? 'disabled' : ''}>Add to cart</button></div></div></article>`;
+}
+function bindProductCardActions(root = document) {
+  root.querySelectorAll('[data-buy]').forEach((btn) => {
+    if (btn.dataset.bound) return; btn.dataset.bound = 'true';
+    btn.addEventListener('click', (event) => { event.stopPropagation(); const id = btn.getAttribute('data-buy'); const product = loadProducts().find((p) => p.id === id); const added = addToCart(id); if (added) showToast(`${product?.name || 'Item'} added to cart.`, 'success'); });
+  });
+  root.querySelectorAll('[data-wishlist]').forEach((btn) => {
+    if (btn.dataset.bound) return; btn.dataset.bound = 'true';
+    btn.addEventListener('click', (event) => { event.stopPropagation(); const on = toggleWishlist(btn.getAttribute('data-wishlist')); btn.classList.toggle('is-active', on); btn.textContent = on ? '♥' : '♡'; showToast(on ? 'Saved to wishlist.' : 'Removed from wishlist.', 'success'); });
+  });
+  root.querySelectorAll('[data-compare]').forEach((input) => {
+    if (input.dataset.bound) return; input.dataset.bound = 'true';
+    input.addEventListener('click', (event) => event.stopPropagation());
+    input.addEventListener('change', () => { const id = input.getAttribute('data-compare'); const list = toggleCompare(id); input.checked = list.includes(id); });
+  });
+  root.querySelectorAll('.product-card').forEach((card) => {
+    if (card.dataset.navBound) return; card.dataset.navBound = 'true';
+    card.addEventListener('click', (event) => { if (event.target.closest('button, input, label, a')) return; const id = card.getAttribute('data-product-id'); if (id) window.location.href = `product.html?id=${encodeURIComponent(id)}`; });
+  });
+}
+
 function renderPublicProducts(options = {}) {
   const root = document.getElementById('public-products');
   if (!root) return;
-  const showAll = options.showAll || false;
+  const showAll = options.showAll || root.dataset.showAll === 'true' || false;
   let products = loadProducts();
   if (!showAll) products = products.filter(p => p.featured !== false);
   const categoryFilter = options.categoryFilter || getCategoryFilter();
+  const categoryChip = options.categoryChip || '';
   const searchQuery = String(options.searchQuery ?? document.getElementById('product-search')?.value ?? '').trim().toLowerCase();
   const sortBy = options.sortBy || document.getElementById('product-sort')?.value || 'featured';
-
-  if (categoryFilter) {
-    products = products.filter((product) => matchesCategory(product.category, categoryFilter));
-  }
-
-  if (searchQuery) {
-    products = products.filter((product) => {
-      const haystack = `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase();
-      return haystack.includes(searchQuery);
-    });
-  }
-
-  if (sortBy === 'price-asc') {
-    products = [...products].sort((a, b) => Number(a.price) - Number(b.price));
-  } else if (sortBy === 'price-desc') {
-    products = [...products].sort((a, b) => Number(b.price) - Number(a.price));
-  } else if (sortBy === 'name') {
-    products = [...products].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
-  } else {
-    products = [...products].sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
-  }
-
+  const priceMin = Number(options.priceMin ?? document.getElementById('filter-price-min')?.value);
+  const priceMax = Number(options.priceMax ?? document.getElementById('filter-price-max')?.value);
+  const inStockOnly = options.inStockOnly ?? !!document.getElementById('filter-in-stock')?.checked;
+  if (categoryFilter) products = products.filter((product) => matchesCategory(product.category, categoryFilter));
+  if (categoryChip) products = products.filter((product) => String(product.category || '').toLowerCase() === categoryChip.toLowerCase());
+  if (searchQuery) products = products.filter((product) => `${product.name || ''} ${product.description || ''} ${product.category || ''}`.toLowerCase().includes(searchQuery));
+  if (Number.isFinite(priceMin) && priceMin > 0) products = products.filter((p) => Number(p.price) >= priceMin);
+  if (Number.isFinite(priceMax) && priceMax > 0) products = products.filter((p) => Number(p.price) <= priceMax);
+  if (inStockOnly) products = products.filter((p) => Number(p.stock) > 0);
+  if (sortBy === 'price-asc') products = [...products].sort((a, b) => Number(a.price) - Number(b.price));
+  else if (sortBy === 'price-desc') products = [...products].sort((a, b) => Number(b.price) - Number(a.price));
+  else if (sortBy === 'name') products = [...products].sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
+  else products = [...products].sort((a, b) => Number(!!b.featured) - Number(!!a.featured));
   const meta = document.getElementById('shop-result-meta');
-  if (meta) {
-    const label = searchQuery ? `Showing ${products.length} result${products.length === 1 ? '' : 's'} for “${searchQuery}”` : `${products.length} products`;
-    meta.textContent = label;
-  }
-
-  root.innerHTML = '';
-
-  if (!products.length) {
-    root.innerHTML = '<div class="card"><p class="muted">No products match your search. Try another keyword or clear filters.</p></div>';
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-  products.forEach(product => {
-    const imageSrc = product.imageUrl ? escapeHtml(optimizeImageUrl(product.imageUrl, 520, 70)) : DEFAULT_IMAGE_URL;
-    const card = document.createElement('article');
-    card.className = 'product-card';
-    card.dataset.productId = product.id;
-    card.innerHTML = `
-      <img class="product-image" src="${imageSrc}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" fetchpriority="low">
-      <span class="badge">${escapeHtml(product.category || 'Coffee')}</span>
-      <h3>${escapeHtml(product.name)}</h3>
-      <p class="muted">${escapeHtml(product.description || 'Freshly made with care.')}</p>
-      <div class="product-meta">
-        <div class="price">${formatCurrencyAmount(Number(product.price))}</div>
-        <div class="product-actions">
-          <button class="btn secondary add-to-kart" type="button" data-buy="${product.id}">Add to cart</button>
-        </div>
-      </div>
-    `;
-    const addButton = card.querySelector('.add-to-kart');
-    if (addButton) {
-      addButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const added = addToCart(product.id);
-        if (added) showToast(`${product.name} added to cart.`, 'success');
-      });
-    }
-
-    card.addEventListener('click', (event) => {
-      if (event.target.closest('.add-to-kart')) return;
-      window.location.href = `product.html?id=${encodeURIComponent(product.id)}`;
-    });
-    fragment.appendChild(card);
-  });
-  root.appendChild(fragment);
+  if (meta) meta.textContent = searchQuery ? `Showing ${products.length} result${products.length === 1 ? '' : 's'} for “${searchQuery}”` : `${products.length} products`;
+  if (!products.length) { root.innerHTML = '<div class="card"><p class="muted">No products match your filters. Try clearing search or widening the price range.</p></div>'; return; }
+  root.innerHTML = products.map((product) => renderProductCardHtml(product)).join('');
+  bindProductCardActions(root);
+  renderCompareBar();
 }
 
 async function renderProductDetail() {
@@ -1716,10 +1976,17 @@ async function renderProductDetail() {
     return;
   }
 
+  pushRecentlyViewed(product.id);
+  document.body.dataset.seoTitle = `${product.name} | Bean & Bloom`;
+  document.body.dataset.seoDescription = product.description || `${product.name} from Bean & Bloom`;
+  applySeoMeta();
+
   const images = Array.isArray(product.imageUrls) && product.imageUrls.length
     ? product.imageUrls
     : [product.imageUrl || DEFAULT_IMAGE_URL];
   const currentUser = getLoggedInUser();
+  const similar = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const wished = loadWishlist().includes(String(product.id));
 
   root.innerHTML = `
     <section class="section product-detail-section">
@@ -1747,13 +2014,17 @@ async function renderProductDetail() {
           <div class="product-detail-meta">
             <span class="price">${formatCurrencyAmount(Number(product.price))}</span>
             <button class="btn" id="buy-button" type="button">Add to cart</button>
+            <button class="btn secondary" id="wishlist-detail-btn" type="button">${wished ? '♥ Wishlisted' : '♡ Wishlist'}</button>
           </div>
+          <p class="muted" style="margin:.6rem 0 0;font-size:.88rem;">${Number(product.stock) > 0 ? `${product.stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock'}</p>
           <div class="product-detail-panel">
             <h3>Product details</h3>
             <p class="product-detail-note">${escapeHtml(product.longDescription || product.description || 'Enjoy fast shipping, secure checkout, and premium customer support with every order.')}</p>
           </div>
         </div>
       </div>
+
+      ${similar.length ? `<div class="container" style="margin-top:2rem;"><div class="section-head"><div><h2>Similar in ${escapeHtml(product.category || 'this range')}</h2><p class="muted">Customers also browse these.</p></div></div><div class="product-rail" id="similar-products-rail">${similar.map((item) => renderProductCardHtml(item, { compact: true })).join('')}</div></div>` : ''}
 
       <div class="container product-review-section">
         <div class="product-review-header">
@@ -1805,6 +2076,12 @@ async function renderProductDetail() {
       if (added) showToast(`${product.name} added to cart.`, 'success');
     });
   }
+  document.getElementById('wishlist-detail-btn')?.addEventListener('click', (e) => {
+    const on = toggleWishlist(product.id);
+    e.currentTarget.textContent = on ? '♥ Wishlisted' : '♡ Wishlist';
+    showToast(on ? 'Saved to wishlist.' : 'Removed from wishlist.', 'success');
+  });
+  bindProductCardActions(document.getElementById('similar-products-rail') || document);
 
   const mainImage = document.getElementById('product-main-image');
   const thumbRow = document.getElementById('product-thumb-row');
@@ -2019,7 +2296,7 @@ function initAdmin() {
   showPanel(isLoggedIn);
   if (isLoggedIn) {
     renderAdminMetrics();
-    if (isDashboardPage || isCategoriesPage) {
+    if (isCategoriesPage) {
       renderAdminCategoryGrid(null);
     }
     initAdminFeaturePages(adminPageType);
@@ -2345,25 +2622,23 @@ function initAdmin() {
   }
 
   function renderAdminMetrics() {
-    const categories = loadCategories();
     const products = loadProducts();
     const featuredCount = products.filter((product) => product.featured).length;
-    const cartItems = getCartCount();
-    const cartTotal = loadCart().reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
     const averagePrice = products.length ? products.reduce((sum, item) => sum + Number(item.price || 0), 0) / products.length : 0;
-
-    const categoriesEl = document.getElementById('metric-categories');
+    const orders = loadAllOrders();
+    const revenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const lowStock = products.filter((p) => Number(p.stock) <= 5).length;
     const productsEl = document.getElementById('metric-products');
     const featuredEl = document.getElementById('metric-featured');
-    const cartEl = document.getElementById('metric-cart');
-    const cartValueEl = document.getElementById('metric-cart-value');
+    const ordersEl = document.getElementById('metric-orders');
+    const revenueEl = document.getElementById('metric-revenue');
+    const lowStockEl = document.getElementById('metric-low-stock');
     const avgPriceEl = document.getElementById('metric-average-price');
-
-    if (categoriesEl) categoriesEl.textContent = categories.length;
     if (productsEl) productsEl.textContent = products.length;
     if (featuredEl) featuredEl.textContent = featuredCount;
-    if (cartEl) cartEl.textContent = cartItems;
-    if (cartValueEl) cartValueEl.textContent = formatCurrencyAmount(cartTotal);
+    if (ordersEl) ordersEl.textContent = orders.length;
+    if (revenueEl) revenueEl.textContent = formatCurrencyAmount(revenue);
+    if (lowStockEl) lowStockEl.textContent = lowStock;
     if (avgPriceEl) avgPriceEl.textContent = formatCurrencyAmount(averagePrice);
   }
 
@@ -2501,13 +2776,10 @@ function initAdmin() {
     statusBox.textContent = 'Editing product.';
   }
 
-  // Only render these on dashboard/categories where elements exist
-  if (isDashboardPage) {
-    renderCategoryOptions();
+  if (isCategoriesPage) {
     renderAdminCategoryGrid(selectedCategory);
-    if (productList) renderAdminProducts();
-  } else if (isCategoriesPage) {
-    renderAdminCategoryGrid(selectedCategory);
+  } else if (isDashboardPage) {
+    renderAdminMetrics();
   }
 
   if (productList) {
@@ -2684,16 +2956,39 @@ function initAdminFeaturePages(pageType) {
   if (pageType === 'discounts') renderAdminDiscountsPage();
 }
 
+function getOrdersDateFilter() {
+  return {
+    from: document.getElementById('orders-date-from')?.value || '',
+    to: document.getElementById('orders-date-to')?.value || ''
+  };
+}
+
+function bindOrdersDateFilter() {
+  const apply = document.getElementById('orders-apply-range');
+  if (!apply || apply.dataset.bound === 'true') return;
+  apply.dataset.bound = 'true';
+  apply.addEventListener('click', () => renderAdminOrdersPage());
+  document.querySelectorAll('[data-orders-preset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setDateRangePreset('orders-date-from', 'orders-date-to', btn.getAttribute('data-orders-preset'));
+      renderAdminOrdersPage();
+    });
+  });
+}
+
 function renderAdminOrdersPage() {
   const root = document.getElementById('admin-orders-list');
   if (!root) return;
-  const orders = loadAllOrders();
+  bindOrdersDateFilter();
+  const { from, to } = getOrdersDateFilter();
+  const orders = filterOrdersByDateRange(loadAllOrders(), from, to);
   const summary = document.getElementById('admin-orders-summary');
   if (summary) {
     const paid = orders.filter((o) => o.status === 'Paid' || o.paymentVerified).length;
     const verified = orders.filter((o) => o.paymentVerified).length;
     const revenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
     summary.innerHTML = `
+      <p class="muted" style="margin:0 0 .8rem;">Showing ${orders.length} order${orders.length === 1 ? '' : 's'}${from || to ? ` · ${from || '…'} → ${to || '…'}` : ' · all time'}.</p>
       <div class="stats-grid">
         <article class="stat-card"><p class="stat-label">Orders</p><strong>${orders.length}</strong></article>
         <article class="stat-card"><p class="stat-label">Paid / pending verify</p><strong>${paid}</strong></article>
@@ -2701,12 +2996,10 @@ function renderAdminOrdersPage() {
         <article class="stat-card"><p class="stat-label">Revenue</p><strong>${formatCurrencyAmount(revenue)}</strong></article>
       </div>`;
   }
-
   if (!orders.length) {
-    root.innerHTML = '<div class="card"><p class="muted">No customer orders yet. Orders placed at checkout will appear here.</p></div>';
+    root.innerHTML = '<div class="card"><p class="muted">No orders in this date range.</p></div>';
     return;
   }
-
   root.innerHTML = orders.map((order) => {
     const addr = order.address || {};
     const meta = order.paymentMeta || {};
@@ -2737,7 +3030,6 @@ function renderAdminOrdersPage() {
         </div>
       </article>`;
   }).join('');
-
   root.querySelectorAll('[data-order-status]').forEach((select) => {
     select.addEventListener('change', () => {
       const id = select.getAttribute('data-order-status');
@@ -2746,7 +3038,6 @@ function renderAdminOrdersPage() {
       renderAdminOrdersPage();
     });
   });
-
   root.querySelectorAll('[data-verify-payment]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-verify-payment');
@@ -2934,48 +3225,145 @@ function renderAdminInventoryPage() {
   });
 }
 
+function getAnalyticsDateFilter() {
+  return {
+    from: document.getElementById('analytics-date-from')?.value || '',
+    to: document.getElementById('analytics-date-to')?.value || ''
+  };
+}
+
+function bindAnalyticsDateFilter() {
+  const apply = document.getElementById('analytics-apply-range');
+  if (!apply || apply.dataset.bound === 'true') return;
+  apply.dataset.bound = 'true';
+  apply.addEventListener('click', () => renderAdminAnalyticsPage());
+  document.querySelectorAll('[data-range-preset]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      setDateRangePreset('analytics-date-from', 'analytics-date-to', btn.getAttribute('data-range-preset'));
+      renderAdminAnalyticsPage();
+    });
+  });
+  const from = document.getElementById('analytics-date-from');
+  const to = document.getElementById('analytics-date-to');
+  if (from && to && !from.value && !to.value && !apply.dataset.defaulted) {
+    apply.dataset.defaulted = 'true';
+    setDateRangePreset('analytics-date-from', 'analytics-date-to', 30);
+  }
+}
+
 function renderAdminAnalyticsPage() {
   const root = document.getElementById('admin-analytics-panel');
   if (!root) return;
-  const orders = loadAllOrders();
+  bindAnalyticsDateFilter();
+  const { from, to } = getAnalyticsDateFilter();
+  const allOrders = loadAllOrders();
+  const orders = filterOrdersByDateRange(allOrders, from, to);
   const products = loadProducts();
   const customers = loadRegisteredCustomers();
   const revenue = orders.reduce((sum, o) => sum + Number(o.total || 0), 0);
+  const itemsSold = orders.reduce((sum, o) => sum + (o.items || []).reduce((s, i) => s + Number(i.quantity || 0), 0), 0);
   const avgOrder = orders.length ? revenue / orders.length : 0;
-  const methodCounts = {};
+  const discountGiven = orders.reduce((sum, o) => sum + Number(o.discountTotal || 0), 0);
+  const verified = orders.filter((o) => o.paymentVerified).length;
+  const verifyRate = orders.length ? Math.round((verified / orders.length) * 100) : 0;
+  const cancelled = orders.filter((o) => o.status === 'Cancelled').length;
+  const delivered = orders.filter((o) => o.status === 'Delivered').length;
+  const uniqueBuyers = new Set(orders.map((o) => o._customerId || o.address?.mobile || o.id)).size;
+
+  const dayMap = {};
   orders.forEach((order) => {
-    const key = order.payMethod || 'unknown';
-    methodCounts[key] = (methodCounts[key] || 0) + 1;
+    const key = toInputDate(order.date);
+    if (!key) return;
+    if (!dayMap[key]) dayMap[key] = { revenue: 0, count: 0 };
+    dayMap[key].revenue += Number(order.total || 0);
+    dayMap[key].count += 1;
   });
-  const topProducts = {};
+  const dayRows = Object.keys(dayMap).sort().map((key) => ({ label: key, short: key.slice(5), value: dayMap[key].revenue, display: formatCurrencyAmount(dayMap[key].revenue) }));
+
+  const categoryMap = {};
   orders.forEach((order) => {
     (order.items || []).forEach((item) => {
-      topProducts[item.name] = (topProducts[item.name] || 0) + Number(item.quantity || 0);
+      const cat = item.category || 'Uncategorized';
+      categoryMap[cat] = (categoryMap[cat] || 0) + Number(item.price || 0) * Number(item.quantity || 0);
     });
   });
-  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const categoryRows = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, value]) => ({ label, value, display: formatCurrencyAmount(value) }));
+
+  const statusOrder = ['Confirmed', 'Paid', 'Preparing', 'Out for delivery', 'Delivered', 'Cancelled'];
+  const statusCounts = {};
+  orders.forEach((o) => { const key = o.status || 'Confirmed'; statusCounts[key] = (statusCounts[key] || 0) + 1; });
+  const statusRows = statusOrder.filter((s) => statusCounts[s]).map((label) => ({ label, value: statusCounts[label], display: String(statusCounts[label]) }));
+
+  const topProducts = {};
+  orders.forEach((order) => { (order.items || []).forEach((item) => { topProducts[item.name] = (topProducts[item.name] || 0) + Number(item.quantity || 0); }); });
+  const topList = Object.entries(topProducts).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([label, value]) => ({ label, value, display: `${value} sold` }));
+
+  const cityMap = {};
+  orders.forEach((order) => { const city = order.address?.city || 'Unknown'; cityMap[city] = (cityMap[city] || 0) + Number(order.total || 0); });
+  const cityRows = Object.entries(cityMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, value]) => ({ label, value, display: formatCurrencyAmount(value) }));
+
+  const lowStock = products.filter((p) => Number(p.stock) <= 5 && Number(p.stock) > 0).length;
+  const outStock = products.filter((p) => Number(p.stock) <= 0).length;
+  const catalogValue = products.reduce((sum, p) => sum + Number(p.price || 0) * Number(p.stock || 0), 0);
+  const buyerCounts = {};
+  orders.forEach((o) => { const key = o._customerId || o.address?.mobile || 'guest'; buyerCounts[key] = (buyerCounts[key] || 0) + 1; });
+  const repeatBuyers = Object.values(buyerCounts).filter((n) => n > 1).length;
+  const repeatRate = uniqueBuyers ? Math.round((repeatBuyers / uniqueBuyers) * 100) : 0;
+
+  const insights = [];
+  if (orders.length) {
+    insights.push(`AOV is ${formatCurrencyAmount(avgOrder)} across ${orders.length} orders.`);
+    insights.push(verifyRate < 70 ? `Only ${verifyRate}% of Razorpay payments are verified — clear the Orders queue.` : `${verifyRate}% of payments are verified. Strong settlement hygiene.`);
+    if (categoryRows[0]) insights.push(`${categoryRows[0].label} leads revenue in this window.`);
+    if (repeatRate >= 20) insights.push(`${repeatRate}% of buyers ordered more than once — loyalty is building.`);
+    if (discountGiven > 0) insights.push(`${formatCurrencyAmount(discountGiven)} given in discounts this period.`);
+    if (outStock) insights.push(`${outStock} SKUs are out of stock — refill bestsellers first.`);
+  } else {
+    insights.push('No orders in this range yet. Try All time or place a test Razorpay order.');
+  }
 
   root.innerHTML = `
+    <p class="muted" style="margin:0 0 1rem;">Window: ${from || 'beginning'} → ${to || 'today'} · ${orders.length} of ${allOrders.length} total orders</p>
     <div class="stats-grid" style="margin-bottom:1.5rem;">
-      <article class="stat-card"><p class="stat-label">Revenue</p><strong>${formatCurrencyAmount(revenue)}</strong></article>
+      <article class="stat-card"><p class="stat-label">Gross merchandise</p><strong>${formatCurrencyAmount(revenue)}</strong></article>
       <article class="stat-card"><p class="stat-label">Orders</p><strong>${orders.length}</strong></article>
-      <article class="stat-card"><p class="stat-label">Avg order</p><strong>${formatCurrencyAmount(avgOrder)}</strong></article>
-      <article class="stat-card"><p class="stat-label">Customers</p><strong>${customers.length}</strong></article>
+      <article class="stat-card"><p class="stat-label">AOV</p><strong>${formatCurrencyAmount(avgOrder)}</strong></article>
+      <article class="stat-card"><p class="stat-label">Items sold</p><strong>${itemsSold}</strong></article>
+      <article class="stat-card"><p class="stat-label">Unique buyers</p><strong>${uniqueBuyers}</strong></article>
+      <article class="stat-card"><p class="stat-label">Discount given</p><strong>${formatCurrencyAmount(discountGiven)}</strong></article>
+      <article class="stat-card"><p class="stat-label">Payment verified</p><strong>${verifyRate}%</strong></article>
+      <article class="stat-card"><p class="stat-label">Repeat buyers</p><strong>${repeatRate}%</strong></article>
+      <article class="stat-card"><p class="stat-label">Delivered</p><strong>${delivered}</strong></article>
+      <article class="stat-card"><p class="stat-label">Cancelled</p><strong>${cancelled}</strong></article>
       <article class="stat-card"><p class="stat-label">Catalog SKUs</p><strong>${products.length}</strong></article>
-      <article class="stat-card"><p class="stat-label">Featured</p><strong>${products.filter((p) => p.featured).length}</strong></article>
+      <article class="stat-card"><p class="stat-label">Customers</p><strong>${customers.length}</strong></article>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:1.2rem;">
+      <article class="card"><h3 style="margin-top:0;">Revenue by day</h3>${buildBarChart(dayRows)}</article>
+      <article class="card"><h3 style="margin-top:0;">Operator insights</h3><ul class="analytics-insights">${insights.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul></article>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:1.2rem;">
+      <article class="card"><h3 style="margin-top:0;">Category revenue mix</h3>${buildProgressRows(categoryRows)}</article>
+      <article class="card"><h3 style="margin-top:0;">Fulfillment funnel</h3>${buildProgressRows(statusRows)}</article>
+    </div>
+    <div class="grid grid-2" style="margin-bottom:1.2rem;">
+      <article class="card"><h3 style="margin-top:0;">Top sellers</h3>${buildProgressRows(topList)}</article>
+      <article class="card"><h3 style="margin-top:0;">Top cities</h3>${buildProgressRows(cityRows)}</article>
     </div>
     <div class="grid grid-2">
       <article class="card">
-        <h3 style="margin-top:0;">Payment mix</h3>
-        ${Object.keys(methodCounts).length ? Object.entries(methodCounts).map(([method, count]) => `
-          <div class="summary-row"><span>${escapeHtml(getPaymentMethodLabel(method))}</span><strong>${count}</strong></div>
-        `).join('') : '<p class="muted">No payments yet.</p>'}
+        <h3 style="margin-top:0;">Inventory pulse</h3>
+        <div class="summary-row"><span>Low stock (≤5)</span><strong>${lowStock}</strong></div>
+        <div class="summary-row"><span>Out of stock</span><strong>${outStock}</strong></div>
+        <div class="summary-row"><span>Inventory retail value</span><strong>${formatCurrencyAmount(catalogValue)}</strong></div>
+        <div class="summary-row"><span>Featured SKUs</span><strong>${products.filter((p) => p.featured).length}</strong></div>
       </article>
       <article class="card">
-        <h3 style="margin-top:0;">Top sellers</h3>
-        ${topList.length ? topList.map(([name, qty]) => `
-          <div class="summary-row"><span>${escapeHtml(name)}</span><strong>${qty}</strong></div>
-        `).join('') : '<p class="muted">No sales data yet.</p>'}
+        <h3 style="margin-top:0;">Payment health</h3>
+        <div class="summary-row"><span>Razorpay orders</span><strong>${orders.filter((o) => o.payMethod === 'razorpay').length}</strong></div>
+        <div class="summary-row"><span>Verified</span><strong>${verified}</strong></div>
+        <div class="summary-row"><span>Awaiting verification</span><strong>${orders.length - verified}</strong></div>
+        <div class="summary-row"><span>Verify rate</span><strong>${verifyRate}%</strong></div>
       </article>
     </div>
   `;
@@ -2996,8 +3384,12 @@ document.addEventListener('DOMContentLoaded', () => {
   renderUserNav();
   renderPublicCategoryGrid();
   initShopControls();
+  renderOfferStrip();
+  renderTrendingRail();
+  renderRecentlyViewedRail();
+  renderCompareBar();
   if (document.getElementById('public-products')) {
-    renderPublicProducts();
+    renderPublicProducts({ showAll: document.getElementById('public-products').dataset.showAll === 'true' });
   }
   if (document.getElementById('product-detail')) {
     renderProductDetail();
