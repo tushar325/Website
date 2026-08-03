@@ -171,35 +171,114 @@
               </div>
 
               <div class="settings-card">
-                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Payment methods</h3>
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Indian payment methods</h3>
+                <p class="muted" style="margin:0 0 1rem;">Toggle each method for checkout. Customers only see methods you enable here.</p>
                 <div class="settings-grid" style="gap:1.2rem;">
                   <div class="promo-block">
                     <div class="block-label">Cash on Delivery</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
                       <input type="checkbox" id="s-cod-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
                       <label for="s-cod-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable COD</label>
                     </div>
+                    <div class="field"><label>COD note</label><input id="s-cod-note" type="text" placeholder="Pay in cash when your order arrives."></div>
                   </div>
+
                   <div class="promo-block">
                     <div class="block-label">UPI</div>
                     <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
                       <input type="checkbox" id="s-upi-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
                       <label for="s-upi-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable UPI</label>
                     </div>
-                    <div class="field"><label>UPI ID</label><input id="s-upi-id" type="text" placeholder="merchant@upi"></div>
+                    <div class="field" style="margin-bottom:.7rem;"><label>UPI ID / VPA</label><input id="s-upi-id" type="text" placeholder="merchant@upi"></div>
+                    <div class="field" style="margin-bottom:.7rem;"><label>Merchant name on UPI</label><input id="s-upi-merchant" type="text" placeholder="Bean & Bloom"></div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                      <input type="checkbox" id="s-upi-qr" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-upi-qr" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Show UPI QR code at checkout</label>
+                    </div>
                   </div>
+
+                  <div class="promo-block">
+                    <div class="block-label">Cards</div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                      <input type="checkbox" id="s-cards-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-cards-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Credit / Debit / RuPay cards</label>
+                    </div>
+                    <p style="font-size:.82rem;color:var(--muted);margin:.7rem 0 0;">Collects card details at checkout for demo orders. Use Razorpay for live card processing.</p>
+                  </div>
+
+                  <div class="promo-block">
+                    <div class="block-label">Net Banking</div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                      <input type="checkbox" id="s-netbanking-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-netbanking-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Net Banking</label>
+                    </div>
+                    <p style="font-size:.82rem;color:var(--muted);margin:.7rem 0 0;">SBI, HDFC, ICICI, Axis, and other major Indian banks.</p>
+                  </div>
+
+                  <div class="promo-block" style="grid-column:1/-1;">
+                    <div class="block-label">Wallets</div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.9rem;">
+                      <input type="checkbox" id="s-wallets-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-wallets-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable wallets</label>
+                    </div>
+                    <div class="settings-grid">
+                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                        <input type="checkbox" id="s-wallet-paytm" style="accent-color:var(--accent);width:16px;height:16px;">
+                        <label for="s-wallet-paytm" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Paytm Wallet</label>
+                      </div>
+                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                        <input type="checkbox" id="s-wallet-phonepe" style="accent-color:var(--accent);width:16px;height:16px;">
+                        <label for="s-wallet-phonepe" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">PhonePe Wallet</label>
+                      </div>
+                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                        <input type="checkbox" id="s-wallet-amazonpay" style="accent-color:var(--accent);width:16px;height:16px;">
+                        <label for="s-wallet-amazonpay" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Amazon Pay</label>
+                      </div>
+                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                        <input type="checkbox" id="s-wallet-mobikwik" style="accent-color:var(--accent);width:16px;height:16px;">
+                        <label for="s-wallet-mobikwik" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Mobikwik</label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="promo-block">
+                    <div class="block-label">EMI</div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
+                      <input type="checkbox" id="s-emi-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-emi-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable EMI options</label>
+                    </div>
+                  </div>
+
+                  <div class="promo-block">
+                    <div class="block-label">Paytm Gateway</div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
+                      <input type="checkbox" id="s-paytm-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-paytm-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Paytm Payment Gateway</label>
+                    </div>
+                    <div class="field"><label>Paytm Merchant ID</label><input id="s-paytm-mid" type="text" placeholder="Your Paytm MID"></div>
+                  </div>
+
+                  <div class="promo-block">
+                    <div class="block-label">PhonePe Gateway</div>
+                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
+                      <input type="checkbox" id="s-phonepe-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
+                      <label for="s-phonepe-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable PhonePe Payment Gateway</label>
+                    </div>
+                    <div class="field"><label>PhonePe Merchant ID</label><input id="s-phonepe-mid" type="text" placeholder="Your PhonePe Merchant ID"></div>
+                  </div>
+
                   <div class="promo-block" style="grid-column:1/-1;">
                     <div class="block-label">Razorpay</div>
                     <div class="settings-grid">
                       <div>
                         <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
                           <input type="checkbox" id="s-rzp-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                          <label for="s-rzp-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Razorpay</label>
+                          <label for="s-rzp-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Razorpay Checkout</label>
                         </div>
                         <div class="field"><label>Razorpay Key ID (public)</label><input id="s-rzp-key" type="text" placeholder="rzp_test_..."></div>
                       </div>
                       <div style="display:flex;align-items:center;">
-                        <p style="font-size:.82rem;color:var(--muted);margin:0;">Get your Key ID from <strong>Razorpay Dashboard → Settings → API Keys</strong>. Use <code>rzp_test_</code> prefix for test mode.</p>
+                        <p style="font-size:.82rem;color:var(--muted);margin:0;">Live cards, UPI, net banking, and wallets via Razorpay. Get your Key ID from <strong>Razorpay Dashboard → Settings → API Keys</strong>. Use <code>rzp_test_</code> for test mode.</p>
                       </div>
                     </div>
                   </div>
@@ -347,16 +426,32 @@
       // Payment settings
       const pay = s.payments || {};
       const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
-      chk('s-cod-enabled', pay.codEnabled);
-      chk('s-upi-enabled', pay.upiEnabled);
+      chk('s-cod-enabled', pay.codEnabled !== false);
+      set('s-cod-note', pay.codNote);
+      chk('s-upi-enabled', pay.upiEnabled !== false);
       set('s-upi-id', pay.upiId);
-      chk('s-rzp-enabled', pay.razorpayEnabled);
+      set('s-upi-merchant', pay.upiMerchantName);
+      chk('s-upi-qr', pay.upiQrEnabled !== false);
+      chk('s-cards-enabled', pay.cardsEnabled !== false);
+      chk('s-netbanking-enabled', pay.netbankingEnabled !== false);
+      chk('s-wallets-enabled', pay.walletsEnabled !== false);
+      chk('s-wallet-paytm', pay.walletPaytm !== false);
+      chk('s-wallet-phonepe', pay.walletPhonepe !== false);
+      chk('s-wallet-amazonpay', pay.walletAmazonpay !== false);
+      chk('s-wallet-mobikwik', pay.walletMobikwik !== false);
+      chk('s-emi-enabled', !!pay.emiEnabled);
+      chk('s-paytm-enabled', !!pay.paytmGatewayEnabled);
+      set('s-paytm-mid', pay.paytmMerchantId);
+      chk('s-phonepe-enabled', !!pay.phonepeGatewayEnabled);
+      set('s-phonepe-mid', pay.phonepeMerchantId);
+      chk('s-rzp-enabled', !!pay.razorpayEnabled);
       set('s-rzp-key', pay.razorpayKeyId);
       renderProductContentEditor();
     }
 
     function collectSettingsFromForm() {
       const get = id => (document.getElementById(id)?.value || '').trim();
+      const checked = id => !!document.getElementById(id)?.checked;
       return {
         siteName: get('s-siteName'), footerText: get('s-footerText'),
         hero: {
@@ -376,10 +471,25 @@
         testimonials: collectTestimonialsFromForm(),
         promoStrip: [0,1,2,3].map(i => ({ title: get(`s-p${i}-title`), desc: get(`s-p${i}-desc`) })),
         payments: {
-          codEnabled: document.getElementById('s-cod-enabled')?.checked ?? true,
-          upiEnabled: document.getElementById('s-upi-enabled')?.checked ?? true,
+          codEnabled: checked('s-cod-enabled'),
+          codNote: get('s-cod-note') || 'Pay in cash when your order arrives.',
+          upiEnabled: checked('s-upi-enabled'),
           upiId: get('s-upi-id'),
-          razorpayEnabled: document.getElementById('s-rzp-enabled')?.checked ?? false,
+          upiMerchantName: get('s-upi-merchant') || 'Bean & Bloom',
+          upiQrEnabled: checked('s-upi-qr'),
+          cardsEnabled: checked('s-cards-enabled'),
+          netbankingEnabled: checked('s-netbanking-enabled'),
+          walletsEnabled: checked('s-wallets-enabled'),
+          walletPaytm: checked('s-wallet-paytm'),
+          walletPhonepe: checked('s-wallet-phonepe'),
+          walletAmazonpay: checked('s-wallet-amazonpay'),
+          walletMobikwik: checked('s-wallet-mobikwik'),
+          emiEnabled: checked('s-emi-enabled'),
+          paytmGatewayEnabled: checked('s-paytm-enabled'),
+          paytmMerchantId: get('s-paytm-mid'),
+          phonepeGatewayEnabled: checked('s-phonepe-enabled'),
+          phonepeMerchantId: get('s-phonepe-mid'),
+          razorpayEnabled: checked('s-rzp-enabled'),
           razorpayKeyId: get('s-rzp-key')
         }
       };

@@ -4,29 +4,43 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Checkout | Bean & Bloom</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <style>
     .checkout-grid { display: grid; grid-template-columns: minmax(0,1.6fr) 340px; gap: 2rem; align-items: start; margin-top: 2rem; }
     @media(max-width:860px){ .checkout-grid{ grid-template-columns:1fr; } }
-    .checkout-card { background:rgba(255,255,255,.96); border:1px solid rgba(223,229,236,.8); border-radius:24px; padding:1.8rem; box-shadow:0 16px 44px rgba(31,40,65,.06); margin-bottom:1.2rem; }
-    .checkout-card h3 { margin:0 0 1.3rem; font-size:1.05rem; display:flex; align-items:center; gap:.6rem; }
-    .checkout-card h3 svg { width:18px; height:18px; color:var(--accent); }
+    .checkout-card { background:var(--surface-strong,#fff); border:1px solid var(--border,rgba(0,0,0,.1)); border-radius:22px; padding:1.8rem; box-shadow:0 16px 44px rgba(27,36,32,.06); margin-bottom:1.2rem; }
+    .checkout-card h3 { margin:0 0 1.3rem; font-size:1.05rem; display:flex; align-items:center; gap:.6rem; font-family:var(--font-display,inherit); }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
     @media(max-width:520px){ .form-row{ grid-template-columns:1fr; } }
     .field { display:flex; flex-direction:column; gap:.35rem; margin-bottom:.85rem; }
     .field label { font-size:.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
-    .field input, .field select, .field textarea { padding:.72rem .9rem; border:1.5px solid rgba(0,0,0,.12); border-radius:10px; font:inherit; font-size:.95rem; background:rgba(249,246,242,.95); transition:border-color .2s; }
-    .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(138,75,47,.1); }
+    .field input, .field select, .field textarea { padding:.72rem .9rem; border:1.5px solid rgba(0,0,0,.12); border-radius:10px; font:inherit; font-size:.95rem; background:#fff; transition:border-color .2s; }
+    .field input:focus, .field select:focus, .field textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft,rgba(47,93,74,.12)); }
     .payment-option { display:flex; align-items:center; gap:1rem; padding:1rem 1.1rem; border:2px solid rgba(0,0,0,.1); border-radius:14px; cursor:pointer; margin-bottom:.75rem; transition:border-color .2s, background .2s; }
-    .payment-option:hover { border-color:var(--accent); background:rgba(138,75,47,.04); }
-    .payment-option.selected { border-color:var(--accent); background:rgba(138,75,47,.07); }
+    .payment-option:hover { border-color:var(--accent); background:var(--accent-soft,rgba(47,93,74,.06)); }
+    .payment-option.selected { border-color:var(--accent); background:var(--accent-soft,rgba(47,93,74,.08)); }
     .payment-option input[type=radio] { accent-color:var(--accent); width:18px; height:18px; flex-shrink:0; }
-    .payment-option .pay-icon { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:1.3rem; flex-shrink:0; }
+    .payment-option .pay-icon { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; font-size:1.25rem; flex-shrink:0; background:rgba(0,0,0,.04); }
     .payment-option .pay-label strong { display:block; font-size:.95rem; }
     .payment-option .pay-label span { font-size:.82rem; color:var(--muted); }
-    .upi-detail { background:rgba(138,75,47,.06); border:1px dashed rgba(138,75,47,.3); border-radius:12px; padding:1rem 1.1rem; margin-top:.4rem; display:none; }
-    .upi-detail.show { display:block; }
-    .upi-id { font-size:1.1rem; font-weight:800; color:var(--accent); letter-spacing:.02em; }
+    .pay-detail { background:rgba(47,93,74,.06); border:1px dashed rgba(47,93,74,.28); border-radius:12px; padding:1rem 1.1rem; margin: .2rem 0 1rem; display:none; }
+    .pay-detail.show { display:block; }
+    .upi-id { font-size:1.15rem; font-weight:800; color:var(--accent); letter-spacing:.02em; word-break:break-all; }
+    .upi-apps { display:flex; flex-wrap:wrap; gap:.5rem; margin:.85rem 0; }
+    .upi-apps span { background:#fff; border:1px solid var(--border,rgba(0,0,0,.1)); border-radius:999px; padding:.35rem .7rem; font-size:.78rem; font-weight:700; color:var(--muted); }
+    .upi-qr-wrap { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-top:.8rem; }
+    .upi-qr-wrap img { width:160px; height:160px; border-radius:12px; background:#fff; border:1px solid var(--border,rgba(0,0,0,.1)); }
+    .wallet-grid, .emi-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.65rem; }
+    @media(max-width:520px){ .wallet-grid,.emi-grid{ grid-template-columns:1fr; } }
+    .wallet-chip, .emi-chip {
+      display:flex; align-items:center; gap:.65rem; border:1.5px solid rgba(0,0,0,.12);
+      border-radius:12px; padding:.75rem .85rem; cursor:pointer; background:#fff;
+    }
+    .wallet-chip.selected, .emi-chip.selected { border-color:var(--accent); background:var(--accent-soft,rgba(47,93,74,.08)); }
+    .wallet-chip input, .emi-chip input { accent-color:var(--accent); }
     .order-summary-line { display:flex; justify-content:space-between; padding:.6rem 0; border-bottom:1px solid rgba(0,0,0,.06); font-size:.93rem; }
     .order-summary-line:last-of-type { border-bottom:none; }
     .summary-total-line { display:flex; justify-content:space-between; padding:.9rem 0 0; font-size:1.1rem; font-weight:800; color:var(--accent); }
@@ -34,7 +48,7 @@
     .btn-place { width:100%; padding:1rem; font-size:1rem; font-weight:800; margin-top:.8rem; }
     #order-success { display:none; text-align:center; padding:3rem 2rem; }
     #order-success .success-icon { font-size:3.5rem; margin-bottom:1rem; }
-    #order-success h2 { margin:0 0 .6rem; }
+    #order-success h2 { margin:0 0 .6rem; font-family:var(--font-display,inherit); }
     #order-success p { color:var(--muted); margin:0 0 1.5rem; }
     .order-item-row { display:flex; align-items:center; gap:.8rem; padding:.6rem 0; border-bottom:1px solid rgba(0,0,0,.06); }
     .order-item-row img { width:48px; height:48px; object-fit:cover; border-radius:8px; flex-shrink:0; }
@@ -42,17 +56,21 @@
     .order-item-row .item-info strong { display:block; font-size:.9rem; }
     .order-item-row .item-info span { font-size:.8rem; color:var(--muted); }
     .order-item-row .item-price { font-weight:700; font-size:.9rem; }
-    .razorpay-note { font-size:.82rem; color:var(--muted); margin-top:.5rem; text-align:center; }
+    .gateway-note { font-size:.82rem; color:var(--muted); margin-top:.5rem; text-align:center; display:none; }
+    .pay-error { color:#b42318; font-size:.88rem; margin:.4rem 0 0; display:none; }
   </style>
 </head>
 <body>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html">Bean & Bloom</a>
-      <nav class="nav-links">
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
         <a href="index.html">Home</a>
         <a href="cart.html">← Back to cart</a>
-        <a href="cart.html" class="cart-link"><span class="cart-icon">🛒</span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
         <span id="user-nav"></span>
       </nav>
     </div>
@@ -62,7 +80,7 @@
     <div class="container">
       <div class="section-head">
         <h1>Checkout</h1>
-        <p class="muted">Complete your delivery details and choose a payment method.</p>
+        <p class="muted">Complete delivery details and choose an Indian payment method.</p>
       </div>
 
       <div id="order-success" class="card">
@@ -78,7 +96,6 @@
       <form id="checkout-form">
         <div class="checkout-grid">
           <div>
-            <!-- Address -->
             <div class="checkout-card">
               <h3><span class="step-badge">1</span>Delivery address</h3>
               <div class="form-row">
@@ -100,26 +117,96 @@
               </label>
             </div>
 
-            <!-- Payment -->
             <div class="checkout-card">
               <h3><span class="step-badge">2</span>Payment method</h3>
               <div id="payment-options"></div>
-              <div class="upi-detail" id="upi-detail">
-                <p style="margin:0 0 .4rem;font-size:.85rem;font-weight:700;">Pay to UPI ID:</p>
+
+              <div class="pay-detail" id="detail-upi">
+                <p style="margin:0 0 .35rem;font-size:.85rem;font-weight:700;">Pay via UPI</p>
                 <div class="upi-id" id="upi-id-display"></div>
-                <p style="margin:.5rem 0 0;font-size:.82rem;color:var(--muted);">Open your UPI app, send the exact amount to the above ID, then click Place Order.</p>
+                <div class="upi-apps">
+                  <span>Google Pay</span><span>PhonePe</span><span>Paytm</span><span>BHIM</span><span>Amazon Pay</span>
+                </div>
+                <div class="upi-qr-wrap" id="upi-qr-wrap" style="display:none;">
+                  <img id="upi-qr-image" alt="UPI QR code">
+                  <div>
+                    <p style="margin:0 0 .6rem;font-size:.88rem;color:var(--muted);">Scan with any UPI app, or open your preferred app and pay the exact amount.</p>
+                    <a class="btn secondary" id="upi-intent-link" href="#" style="margin:0;">Open UPI app</a>
+                  </div>
+                </div>
+                <div class="field" style="margin-top:1rem;margin-bottom:0;">
+                  <label>UPI transaction / UTR reference</label>
+                  <input id="upi-ref" type="text" placeholder="Enter UTR / reference after payment">
+                </div>
               </div>
+
+              <div class="pay-detail" id="detail-cards">
+                <p style="margin:0 0 .8rem;font-size:.85rem;font-weight:700;">Card details (Visa · Mastercard · RuPay · Amex)</p>
+                <div class="field"><label>Name on card</label><input id="card-name" type="text" placeholder="Name as on card" autocomplete="cc-name"></div>
+                <div class="field"><label>Card number</label><input id="card-number" type="text" inputmode="numeric" maxlength="19" placeholder="XXXX XXXX XXXX XXXX" autocomplete="cc-number"></div>
+                <div class="form-row">
+                  <div class="field"><label>Expiry (MM/YY)</label><input id="card-expiry" type="text" maxlength="5" placeholder="MM/YY" autocomplete="cc-exp"></div>
+                  <div class="field"><label>CVV</label><input id="card-cvv" type="password" maxlength="4" placeholder="***" autocomplete="cc-csc"></div>
+                </div>
+                <p style="margin:0;font-size:.8rem;color:var(--muted);">Demo checkout stores only the last 4 digits with the order. Enable Razorpay for live card charging.</p>
+              </div>
+
+              <div class="pay-detail" id="detail-netbanking">
+                <p style="margin:0 0 .8rem;font-size:.85rem;font-weight:700;">Choose your bank</p>
+                <div class="field" style="margin-bottom:0;">
+                  <label>Bank</label>
+                  <select id="netbanking-bank">
+                    <option value="">Select bank</option>
+                    <option>State Bank of India</option>
+                    <option>HDFC Bank</option>
+                    <option>ICICI Bank</option>
+                    <option>Axis Bank</option>
+                    <option>Kotak Mahindra Bank</option>
+                    <option>Punjab National Bank</option>
+                    <option>Bank of Baroda</option>
+                    <option>Canara Bank</option>
+                    <option>Union Bank of India</option>
+                    <option>Yes Bank</option>
+                    <option>IDFC First Bank</option>
+                    <option>Other Indian bank</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="pay-detail" id="detail-wallets">
+                <p style="margin:0 0 .8rem;font-size:.85rem;font-weight:700;">Choose a wallet</p>
+                <div class="wallet-grid" id="wallet-options"></div>
+              </div>
+
+              <div class="pay-detail" id="detail-emi">
+                <p style="margin:0 0 .8rem;font-size:.85rem;font-weight:700;">Select EMI tenure</p>
+                <div class="emi-grid">
+                  <label class="emi-chip selected"><input type="radio" name="emi-tenure" value="3" checked> 3 months</label>
+                  <label class="emi-chip"><input type="radio" name="emi-tenure" value="6"> 6 months</label>
+                  <label class="emi-chip"><input type="radio" name="emi-tenure" value="9"> 9 months</label>
+                  <label class="emi-chip"><input type="radio" name="emi-tenure" value="12"> 12 months</label>
+                </div>
+              </div>
+
+              <div class="pay-detail" id="detail-paytm">
+                <p style="margin:0;font-size:.88rem;color:var(--muted);">You will continue with Paytm Payment Gateway using merchant ID <strong id="paytm-mid-display"></strong>.</p>
+              </div>
+
+              <div class="pay-detail" id="detail-phonepe">
+                <p style="margin:0;font-size:.88rem;color:var(--muted);">You will continue with PhonePe Payment Gateway using merchant ID <strong id="phonepe-mid-display"></strong>.</p>
+              </div>
+
+              <p class="pay-error" id="pay-error"></p>
             </div>
           </div>
 
-          <!-- Order Summary -->
           <div>
-            <div class="checkout-card" style="position:sticky;top:1.5rem;">
+            <div class="checkout-card" style="position:sticky;top:5.5rem;">
               <h3><span class="step-badge">3</span>Order summary</h3>
               <div id="checkout-items"></div>
               <div id="checkout-totals"></div>
               <button class="btn btn-place" type="submit" id="place-order-btn">Place order</button>
-              <p class="razorpay-note" id="razorpay-note" style="display:none;">You will be redirected to Razorpay secure payment.</p>
+              <p class="gateway-note" id="gateway-note"></p>
             </div>
           </div>
         </div>
@@ -137,6 +224,7 @@
       const user = getLoggedInUser();
       if (!user) { window.location.href = 'login.html'; return; }
 
+      initMobileNav();
       updateCartCount();
       renderUserNav();
       renderPublicSiteContent();
@@ -144,63 +232,88 @@
       const cart = loadCart();
       if (!cart.length) { window.location.href = 'cart.html'; return; }
 
-      // Pre-fill saved address
       const saved = loadSavedAddress();
       if (saved) {
-        ['name','mobile','line1','line2','city','state','pin','landmark'].forEach(k => {
+        ['name','mobile','line1','line2','city','state','pin','landmark'].forEach((k) => {
           const el = document.getElementById(`addr-${k}`);
           if (el && saved[k]) el.value = saved[k];
         });
       }
 
-      // Render payment options from settings
       const settings = loadSettings();
-      const pay = settings.payments;
+      const pay = getPaymentSettings();
       const payContainer = document.getElementById('payment-options');
-      let firstPay = null;
-
-      const methods = [
-        pay.codEnabled  && { id:'cod',       icon:'💵', label:'Cash on Delivery', sub:'Pay when your order arrives' },
-        pay.upiEnabled  && { id:'upi',       icon:'📱', label:'UPI',              sub:`Pay via any UPI app` },
-        pay.razorpayEnabled && pay.razorpayKeyId && { id:'razorpay', icon:'💳', label:'Razorpay',         sub:'Credit/Debit card, NetBanking, UPI' }
-      ].filter(Boolean);
+      const methods = getEnabledPaymentMethods(pay);
+      let selectedMethod = methods[0]?.id || null;
 
       if (!methods.length) {
-        payContainer.innerHTML = '<p class="muted">No payment methods are configured. Please contact support.</p>';
+        payContainer.innerHTML = '<p class="muted">No payment methods are enabled. Ask the cafe admin to turn them on in Settings.</p>';
+        document.getElementById('place-order-btn').disabled = true;
       } else {
         methods.forEach((m, i) => {
           const opt = document.createElement('label');
           opt.className = 'payment-option' + (i === 0 ? ' selected' : '');
           opt.innerHTML = `
-            <input type="radio" name="payment" value="${m.id}" ${i===0?'checked':''}>
+            <input type="radio" name="payment" value="${m.id}" ${i === 0 ? 'checked' : ''}>
             <div class="pay-icon">${m.icon}</div>
             <div class="pay-label"><strong>${escapeHtml(m.label)}</strong><span>${escapeHtml(m.sub)}</span></div>`;
           payContainer.appendChild(opt);
-          if (i === 0) firstPay = m.id;
         });
-        if (firstPay === 'upi') showUpiDetail(pay.upiId);
+        showPaymentDetail(selectedMethod, pay, cartTotal(cart));
       }
 
-      // UPI toggle
-      payContainer.addEventListener('change', (e) => {
-        document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
-        e.target.closest('.payment-option')?.classList.add('selected');
-        const razNote = document.getElementById('razorpay-note');
-        if (e.target.value === 'upi') { showUpiDetail(pay.upiId); razNote.style.display = 'none'; }
-        else { document.getElementById('upi-detail').classList.remove('show'); }
-        if (e.target.value === 'razorpay') razNote.style.display = 'block';
-        else if (razNote) razNote.style.display = 'none';
+      const walletRoot = document.getElementById('wallet-options');
+      const walletChoices = [
+        pay.walletPaytm !== false && { id: 'paytm', label: 'Paytm Wallet' },
+        pay.walletPhonepe !== false && { id: 'phonepe', label: 'PhonePe Wallet' },
+        pay.walletAmazonpay !== false && { id: 'amazonpay', label: 'Amazon Pay' },
+        pay.walletMobikwik !== false && { id: 'mobikwik', label: 'Mobikwik' }
+      ].filter(Boolean);
+      walletRoot.innerHTML = walletChoices.map((w, i) => `
+        <label class="wallet-chip${i === 0 ? ' selected' : ''}">
+          <input type="radio" name="wallet" value="${w.id}" ${i === 0 ? 'checked' : ''}>
+          <span>${escapeHtml(w.label)}</span>
+        </label>`).join('') || '<p class="muted">No wallets enabled in admin settings.</p>';
+
+      walletRoot.addEventListener('change', (e) => {
+        walletRoot.querySelectorAll('.wallet-chip').forEach((el) => el.classList.remove('selected'));
+        e.target.closest('.wallet-chip')?.classList.add('selected');
       });
 
-      // Render cart items in summary
+      document.querySelectorAll('#detail-emi .emi-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          document.querySelectorAll('#detail-emi .emi-chip').forEach((el) => el.classList.remove('selected'));
+          chip.classList.add('selected');
+        });
+      });
+
+      document.getElementById('card-number')?.addEventListener('input', (e) => {
+        const digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+        e.target.value = digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+      });
+      document.getElementById('card-expiry')?.addEventListener('input', (e) => {
+        let value = e.target.value.replace(/\D/g, '').slice(0, 4);
+        if (value.length >= 3) value = `${value.slice(0, 2)}/${value.slice(2)}`;
+        e.target.value = value;
+      });
+
+      payContainer.addEventListener('change', (e) => {
+        if (e.target.name !== 'payment') return;
+        document.querySelectorAll('.payment-option').forEach((el) => el.classList.remove('selected'));
+        e.target.closest('.payment-option')?.classList.add('selected');
+        selectedMethod = e.target.value;
+        showPaymentDetail(selectedMethod, pay, cartTotal(cart));
+        clearPayError();
+      });
+
       const itemsEl = document.getElementById('checkout-items');
-      cart.forEach(item => {
+      cart.forEach((item) => {
         const row = document.createElement('div');
         row.className = 'order-item-row';
         row.innerHTML = `
           <img src="${escapeHtml(item.imageUrl || DEFAULT_IMAGE_URL)}" alt="${escapeHtml(item.name)}">
           <div class="item-info"><strong>${escapeHtml(item.name)}</strong><span>Qty: ${item.quantity} · ${escapeHtml(item.category || '')}</span></div>
-          <div class="item-price">$${(item.price * item.quantity).toFixed(2)}</div>`;
+          <div class="item-price">${formatCurrencyAmount(item.price * item.quantity)}</div>`;
         itemsEl.appendChild(row);
       });
 
@@ -209,66 +322,203 @@
       const coupon = 5;
       const total = Math.max(0, subtotal - discount - coupon);
       document.getElementById('checkout-totals').innerHTML = `
-        <div class="order-summary-line"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
-        <div class="order-summary-line"><span>Discount (8%)</span><span style="color:#16a34a;">−$${discount.toFixed(2)}</span></div>
-        <div class="order-summary-line"><span>Coupon</span><span style="color:#16a34a;">−$${coupon.toFixed(2)}</span></div>
-        <div class="summary-total-line"><span>Total</span><span>$${total.toFixed(2)}</span></div>`;
+        <div class="order-summary-line"><span>Subtotal</span><span>${formatCurrencyAmount(subtotal)}</span></div>
+        <div class="order-summary-line"><span>Discount (8%)</span><span style="color:#16a34a;">−${formatCurrencyAmount(discount)}</span></div>
+        <div class="order-summary-line"><span>Coupon</span><span style="color:#16a34a;">−${formatCurrencyAmount(coupon)}</span></div>
+        <div class="summary-total-line"><span>Total</span><span>${formatCurrencyAmount(total)}</span></div>`;
 
-      // Form submit
       document.getElementById('checkout-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        clearPayError();
         const address = {
-          name:     document.getElementById('addr-name').value.trim(),
-          mobile:   document.getElementById('addr-mobile').value.trim(),
-          line1:    document.getElementById('addr-line1').value.trim(),
-          line2:    document.getElementById('addr-line2').value.trim(),
-          city:     document.getElementById('addr-city').value.trim(),
-          state:    document.getElementById('addr-state').value.trim(),
-          pin:      document.getElementById('addr-pin').value.trim(),
+          name: document.getElementById('addr-name').value.trim(),
+          mobile: document.getElementById('addr-mobile').value.trim(),
+          line1: document.getElementById('addr-line1').value.trim(),
+          line2: document.getElementById('addr-line2').value.trim(),
+          city: document.getElementById('addr-city').value.trim(),
+          state: document.getElementById('addr-state').value.trim(),
+          pin: document.getElementById('addr-pin').value.trim(),
           landmark: document.getElementById('addr-landmark').value.trim()
         };
         if (document.getElementById('save-address').checked) saveAddress(address);
 
-        const payMethod = document.querySelector('[name=payment]:checked')?.value || 'cod';
+        const payMethod = document.querySelector('[name=payment]:checked')?.value;
+        if (!payMethod) {
+          showPayError('Please select a payment method.');
+          return;
+        }
+
+        const paymentMeta = collectPaymentMeta(payMethod, pay);
+        if (paymentMeta.error) {
+          showPayError(paymentMeta.error);
+          return;
+        }
 
         if (payMethod === 'razorpay') {
-          await handleRazorpay(address, cart, total, pay.razorpayKeyId, settings.siteName);
-        } else {
-          placeOrder(address, payMethod, cart, total);
+          await handleRazorpay(address, cart, total, pay.razorpayKeyId, settings.siteName, paymentMeta);
+          return;
         }
+
+        // Gateway placeholders (demo confirmation flow)
+        if (payMethod === 'paytm' || payMethod === 'phonepe') {
+          const ok = window.confirm(`Continue with ${getPaymentMethodLabel(payMethod)} for ${formatCurrencyAmount(total)}?`);
+          if (!ok) return;
+        }
+
+        placeOrder(address, payMethod, cart, total, paymentMeta);
       });
     });
 
-    function showUpiDetail(upiId) {
-      const d = document.getElementById('upi-detail');
-      d.classList.add('show');
-      document.getElementById('upi-id-display').textContent = upiId || 'beanbloom@upi';
+    function cartTotal(cart) {
+      const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+      return Math.max(0, subtotal - subtotal * 0.08 - 5);
     }
 
-    function placeOrder(address, payMethod, cart, total) {
+    function hideAllDetails() {
+      document.querySelectorAll('.pay-detail').forEach((el) => el.classList.remove('show'));
+      const note = document.getElementById('gateway-note');
+      if (note) { note.style.display = 'none'; note.textContent = ''; }
+    }
+
+    function showPaymentDetail(method, pay, total) {
+      hideAllDetails();
+      const note = document.getElementById('gateway-note');
+      const btn = document.getElementById('place-order-btn');
+
+      if (method === 'upi') {
+        document.getElementById('detail-upi').classList.add('show');
+        document.getElementById('upi-id-display').textContent = pay.upiId || 'beanbloom@upi';
+        const intent = buildUpiIntent({
+          upiId: pay.upiId,
+          merchantName: pay.upiMerchantName || 'Bean & Bloom',
+          amount: total,
+          note: 'Bean & Bloom order'
+        });
+        const link = document.getElementById('upi-intent-link');
+        link.href = intent;
+        const qrWrap = document.getElementById('upi-qr-wrap');
+        if (pay.upiQrEnabled !== false) {
+          qrWrap.style.display = 'flex';
+          document.getElementById('upi-qr-image').src = buildUpiQrUrl(intent);
+        } else {
+          qrWrap.style.display = 'none';
+        }
+        btn.textContent = 'Confirm UPI payment';
+      } else if (method === 'cards') {
+        document.getElementById('detail-cards').classList.add('show');
+        btn.textContent = 'Pay with card';
+      } else if (method === 'netbanking') {
+        document.getElementById('detail-netbanking').classList.add('show');
+        btn.textContent = 'Pay with net banking';
+      } else if (method === 'wallets') {
+        document.getElementById('detail-wallets').classList.add('show');
+        btn.textContent = 'Pay with wallet';
+      } else if (method === 'emi') {
+        document.getElementById('detail-emi').classList.add('show');
+        btn.textContent = 'Continue with EMI';
+      } else if (method === 'paytm') {
+        document.getElementById('detail-paytm').classList.add('show');
+        document.getElementById('paytm-mid-display').textContent = pay.paytmMerchantId || '—';
+        note.style.display = 'block';
+        note.textContent = 'You will continue via Paytm Payment Gateway.';
+        btn.textContent = 'Pay with Paytm';
+      } else if (method === 'phonepe') {
+        document.getElementById('detail-phonepe').classList.add('show');
+        document.getElementById('phonepe-mid-display').textContent = pay.phonepeMerchantId || '—';
+        note.style.display = 'block';
+        note.textContent = 'You will continue via PhonePe Payment Gateway.';
+        btn.textContent = 'Pay with PhonePe';
+      } else if (method === 'razorpay') {
+        note.style.display = 'block';
+        note.textContent = 'You will be redirected to Razorpay secure checkout.';
+        btn.textContent = 'Pay with Razorpay';
+      } else {
+        btn.textContent = 'Place order';
+      }
+    }
+
+    function collectPaymentMeta(method, pay) {
+      if (method === 'upi') {
+        const ref = document.getElementById('upi-ref')?.value.trim() || '';
+        if (!ref) return { error: 'Enter your UPI UTR / transaction reference after paying.' };
+        return { upiId: pay.upiId, upiRef: ref };
+      }
+      if (method === 'cards') {
+        const name = document.getElementById('card-name')?.value.trim() || '';
+        const number = (document.getElementById('card-number')?.value || '').replace(/\s/g, '');
+        const expiry = document.getElementById('card-expiry')?.value.trim() || '';
+        const cvv = document.getElementById('card-cvv')?.value.trim() || '';
+        if (!name || number.length < 12 || !/^\d{2}\/\d{2}$/.test(expiry) || cvv.length < 3) {
+          return { error: 'Enter valid card name, number, expiry, and CVV.' };
+        }
+        return { cardLast4: number.slice(-4), cardBrand: detectCardBrand(number) };
+      }
+      if (method === 'netbanking') {
+        const bank = document.getElementById('netbanking-bank')?.value || '';
+        if (!bank) return { error: 'Select your bank for net banking.' };
+        return { bank };
+      }
+      if (method === 'wallets') {
+        const wallet = document.querySelector('[name=wallet]:checked')?.value;
+        if (!wallet) return { error: 'Select a wallet.' };
+        return { wallet };
+      }
+      if (method === 'emi') {
+        const tenure = document.querySelector('[name=emi-tenure]:checked')?.value || '3';
+        return { emiTenure: `${tenure} months` };
+      }
+      if (method === 'paytm') return { gateway: 'paytm', merchantId: pay.paytmMerchantId };
+      if (method === 'phonepe') return { gateway: 'phonepe', merchantId: pay.phonepeMerchantId };
+      return {};
+    }
+
+    function detectCardBrand(number) {
+      if (/^4/.test(number)) return 'Visa';
+      if (/^5[1-5]/.test(number)) return 'Mastercard';
+      if (/^6/.test(number)) return 'RuPay';
+      if (/^3[47]/.test(number)) return 'Amex';
+      return 'Card';
+    }
+
+    function showPayError(message) {
+      const el = document.getElementById('pay-error');
+      el.style.display = 'block';
+      el.textContent = message;
+    }
+
+    function clearPayError() {
+      const el = document.getElementById('pay-error');
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+
+    function placeOrder(address, payMethod, cart, total, paymentMeta = {}) {
       const orderId = 'ORD-' + Date.now();
+      const paidMethods = new Set(['upi', 'cards', 'netbanking', 'wallets', 'emi', 'paytm', 'phonepe', 'razorpay']);
       const order = {
         id: orderId,
         date: new Date().toISOString(),
         address,
         payMethod,
-        items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, category: i.category })),
+        paymentMeta,
+        items: cart.map((i) => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity, category: i.category })),
         total,
-        status: payMethod === 'cod' ? 'Confirmed' : 'Paid'
+        status: paidMethods.has(payMethod) ? 'Paid' : 'Confirmed'
       };
       saveOrder(order);
       clearCart();
 
-      // Show success
       document.getElementById('checkout-form').style.display = 'none';
       const suc = document.getElementById('order-success');
       suc.style.display = 'block';
-      document.getElementById('success-order-id').textContent = `Order ID: ${orderId} · ${address.name} · ${address.city}`;
+      document.getElementById('success-order-id').textContent =
+        `Order ID: ${orderId} · ${getPaymentMethodLabel(payMethod)} · ${address.name} · ${address.city}`;
+      if (typeof showToast === 'function') showToast('Order placed successfully.', 'success');
     }
 
-    async function handleRazorpay(address, cart, total, keyId, storeName) {
+    async function handleRazorpay(address, cart, total, keyId, storeName, paymentMeta) {
       if (typeof Razorpay === 'undefined') {
-        alert('Razorpay could not load. Please try another payment method.');
+        showPayError('Razorpay could not load. Please try another payment method.');
         return;
       }
       const amountPaise = Math.round(total * 100);
@@ -279,21 +529,20 @@
         name: storeName || 'Bean & Bloom',
         description: `Order for ${address.name}`,
         prefill: { name: address.name, contact: address.mobile },
-        theme: { color: '#8c6138' },
-        handler: function(response) {
-          placeOrder(address, 'razorpay', cart, total);
+        theme: { color: '#2f5d4a' },
+        handler: function () {
+          placeOrder(address, 'razorpay', cart, total, paymentMeta);
         }
       };
       const rzp = new Razorpay(options);
-      rzp.on('payment.failed', () => alert('Payment failed. Please try again.'));
+      rzp.on('payment.failed', () => showPayError('Payment failed. Please try again or choose another method.'));
       rzp.open();
     }
   </script>
-  <!-- Razorpay SDK loaded only if enabled -->
   <script>
-    (function() {
+    (function () {
       const s = loadSettings();
-      if (s.payments.razorpayEnabled && s.payments.razorpayKeyId) {
+      if (s.payments?.razorpayEnabled && s.payments?.razorpayKeyId) {
         const tag = document.createElement('script');
         tag.src = 'https://checkout.razorpay.com/v1/checkout.js';
         document.head.appendChild(tag);

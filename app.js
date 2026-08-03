@@ -50,8 +50,23 @@ const DEFAULT_SETTINGS = {
   ],
   payments: {
     codEnabled: true,
+    codNote: 'Pay in cash when your order arrives.',
     upiEnabled: true,
     upiId: 'beanbloom@upi',
+    upiMerchantName: 'Bean & Bloom',
+    upiQrEnabled: true,
+    cardsEnabled: true,
+    netbankingEnabled: true,
+    walletsEnabled: true,
+    walletPaytm: true,
+    walletPhonepe: true,
+    walletAmazonpay: true,
+    walletMobikwik: true,
+    emiEnabled: false,
+    paytmGatewayEnabled: false,
+    paytmMerchantId: '',
+    phonepeGatewayEnabled: false,
+    phonepeMerchantId: '',
     razorpayEnabled: false,
     razorpayKeyId: ''
   }
@@ -95,6 +110,131 @@ function loadSettings() {
 function saveSettings(settings) {
   settingsCache = settings;
   localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+const PAYMENT_METHOD_META = {
+  cod: { icon: '💵', label: 'Cash on Delivery', short: 'COD' },
+  upi: { icon: '📱', label: 'UPI', short: 'UPI' },
+  cards: { icon: '💳', label: 'Credit / Debit Card', short: 'Card' },
+  netbanking: { icon: '🏦', label: 'Net Banking', short: 'Net Banking' },
+  wallets: { icon: '👛', label: 'Wallets', short: 'Wallet' },
+  emi: { icon: '📅', label: 'EMI', short: 'EMI' },
+  paytm: { icon: '🅿️', label: 'Paytm', short: 'Paytm' },
+  phonepe: { icon: '📲', label: 'PhonePe', short: 'PhonePe' },
+  razorpay: { icon: '⚡', label: 'Razorpay Checkout', short: 'Razorpay' }
+};
+
+function getPaymentSettings() {
+  return loadSettings().payments || DEFAULT_SETTINGS.payments;
+}
+
+function getPaymentMethodLabel(method) {
+  return PAYMENT_METHOD_META[method]?.label || String(method || 'Payment');
+}
+
+function getPaymentMethodIcon(method) {
+  return PAYMENT_METHOD_META[method]?.icon || '💳';
+}
+
+function getEnabledPaymentMethods(pay = getPaymentSettings()) {
+  const methods = [];
+  if (pay.codEnabled) {
+    methods.push({
+      id: 'cod',
+      icon: PAYMENT_METHOD_META.cod.icon,
+      label: PAYMENT_METHOD_META.cod.label,
+      sub: pay.codNote || 'Pay when your order arrives'
+    });
+  }
+  if (pay.upiEnabled && pay.upiId) {
+    methods.push({
+      id: 'upi',
+      icon: PAYMENT_METHOD_META.upi.icon,
+      label: PAYMENT_METHOD_META.upi.label,
+      sub: 'GPay, PhonePe, Paytm, BHIM & more'
+    });
+  }
+  if (pay.cardsEnabled) {
+    methods.push({
+      id: 'cards',
+      icon: PAYMENT_METHOD_META.cards.icon,
+      label: PAYMENT_METHOD_META.cards.label,
+      sub: 'Visa, Mastercard, RuPay, Amex'
+    });
+  }
+  if (pay.netbankingEnabled) {
+    methods.push({
+      id: 'netbanking',
+      icon: PAYMENT_METHOD_META.netbanking.icon,
+      label: PAYMENT_METHOD_META.netbanking.label,
+      sub: 'All major Indian banks'
+    });
+  }
+  if (pay.walletsEnabled) {
+    const walletNames = [];
+    if (pay.walletPaytm !== false) walletNames.push('Paytm');
+    if (pay.walletPhonepe !== false) walletNames.push('PhonePe');
+    if (pay.walletAmazonpay !== false) walletNames.push('Amazon Pay');
+    if (pay.walletMobikwik !== false) walletNames.push('Mobikwik');
+    if (walletNames.length) {
+      methods.push({
+        id: 'wallets',
+        icon: PAYMENT_METHOD_META.wallets.icon,
+        label: PAYMENT_METHOD_META.wallets.label,
+        sub: walletNames.join(' · ')
+      });
+    }
+  }
+  if (pay.emiEnabled) {
+    methods.push({
+      id: 'emi',
+      icon: PAYMENT_METHOD_META.emi.icon,
+      label: PAYMENT_METHOD_META.emi.label,
+      sub: 'No-cost & standard EMI options'
+    });
+  }
+  if (pay.paytmGatewayEnabled && pay.paytmMerchantId) {
+    methods.push({
+      id: 'paytm',
+      icon: PAYMENT_METHOD_META.paytm.icon,
+      label: PAYMENT_METHOD_META.paytm.label,
+      sub: 'Paytm Payment Gateway'
+    });
+  }
+  if (pay.phonepeGatewayEnabled && pay.phonepeMerchantId) {
+    methods.push({
+      id: 'phonepe',
+      icon: PAYMENT_METHOD_META.phonepe.icon,
+      label: PAYMENT_METHOD_META.phonepe.label,
+      sub: 'PhonePe Payment Gateway'
+    });
+  }
+  if (pay.razorpayEnabled && pay.razorpayKeyId) {
+    methods.push({
+      id: 'razorpay',
+      icon: PAYMENT_METHOD_META.razorpay.icon,
+      label: PAYMENT_METHOD_META.razorpay.label,
+      sub: 'Cards, UPI, Net Banking & wallets via Razorpay'
+    });
+  }
+  return methods;
+}
+
+function buildUpiIntent({ upiId, merchantName, amount, note }) {
+  const params = new URLSearchParams({
+    pa: String(upiId || '').trim(),
+    pn: String(merchantName || 'Bean & Bloom').trim(),
+    cu: 'INR'
+  });
+  if (amount != null && !Number.isNaN(Number(amount))) {
+    params.set('am', Number(amount).toFixed(2));
+  }
+  if (note) params.set('tn', String(note).slice(0, 50));
+  return `upi://pay?${params.toString()}`;
+}
+
+function buildUpiQrUrl(upiIntent) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiIntent)}`;
 }
 
 // Sets text/href/src of element by id if it exists
