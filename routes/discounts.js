@@ -1,5 +1,6 @@
 module.exports = function discountsRouter(pool) {
   const express = require('express');
+  const { requireAdmin } = require('../middleware/auth');
   const router = express.Router();
 
   router.get('/', async (req, res) => {
@@ -17,7 +18,7 @@ module.exports = function discountsRouter(pool) {
     }
   });
 
-  router.post('/', async (req, res) => {
+  router.post('/', requireAdmin, async (req, res) => {
     try {
       const body = req.body || {};
       const scope = ['store', 'category', 'product'].includes(body.type || body.scope)
@@ -50,7 +51,7 @@ module.exports = function discountsRouter(pool) {
     }
   });
 
-  router.put('/:id', async (req, res) => {
+  router.put('/:id', requireAdmin, async (req, res) => {
     try {
       const body = req.body || {};
       await pool.execute(
@@ -82,7 +83,7 @@ module.exports = function discountsRouter(pool) {
     }
   });
 
-  router.delete('/:id', async (req, res) => {
+  router.delete('/:id', requireAdmin, async (req, res) => {
     try {
       await pool.execute('DELETE FROM discounts WHERE id = ?', [req.params.id]);
       res.json({ deleted: true });

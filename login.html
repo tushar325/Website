@@ -89,6 +89,7 @@
     </div>
   </footer>
 
+  <script src="api-client.js"></script>
   <script src="app.js"></script>
   <script>
     const CUSTOMER_KEY = 'bean-bloom-customers-v1';
@@ -96,6 +97,12 @@
 
     function loadCustomers() {
       try { return JSON.parse(localStorage.getItem(CUSTOMER_KEY) || '[]'); } catch { return []; }
+    }
+
+    async function hashPassword(password) {
+      const data = new TextEncoder().encode(`bean-bloom:${password}`);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
     }
 
     function showStatus(msg, type) {
@@ -110,14 +117,20 @@
       window.location.href = 'index.html';
     }
 
-    document.getElementById('login-form').addEventListener('submit', (e) => {
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim().toLowerCase();
       const password = document.getElementById('login-password').value;
       const rememberMe = document.getElementById('remember-me').checked;
 
+      const passwordHash = await hashPassword(password);
       const customers = loadCustomers();
-      const user = customers.find(c => c.email === email && c.password === password);
+      const user = customers.find((c) => {
+        if (c.email !== email) return false;
+        if (c.passwordHash) return c.passwordHash === passwordHash;
+        // Legacy plaintext accounts (migrated away on next register)
+        return c.password === password;
+      });
 
       if (!user) {
         showStatus('Invalid email or password. Please try again.', 'error');

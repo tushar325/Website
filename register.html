@@ -117,6 +117,7 @@
     </div>
   </footer>
 
+  <script src="api-client.js"></script>
   <script src="app.js"></script>
   <script>
     const CUSTOMER_KEY = 'bean-bloom-customers-v1';
@@ -127,7 +128,17 @@
     }
 
     function saveCustomers(customers) {
-      localStorage.setItem(CUSTOMER_KEY, JSON.stringify(customers));
+      const safe = (customers || []).map((c) => {
+        const { password, cardNumber, cvv, pan, card, ...rest } = c || {};
+        return rest;
+      });
+      localStorage.setItem(CUSTOMER_KEY, JSON.stringify(safe));
+    }
+
+    async function hashPassword(password) {
+      const data = new TextEncoder().encode(`bean-bloom:${password}`);
+      const digest = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
     }
 
     function showStatus(msg, type) {
@@ -136,13 +147,11 @@
       el.className = `status-msg ${type}`;
     }
 
-    // Redirect if already logged in
     const existingSession = sessionStorage.getItem(SESSION_KEY) || localStorage.getItem(SESSION_KEY);
     if (existingSession) {
       window.location.href = 'index.html';
     }
 
-    // Password strength indicator
     document.getElementById('reg-password').addEventListener('input', (e) => {
       const val = e.target.value;
       const fill = document.getElementById('strength-fill');
@@ -152,13 +161,12 @@
       if (/[A-Z]/.test(val)) strength++;
       if (/[0-9]/.test(val)) strength++;
       if (/[^A-Za-z0-9]/.test(val)) strength++;
-
       const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a'];
       fill.style.width = `${(strength / 5) * 100}%`;
       fill.style.background = colors[strength - 1] || 'transparent';
     });
 
-    document.getElementById('register-form').addEventListener('submit', (e) => {
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const firstName = document.getElementById('reg-firstname').value.trim();
       const lastName = document.getElementById('reg-lastname').value.trim();
@@ -171,18 +179,18 @@
         showStatus('Passwords do not match.', 'error');
         return;
       }
-
       if (password.length < 6) {
         showStatus('Password must be at least 6 characters.', 'error');
         return;
       }
 
       const customers = loadCustomers();
-      if (customers.find(c => c.email === email)) {
+      if (customers.find((c) => c.email === email)) {
         showStatus('An account with this email already exists.', 'error');
         return;
       }
 
+      const passwordHash = await hashPassword(password);
       const newCustomer = {
         id: crypto.randomUUID(),
         name: `${firstName} ${lastName}`,
@@ -190,17 +198,20 @@
         lastName,
         email,
         phone,
-        password,
+        passwordHash,
+        createdAt: new Date().toISOString(),
         joinedAt: new Date().toISOString()
       };
 
       customers.push(newCustomer);
       saveCustomers(customers);
 
-      // Auto sign-in after registration
+      if (window.BeanbBloomAPI?.Auth?.register) {
+        window.BeanbBloomAPI.Auth.register(email, password, 'customer').catch(() => {});
+      }
+
       const session = JSON.stringify({ id: newCustomer.id, name: newCustomer.name, email: newCustomer.email });
       sessionStorage.setItem(SESSION_KEY, session);
-
       showStatus(`Welcome, ${firstName}! Your account has been created.`, 'success');
       setTimeout(() => { window.location.href = 'index.html'; }, 1000);
     });

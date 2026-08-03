@@ -1,10 +1,11 @@
 const express = require('express');
+const { requireAdmin } = require('../middleware/auth');
 
 module.exports = (pool) => {
   const router = express.Router();
 
   // Get all inquiries for admin view
-  router.get('/', async (req, res) => {
+  router.get('/', requireAdmin, async (req, res) => {
     try {
       const connection = await pool.getConnection();
       const [rows] = await connection.execute(

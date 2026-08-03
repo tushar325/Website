@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Story | Bean & Bloom</title>
+  <meta name="description" content="A Bean & Bloom journal story.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&amp;family=Outfit:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="index.html">Bean & Bloom</a>
+      <button class="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="site-nav">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="site-nav">
+        <a href="index.html">Home</a>
+        <a href="index.html#products">Shop</a>
+        <a href="blog.html" class="is-active">Blog</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="cart.html" class="cart-link"><span class="cart-icon" aria-hidden="true"></span>Cart<span class="cart-count" id="cart-count">0</span></a>
+        <span id="user-nav"></span>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="blog-post">
+      <header class="blog-post-hero" id="blog-post-hero">
+        <div class="blog-post-hero-media" id="blog-post-cover" aria-hidden="true"></div>
+        <div class="blog-post-hero-veil"></div>
+        <div class="container blog-post-hero-copy">
+          <a class="blog-back" href="blog.html">← Journal</a>
+          <p class="eyebrow" id="blog-post-category">Brew notes</p>
+          <h1 id="blog-post-title">Loading story…</h1>
+          <div class="blog-post-meta" id="blog-post-meta"></div>
+        </div>
+      </header>
+
+      <div class="section">
+        <div class="container blog-post-layout">
+          <div class="blog-post-body" id="blog-post-body">
+            <p class="muted">Loading…</p>
+          </div>
+          <aside class="blog-post-aside">
+            <div class="blog-aside-card">
+              <p class="eyebrow">Keep exploring</p>
+              <h3>Shop the collection</h3>
+              <p class="muted">Beans, gear, and gifts ready to ship.</p>
+              <a class="btn" href="index.html#products">Browse shop</a>
+            </div>
+            <div class="blog-aside-card" id="blog-related-wrap">
+              <p class="eyebrow">More from the journal</p>
+              <div id="blog-related"></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <a class="brand" href="index.html">Bean & Bloom</a>
+        <p id="footer-text" data-footer-text>© 2026 Bean & Bloom. Specialty coffee and brew essentials delivered to your door.</p>
+      </div>
+      <div class="footer-links">
+        <a href="index.html#products">Shop</a>
+        <a href="blog.html">Blog</a>
+        <a href="about.html">Our story</a>
+        <a href="contact.html">Contact</a>
+        <a href="orders.html">My orders</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="api-client.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

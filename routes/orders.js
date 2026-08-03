@@ -1,5 +1,6 @@
 module.exports = function ordersRouter(pool) {
   const express = require('express');
+  const { requireAdmin, scrubSensitiveFields } = require('../middleware/auth');
   const router = express.Router();
   let ordersTableCache = null;
 
@@ -21,7 +22,7 @@ module.exports = function ordersRouter(pool) {
     return ordersTableCache;
   }
 
-  router.get('/', async (req, res) => {
+  router.get('/', requireAdmin, async (req, res) => {
     try {
       const ordersTable = await getOrdersTable();
       const [orders] = await pool.execute(
@@ -61,7 +62,11 @@ module.exports = function ordersRouter(pool) {
     const connection = await pool.getConnection();
     try {
       const ordersTable = await getOrdersTable();
-      const body = req.body || {};
+      const body = scrubSensitiveFields(req.body || {});
+      // Hard reject any card fields — payments stay with Razorpay Checkout / COD
+      if (body.cardNumber || body.cvv || body.pan || body.card) {
+        return res.status(400).json({ error: 'Card data is never stored. Use Razorpay Checkout.' });
+      }
       const address = body.address || {};
       const paymentMeta = body.paymentMeta || {};
       const items = Array.isArray(body.items) ? body.items : [];
@@ -138,7 +143,7 @@ module.exports = function ordersRouter(pool) {
     }
   });
 
-  router.patch('/:id/verify', async (req, res) => {
+  router.patch('/:id/verify', requireAdmin, async (req, res) => {
     try {
       const ordersTable = await getOrdersTable();
       const verified = req.body?.verified !== false;
@@ -154,7 +159,7 @@ module.exports = function ordersRouter(pool) {
     }
   });
 
-  router.patch('/:id/status', async (req, res) => {
+  router.patch('/:id/status', requireAdmin, async (req, res) => {
     try {
       const ordersTable = await getOrdersTable();
       const status = req.body?.status;
