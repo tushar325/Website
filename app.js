@@ -1880,8 +1880,14 @@ function renderPublicCategoryGrid() {
 function renderRecentlyViewedRail() {
   const root = document.getElementById('recently-viewed-rail');
   if (!root) return;
+  const section = document.getElementById('recently-viewed-section') || root.closest('section');
   const products = loadRecentlyViewed().map((id) => loadProducts().find((p) => String(p.id) === id)).filter(Boolean);
-  if (!products.length) { root.innerHTML = ''; return; }
+  if (!products.length) {
+    root.innerHTML = '';
+    if (section) section.hidden = true;
+    return;
+  }
+  if (section) section.hidden = false;
   root.innerHTML = `<div class="section-head"><div><h2>Recently viewed</h2><p class="muted">Pick up where you left off.</p></div></div><div class="product-rail">${products.map((product) => renderProductCardHtml(product, { compact: true })).join('')}</div>`;
   bindProductCardActions(root);
 }

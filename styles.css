@@ -267,6 +267,7 @@ img { max-width: 100%; display: block; }
 
 /* Sections */
 .section { padding: 4rem 0; }
+.section-tight { padding: 2rem 0; }
 .section-alt {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent);
   border-top: 1px solid var(--border);
@@ -1404,6 +1405,9 @@ textarea { min-height: 100px; resize: vertical; }
   scroll-snap-type: x mandatory;
 }
 .product-rail .product-card { scroll-snap-align: start; }
+#trending.section-tight .section-head { margin-bottom: 1rem; }
+.products-section { padding-top: 2.5rem; }
+.best-deal { padding-top: 2rem; padding-bottom: 2.5rem; }
 .compare-bar {
   position: fixed;
   left: 0;
