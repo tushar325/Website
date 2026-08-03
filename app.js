@@ -628,12 +628,11 @@ function initNewsletterForm() {
 
 function getShopPageSize() {
   const width = window.innerWidth || 1200;
-  let columns = 4;
-  if (width >= 1560) columns = 6;
-  else if (width >= 1280) columns = 5;
-  else if (width < 520) columns = 1;
+  let columns = 5;
+  if (width < 520) columns = 1;
   else if (width < 720) columns = 2;
   else if (width < 980) columns = 3;
+  else if (width < 1280) columns = 4;
   return columns * 4;
 }
 
@@ -1255,6 +1254,8 @@ function emptyProductDetails() {
     flavor: { notes: '', aroma: '', body: '', acidity: '', sweetness: '', bitterness: '', finish: '', roastMeter: 0, caffeine: '' },
     brewing: { methods: [], ratio: '', temperature: '', brewTime: '', grindSize: '', tips: '' },
     variants: [],
+    optionSizes: [],
+    optionTypes: [],
     nutrition: { servingSize: '', calories: '', protein: '', fat: '', carbs: '', sugar: '', sodium: '', caffeine: '' },
     certifications: [],
     packaging: { size: '', material: '', freshnessValve: '', shelfLife: '', storage: '' },
@@ -1312,15 +1313,27 @@ function normalizeProductDetails(raw, product = {}) {
       ...(d.brewing || {}),
       methods: Array.isArray(d.brewing?.methods) ? d.brewing.methods.map(String).filter(Boolean) : parseLines(d.brewing?.methods)
     },
-    variants: Array.isArray(d.variants) ? d.variants.map((v, i) => ({
-      id: String(v.id || `var-${i + 1}`),
-      label: String(v.label || v.size || `Option ${i + 1}`),
-      size: String(v.size || ''),
-      weight: String(v.weight || ''),
-      grind: String(v.grind || ''),
-      price: Number(v.price != null ? v.price : product.price) || Number(product.price) || 0,
-      stock: Number.isFinite(Number(v.stock)) ? Number(v.stock) : Number(product.stock) || 0
-    })) : [],
+    variants: Array.isArray(d.variants) ? d.variants.map((v, i) => {
+      const size = String(v.size || v.weight || '').trim();
+      const type = String(v.type || v.grind || '').trim();
+      const label = String(v.label || [size, type].filter(Boolean).join(' · ') || `Option ${i + 1}`).trim();
+      return {
+        id: String(v.id || `var-${i + 1}`),
+        label,
+        size,
+        weight: String(v.weight || size || ''),
+        type,
+        grind: String(v.grind || type || ''),
+        price: Number(v.price != null ? v.price : product.price) || Number(product.price) || 0,
+        stock: Number.isFinite(Number(v.stock)) ? Number(v.stock) : Number(product.stock) || 0
+      };
+    }) : [],
+    optionSizes: Array.isArray(d.optionSizes) && d.optionSizes.length
+      ? d.optionSizes.map(String).filter(Boolean)
+      : Array.from(new Set((Array.isArray(d.variants) ? d.variants : []).map((v) => String(v.size || v.weight || '').trim()).filter(Boolean))),
+    optionTypes: Array.isArray(d.optionTypes) && d.optionTypes.length
+      ? d.optionTypes.map(String).filter(Boolean)
+      : Array.from(new Set((Array.isArray(d.variants) ? d.variants : []).map((v) => String(v.type || v.grind || '').trim()).filter(Boolean))),
     nutrition: { ...base.nutrition, ...(d.nutrition || {}) },
     certifications: Array.isArray(d.certifications) ? d.certifications.map(String).filter(Boolean) : parseLines(d.certifications),
     packaging: { ...base.packaging, ...(d.packaging || {}) },
@@ -1406,10 +1419,12 @@ function buildSeedProductDetails(category, item, index) {
       caffeine: '~95mg'
     };
     details.certifications = index === 0 ? ['Fair Trade', 'Rainforest Alliance'] : [];
+    details.optionSizes = ['250g', '500g'];
+    details.optionTypes = ['Whole bean', 'Ground'];
     details.variants = [
-      { id: '250g-wb', label: '250g · Whole bean', size: '250g', weight: '250g', grind: 'Whole bean', price: item.price, stock: 20 },
-      { id: '250g-gr', label: '250g · Ground', size: '250g', weight: '250g', grind: 'Ground', price: Number(item.price) + 0.5, stock: 15 },
-      { id: '500g-wb', label: '500g · Whole bean', size: '500g', weight: '500g', grind: 'Whole bean', price: Number(item.price) * 1.85, stock: 10 }
+      { id: '250g-wb', label: '250g · Whole bean', size: '250g', weight: '250g', type: 'Whole bean', grind: 'Whole bean', price: item.price, stock: 20 },
+      { id: '250g-gr', label: '250g · Ground', size: '250g', weight: '250g', type: 'Ground', grind: 'Ground', price: Number(item.price) + 0.5, stock: 15 },
+      { id: '500g-wb', label: '500g · Whole bean', size: '500g', weight: '500g', type: 'Whole bean', grind: 'Whole bean', price: Number(item.price) * 1.85, stock: 10 }
     ];
     details.compareAtPrice = Number((Number(item.price) * 1.15).toFixed(2));
   }
@@ -1463,17 +1478,40 @@ function normalizeProduct(product) {
 
 function collectProductDetailsFromAdminForm(existingDetails = {}) {
   const val = (id) => document.getElementById(id)?.value ?? '';
+  const optionSizes = parseLines(val('product-option-sizes'));
+  const optionTypes = parseLines(val('product-option-types'));
   const variants = String(val('product-variants') || '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
-      const [label, price, stock, grind] = line.split('|').map((part) => part.trim());
+      const parts = line.split('|').map((part) => part.trim());
+      // Preferred: size | type | price | stock
+      // Legacy: label | price | stock | grind
+      const looksStructured = parts.length >= 3 && Number.isFinite(Number(parts[2]));
+      if (looksStructured || optionSizes.length || optionTypes.length) {
+        const size = parts[0] || '';
+        const type = parts[1] || '';
+        const price = Number(parts[2]) || 0;
+        const stock = Number.isFinite(Number(parts[3])) ? Number(parts[3]) : 0;
+        return {
+          id: existingDetails.variants?.[index]?.id || `var-${index + 1}`,
+          label: [size, type].filter(Boolean).join(' · ') || `Option ${index + 1}`,
+          size,
+          weight: size,
+          type,
+          grind: type,
+          price,
+          stock
+        };
+      }
+      const [label, price, stock, grind] = parts;
       return {
         id: existingDetails.variants?.[index]?.id || `var-${index + 1}`,
         label: label || `Option ${index + 1}`,
         size: label || '',
         weight: label || '',
+        type: grind || '',
         grind: grind || '',
         price: Number(price) || 0,
         stock: Number.isFinite(Number(stock)) ? Number(stock) : 0
@@ -1531,6 +1569,8 @@ function collectProductDetailsFromAdminForm(existingDetails = {}) {
       grindSize: val('product-brew-grind'),
       tips: val('product-brew-tips')
     },
+    optionSizes,
+    optionTypes,
     variants,
     nutrition: {
       servingSize: val('product-nut-serving'),
@@ -1603,7 +1643,9 @@ function populateProductDetailsAdminForm(product = {}) {
   set('product-brew-time', details.brewing.brewTime);
   set('product-brew-grind', details.brewing.grindSize);
   set('product-brew-tips', details.brewing.tips);
-  set('product-variants', (details.variants || []).map((v) => `${v.label} | ${v.price} | ${v.stock} | ${v.grind || ''}`).join('\n'));
+  set('product-option-sizes', (details.optionSizes || []).join(', '));
+  set('product-option-types', (details.optionTypes || []).join(', '));
+  set('product-variants', (details.variants || []).map((v) => `${v.size || ''} | ${v.type || v.grind || ''} | ${v.price} | ${v.stock}`).join('\n'));
   set('product-nut-serving', details.nutrition.servingSize);
   set('product-nut-calories', details.nutrition.calories);
   set('product-nut-protein', details.nutrition.protein);
@@ -2405,16 +2447,27 @@ function renderProductCardHtml(product, options = {}) {
   const wished = loadWishlist().includes(String(product.id));
   const compared = loadCompareList().includes(String(product.id));
   const stock = Number(product.stock);
-  const imageSrc = escapeHtml(optimizeImageUrl(product.imageUrl || DEFAULT_IMAGE_URL, 520, 70));
+  const images = (Array.isArray(product.imageUrls) && product.imageUrls.length
+    ? product.imageUrls
+    : [product.imageUrl || DEFAULT_IMAGE_URL]).filter(Boolean);
   const name = escapeHtml(product.name || 'Product');
   const description = escapeHtml(product.description || 'Freshly made with care.');
   const category = escapeHtml(product.category || 'Coffee');
+  const slides = images.map((src, index) => `
+    <img class="product-image" src="${escapeHtml(optimizeImageUrl(src, 640, 72))}" alt="${name}${images.length > 1 ? ` ${index + 1}` : ''}" loading="${index === 0 ? 'lazy' : 'lazy'}" decoding="async">
+  `).join('');
+  const dots = images.length > 1
+    ? `<div class="product-card-dots" aria-hidden="true">${images.map((_, index) => `<span${index === 0 ? ' class="is-active"' : ''}></span>`).join('')}</div>`
+    : '';
   return `
     <article class="product-card${options.compact ? ' product-card-compact' : ''}" data-product-id="${escapeHtml(product.id)}">
-      <button class="wishlist-btn${wished ? ' is-active' : ''}" type="button" data-wishlist="${escapeHtml(product.id)}" aria-label="Wishlist">${wished ? '♥' : '♡'}</button>
-      <img class="product-image" src="${imageSrc}" alt="${name}" loading="lazy" decoding="async">
+      <div class="product-card-media">
+        <button class="wishlist-btn${wished ? ' is-active' : ''}" type="button" data-wishlist="${escapeHtml(product.id)}" aria-label="Wishlist">${wished ? '♥' : '♡'}</button>
+        ${stock <= 5 ? `<span class="stock-pill">${stock <= 0 ? 'Sold out' : 'Only few left'}</span>` : ''}
+        <div class="product-card-slider" data-card-slider>${slides}</div>
+        ${dots}
+      </div>
       <span class="badge">${category}</span>
-      ${stock <= 5 ? `<span class="stock-pill">${stock <= 0 ? 'Sold out' : 'Only few left'}</span>` : ''}
       <h3>${name}</h3>
       <p class="muted">${description}</p>
       <div class="product-meta">
@@ -2442,9 +2495,27 @@ function bindProductCardActions(root = document) {
     input.addEventListener('click', (event) => event.stopPropagation());
     input.addEventListener('change', () => { const id = input.getAttribute('data-compare'); const list = toggleCompare(id); input.checked = list.includes(id); });
   });
+  root.querySelectorAll('[data-card-slider]').forEach((slider) => {
+    if (slider.dataset.bound) return;
+    slider.dataset.bound = 'true';
+    const dots = slider.parentElement?.querySelectorAll('.product-card-dots span') || [];
+    const syncDots = () => {
+      if (!dots.length) return;
+      const index = Math.round(slider.scrollLeft / Math.max(slider.clientWidth, 1));
+      dots.forEach((dot, i) => dot.classList.toggle('is-active', i === index));
+    };
+    slider.addEventListener('scroll', syncDots, { passive: true });
+    slider.addEventListener('click', (event) => event.stopPropagation());
+    slider.addEventListener('wheel', (event) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      if (slider.scrollWidth <= slider.clientWidth) return;
+      event.preventDefault();
+      slider.scrollLeft += event.deltaY;
+    }, { passive: false });
+  });
   root.querySelectorAll('.product-card').forEach((card) => {
     if (card.dataset.navBound) return; card.dataset.navBound = 'true';
-    card.addEventListener('click', (event) => { if (event.target.closest('button, input, label, a')) return; const id = card.getAttribute('data-product-id'); if (id) window.location.href = `product.html?id=${encodeURIComponent(id)}`; });
+    card.addEventListener('click', (event) => { if (event.target.closest('button, input, label, a, [data-card-slider]')) return; const id = card.getAttribute('data-product-id'); if (id) window.location.href = `product.html?id=${encodeURIComponent(id)}`; });
   });
 }
 
@@ -2613,22 +2684,35 @@ async function renderProductDetail() {
           <p class="muted pp-stock" id="pp-stock">${Number(product.stock) > 0 ? `${product.stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock'}</p>
           ${page.variants !== false && details.variants.length ? `
             <div class="pp-variants" id="pp-variants">
-              <span class="pp-label">Choose option</span>
-              <div class="pp-variant-list">
-                ${details.variants.map((v, i) => `
-                  <button type="button" class="pp-variant-btn${i === 0 ? ' is-active' : ''}" data-variant-id="${escapeHtml(v.id)}" data-variant-price="${escapeHtml(v.price)}" data-variant-stock="${escapeHtml(v.stock)}" data-variant-label="${escapeHtml(v.label)}">
-                    <strong>${escapeHtml(v.label)}</strong>
-                    <span>${formatCurrencyAmount(v.price)}${Number(v.stock) <= 0 ? ' · Sold out' : ''}</span>
-                  </button>`).join('')}
-              </div>
+              ${(details.optionSizes || []).length ? `
+                <div class="pp-option-group">
+                  <span class="pp-label">Size</span>
+                  <div class="pp-option-chips" data-option-group="size">
+                    ${details.optionSizes.map((size, i) => `<button type="button" class="pp-option-chip${i === 0 ? ' is-active' : ''}" data-option-size="${escapeHtml(size)}">${escapeHtml(size)}</button>`).join('')}
+                  </div>
+                </div>` : ''}
+              ${(details.optionTypes || []).length ? `
+                <div class="pp-option-group">
+                  <span class="pp-label">Type</span>
+                  <div class="pp-option-chips" data-option-group="type">
+                    ${details.optionTypes.map((type, i) => `<button type="button" class="pp-option-chip${i === 0 ? ' is-active' : ''}" data-option-type="${escapeHtml(type)}">${escapeHtml(type)}</button>`).join('')}
+                  </div>
+                </div>` : ''}
+              ${!(details.optionSizes || []).length && !(details.optionTypes || []).length ? `
+                <div class="pp-option-group">
+                  <span class="pp-label">Choose option</span>
+                  <div class="pp-option-chips" data-option-group="legacy">
+                    ${details.variants.map((v, i) => `<button type="button" class="pp-option-chip${i === 0 ? ' is-active' : ''}" data-variant-id="${escapeHtml(v.id)}">${escapeHtml(v.label)}</button>`).join('')}
+                  </div>
+                </div>` : ''}
+              <p class="muted pp-selected-option" id="pp-selected-option"></p>
             </div>` : ''}
           <div class="pp-purchase-row">
-            <label class="pp-qty">
-              <span class="visually-hidden">Quantity</span>
+            <div class="pp-qty" id="pp-qty-wrap">
               <button type="button" id="pp-qty-minus" aria-label="Decrease quantity">−</button>
-              <input id="pp-qty" type="number" min="1" value="1">
+              <input id="pp-qty" type="number" min="1" value="1" inputmode="numeric">
               <button type="button" id="pp-qty-plus" aria-label="Increase quantity">+</button>
-            </label>
+            </div>
             <button class="btn" id="buy-button" type="button" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Add to cart</button>
             <button class="btn secondary" id="buy-now-button" type="button" ${Number(product.stock) <= 0 ? 'disabled' : ''}>Buy now</button>
           </div>
@@ -2818,6 +2902,11 @@ async function renderProductDetail() {
   let selectedVariant = details.variants[0] || null;
   const qtyInput = document.getElementById('pp-qty');
   const getQty = () => Math.max(1, Number(qtyInput?.value || 1));
+  const findVariant = (size, type) => details.variants.find((v) => {
+    const sizeOk = !size || String(v.size || v.weight || '') === size;
+    const typeOk = !type || String(v.type || v.grind || '') === type;
+    return sizeOk && typeOk;
+  }) || details.variants.find((v) => !size || String(v.size || v.weight || '') === size) || details.variants[0] || null;
   const syncPriceUi = () => {
     const price = selectedVariant ? Number(selectedVariant.price) : basePrice;
     const stock = selectedVariant ? Number(selectedVariant.stock) : Number(product.stock);
@@ -2825,9 +2914,11 @@ async function renderProductDetail() {
     const stockEl = document.getElementById('pp-stock');
     const stickyPrice = document.getElementById('pp-sticky-price');
     const stickyVariant = document.getElementById('pp-sticky-variant');
+    const selectedLabel = document.getElementById('pp-selected-option');
     if (priceEl) priceEl.textContent = formatCurrencyAmount(price);
     if (stickyPrice) stickyPrice.textContent = formatCurrencyAmount(price);
     if (stickyVariant) stickyVariant.textContent = selectedVariant ? selectedVariant.label : 'Standard';
+    if (selectedLabel && selectedVariant) selectedLabel.textContent = `${selectedVariant.label} · ${formatCurrencyAmount(selectedVariant.price)}`;
     if (stockEl) stockEl.textContent = stock > 0 ? `${stock} in stock · Razorpay checkout · Cafe pickup available` : 'Currently out of stock';
     ['buy-button', 'buy-now-button', 'footer-add-cart', 'footer-buy-now', 'sticky-add-cart'].forEach((id) => {
       const btn = document.getElementById(id);
@@ -2874,10 +2965,24 @@ async function renderProductDetail() {
   });
 
   document.getElementById('pp-variants')?.addEventListener('click', (event) => {
-    const btn = event.target.closest('[data-variant-id]');
-    if (!btn) return;
-    selectedVariant = details.variants.find((v) => v.id === btn.getAttribute('data-variant-id')) || selectedVariant;
-    document.querySelectorAll('.pp-variant-btn').forEach((node) => node.classList.toggle('is-active', node === btn));
+    const chip = event.target.closest('.pp-option-chip');
+    if (!chip) return;
+    const group = chip.closest('[data-option-group]');
+    group?.querySelectorAll('.pp-option-chip').forEach((node) => node.classList.toggle('is-active', node === chip));
+    if (chip.hasAttribute('data-variant-id')) {
+      selectedVariant = details.variants.find((v) => v.id === chip.getAttribute('data-variant-id')) || selectedVariant;
+    } else {
+      const size = document.querySelector('[data-option-size].is-active')?.getAttribute('data-option-size') || '';
+      const type = document.querySelector('[data-option-type].is-active')?.getAttribute('data-option-type') || '';
+      selectedVariant = findVariant(size, type);
+      // Disable unavailable type chips for selected size
+      document.querySelectorAll('[data-option-type]').forEach((typeChip) => {
+        const t = typeChip.getAttribute('data-option-type');
+        const available = details.variants.some((v) => String(v.size || v.weight || '') === size && String(v.type || v.grind || '') === t && Number(v.stock) > 0)
+          || details.variants.some((v) => String(v.size || v.weight || '') === size && String(v.type || v.grind || '') === t);
+        typeChip.disabled = !available;
+      });
+    }
     syncPriceUi();
   });
 
