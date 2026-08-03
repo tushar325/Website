@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Discounts</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      try {
+        if (sessionStorage.getItem('bean-bloom-admin') === 'true') {
+          document.documentElement.classList.add('admin-authed-html');
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body data-admin-page="discounts">
+  <script>
+    (function () {
+      var authed = false;
+      try { authed = sessionStorage.getItem('bean-bloom-admin') === 'true'; } catch (e) {}
+      if (authed) document.body.classList.add('admin-authed');
+    })();
+  </script>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="brand" href="admin.html">Bean & Bloom Admin</a>
+      <nav class="nav-links">
+        <a href="index.html">Public site</a>
+        <a href="admin.html">Dashboard</a>
+        <button id="logout-btn" class="btn secondary" type="button" style="display:none;">Log out</button>
+      </nav>
+    </div>
+  </header>
+  <main class="section">
+    <div class="container">
+      <form id="login-form" class="card form-grid">
+        <h3>Admin access</h3>
+        <div class="form-input-group">
+          <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <input id="username" type="text" placeholder="Username" required autocomplete="username">
+        </div>
+        <div class="form-input-group">
+          <svg class="form-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          <input id="password" type="password" placeholder="Password" required autocomplete="current-password">
+        </div>
+        <button class="btn" type="submit">Enter dashboard</button>
+        <p class="muted">Demo login: admin / admin</p>
+      </form>
+
+      <div id="admin-panel" class="hide">
+        <div class="section-head">
+          <h2>Discounts</h2>
+          <p class="muted">Create store-wide, category-level, or product-level discounts. They apply automatically at checkout.</p>
+        </div>
+        <div class="admin-shell">
+          <aside class="admin-sidebar">
+            <nav class="sidebar-nav">
+              <a href="admin.html" class="sidebar-item">Dashboard</a>
+              <a href="admin-analytics.html" class="sidebar-item">Analytics</a>
+              <a href="admin-product-categories.html" class="sidebar-item">Product categories</a>
+              <a href="admin-orders.html" class="sidebar-item">Orders</a>
+              <a href="admin-customers.html" class="sidebar-item">Customers</a>
+              <a href="admin-inventory.html" class="sidebar-item">Inventory</a>
+              <a href="admin-discounts.html" class="sidebar-item active">Discounts</a>
+              <a href="admin-settings.html" class="sidebar-item">Settings</a>
+            </nav>
+          </aside>
+          <main class="admin-main">
+            <div class="card" style="margin-bottom:1.2rem;">
+              <h3 style="margin-top:0;">Add discount</h3>
+              <form id="discount-form" class="form-grid">
+                <div class="field">
+                  <label for="discount-name">Name</label>
+                  <input id="discount-name" type="text" placeholder="Weekend pour-over sale" required>
+                </div>
+                <div class="field">
+                  <label for="discount-type">Scope</label>
+                  <select id="discount-type">
+                    <option value="store">Store-wide (general)</option>
+                    <option value="category">Category</option>
+                    <option value="product">Product</option>
+                  </select>
+                </div>
+                <div class="field" id="discount-category-wrap" style="display:none;">
+                  <label for="discount-category">Category</label>
+                  <select id="discount-category"></select>
+                </div>
+                <div class="field" id="discount-product-wrap" style="display:none;">
+                  <label for="discount-product">Product</label>
+                  <select id="discount-product"></select>
+                </div>
+                <div class="field">
+                  <label for="discount-value-type">Value type</label>
+                  <select id="discount-value-type">
+                    <option value="percent">Percent (%)</option>
+                    <option value="fixed">Fixed amount (₹)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="discount-value">Value</label>
+                  <input id="discount-value" type="number" min="0" step="0.01" placeholder="10" required>
+                </div>
+                <div class="field">
+                  <label for="discount-code">Optional code label</label>
+                  <input id="discount-code" type="text" placeholder="WEEKEND10">
+                </div>
+                <button class="btn" type="submit">Save discount</button>
+              </form>
+              <p class="muted" style="margin:1rem 0 0;font-size:.85rem;">Priority at checkout: product discount → category discount → best store-wide discount.</p>
+            </div>
+            <div class="card">
+              <h3 style="margin-top:0;">Active discounts</h3>
+              <div id="admin-discounts-list"></div>
+            </div>
+            <div class="card" style="margin-top:1.2rem;">
+              <h3 style="margin-top:0;">Suggested admin additions</h3>
+              <ul class="muted" style="margin:0;padding-left:1.1rem;line-height:1.7;">
+                <li>Coupons with start/end dates and usage limits</li>
+                <li>Gift cards / store credit</li>
+                <li>Low-stock alerts emailed to cafe staff</li>
+                <li>Pickup vs delivery slots</li>
+                <li>Razorpay refunds linked to order ID</li>
+              </ul>
+            </div>
+          </main>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

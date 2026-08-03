@@ -75,21 +75,8 @@
         return;
       }
 
-      const payIcons = {
-        cod: '💵', upi: '📱', cards: '💳', netbanking: '🏦', wallets: '👛',
-        emi: '📅', paytm: '🅿️', phonepe: '📲', razorpay: '⚡'
-      };
-      const payLabels = {
-        cod: 'Cash on Delivery',
-        upi: 'UPI',
-        cards: 'Credit / Debit Card',
-        netbanking: 'Net Banking',
-        wallets: 'Wallet',
-        emi: 'EMI',
-        paytm: 'Paytm',
-        phonepe: 'PhonePe',
-        razorpay: 'Razorpay'
-      };
+      const payIcons = { razorpay: '⚡' };
+      const payLabels = { razorpay: 'Razorpay' };
 
       orders.forEach(order => {
         const card = document.createElement('div');
@@ -99,13 +86,10 @@
         const addr = order.address;
         const addrStr = [addr.line1, addr.city, addr.state, addr.pin].filter(Boolean).join(', ');
         const meta = order.paymentMeta || {};
+        const paymentId = meta.razorpayPaymentId || meta.razorpay_payment_id || '';
         const metaBits = [
-          meta.upiRef && `UTR ${meta.upiRef}`,
-          meta.cardLast4 && `${meta.cardBrand || 'Card'} •••• ${meta.cardLast4}`,
-          meta.bank,
-          meta.wallet && String(meta.wallet).replace(/^\w/, (c) => c.toUpperCase()),
-          meta.emiTenure && `EMI ${meta.emiTenure}`,
-          meta.merchantId && `MID ${meta.merchantId}`
+          paymentId && `Payment ID ${paymentId}`,
+          order.paymentVerified ? 'Verified by cafe' : 'Awaiting verification'
         ].filter(Boolean).join(' · ');
 
         card.innerHTML = `
@@ -125,7 +109,7 @@
               </div>`).join('')}
           </div>
           <div class="order-footer">
-            <span class="pay-badge">${payIcons[order.payMethod] || '💳'} ${escapeHtml(payLabels[order.payMethod] || getPaymentMethodLabel(order.payMethod))}${metaBits ? ` · ${escapeHtml(metaBits)}` : ''}</span>
+            <span class="pay-badge">${payIcons[order.payMethod] || '⚡'} ${escapeHtml(payLabels[order.payMethod] || getPaymentMethodLabel(order.payMethod))}${metaBits ? ` · ${escapeHtml(metaBits)}` : ''}</span>
             <span class="order-total">Total: ${formatCurrencyAmount(Number(order.total))}</span>
           </div>`;
         container.appendChild(card);

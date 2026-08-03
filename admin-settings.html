@@ -86,7 +86,8 @@
               <a href="admin-orders.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Orders</a>
               <a href="admin-customers.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>Customers</a>
               <a href="admin-inventory.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>Inventory</a>
-              <a href="admin-settings.html" class="sidebar-item active"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6m-1.78 7.78l-4.24-4.24m-3.08-3.08l-4.24-4.24"></path></svg>Settings</a>
+              <a href="admin-discounts.html" class="sidebar-item"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>Discounts</a>
+            <a href="admin-settings.html" class="sidebar-item active"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m3.08 3.08l4.24 4.24M1 12h6m6 0h6m-1.78 7.78l-4.24-4.24m-3.08-3.08l-4.24-4.24"></path></svg>Settings</a>
             </nav>
           </aside>
 
@@ -235,124 +236,26 @@
               </div>
 
               <div class="settings-card">
-                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Indian payment methods</h3>
-                <p class="muted" style="margin:0 0 1rem;">Toggle each method for checkout. Customers only see methods you enable here.</p>
-                <div class="settings-grid" style="gap:1.2rem;">
-                  <div class="promo-block">
-                    <div class="block-label">Cash on Delivery</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-                      <input type="checkbox" id="s-cod-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-cod-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable COD</label>
-                    </div>
-                    <div class="field"><label>COD note</label><input id="s-cod-note" type="text" placeholder="Pay in cash when your order arrives."></div>
+                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>Razorpay payments</h3>
+                <p class="muted" style="margin:0 0 1rem;">Checkout uses Razorpay only. Cards, UPI, net banking, and wallets are offered inside Razorpay Checkout. Payment IDs are saved on each order for admin verification.</p>
+                <div class="settings-grid">
+                  <div class="field" style="grid-column:1/-1;">
+                    <label style="display:flex;align-items:center;gap:.55rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:600;">
+                      <input id="s-rzp-enabled" type="checkbox" checked style="width:auto;margin:0;accent-color:var(--accent);">
+                      Enable Razorpay Checkout
+                    </label>
                   </div>
-
-                  <div class="promo-block">
-                    <div class="block-label">UPI</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-                      <input type="checkbox" id="s-upi-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-upi-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable UPI</label>
-                    </div>
-                    <div class="field" style="margin-bottom:.7rem;"><label>UPI ID / VPA</label><input id="s-upi-id" type="text" placeholder="merchant@upi"></div>
-                    <div class="field" style="margin-bottom:.7rem;"><label>Merchant name on UPI</label><input id="s-upi-merchant" type="text" placeholder="Bean & Bloom"></div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                      <input type="checkbox" id="s-upi-qr" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-upi-qr" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Show UPI QR code at checkout</label>
-                    </div>
+                  <div class="field">
+                    <label for="s-rzp-key">Razorpay Key ID (public)</label>
+                    <input id="s-rzp-key" type="text" placeholder="rzp_test_...">
                   </div>
-
-                  <div class="promo-block">
-                    <div class="block-label">Cards</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                      <input type="checkbox" id="s-cards-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-cards-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Credit / Debit / RuPay cards</label>
-                    </div>
-                    <p style="font-size:.82rem;color:var(--muted);margin:.7rem 0 0;">Collects card details at checkout for demo orders. Use Razorpay for live card processing.</p>
-                  </div>
-
-                  <div class="promo-block">
-                    <div class="block-label">Net Banking</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                      <input type="checkbox" id="s-netbanking-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-netbanking-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Net Banking</label>
-                    </div>
-                    <p style="font-size:.82rem;color:var(--muted);margin:.7rem 0 0;">SBI, HDFC, ICICI, Axis, and other major Indian banks.</p>
-                  </div>
-
-                  <div class="promo-block" style="grid-column:1/-1;">
-                    <div class="block-label">Wallets</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.9rem;">
-                      <input type="checkbox" id="s-wallets-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-wallets-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable wallets</label>
-                    </div>
-                    <div class="settings-grid">
-                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                        <input type="checkbox" id="s-wallet-paytm" style="accent-color:var(--accent);width:16px;height:16px;">
-                        <label for="s-wallet-paytm" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Paytm Wallet</label>
-                      </div>
-                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                        <input type="checkbox" id="s-wallet-phonepe" style="accent-color:var(--accent);width:16px;height:16px;">
-                        <label for="s-wallet-phonepe" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">PhonePe Wallet</label>
-                      </div>
-                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                        <input type="checkbox" id="s-wallet-amazonpay" style="accent-color:var(--accent);width:16px;height:16px;">
-                        <label for="s-wallet-amazonpay" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Amazon Pay</label>
-                      </div>
-                      <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                        <input type="checkbox" id="s-wallet-mobikwik" style="accent-color:var(--accent);width:16px;height:16px;">
-                        <label for="s-wallet-mobikwik" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Mobikwik</label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="promo-block">
-                    <div class="block-label">EMI</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;">
-                      <input type="checkbox" id="s-emi-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-emi-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable EMI options</label>
-                    </div>
-                  </div>
-
-                  <div class="promo-block">
-                    <div class="block-label">Paytm Gateway</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-                      <input type="checkbox" id="s-paytm-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-paytm-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Paytm Payment Gateway</label>
-                    </div>
-                    <div class="field"><label>Paytm Merchant ID</label><input id="s-paytm-mid" type="text" placeholder="Your Paytm MID"></div>
-                  </div>
-
-                  <div class="promo-block">
-                    <div class="block-label">PhonePe Gateway</div>
-                    <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-                      <input type="checkbox" id="s-phonepe-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                      <label for="s-phonepe-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable PhonePe Payment Gateway</label>
-                    </div>
-                    <div class="field"><label>PhonePe Merchant ID</label><input id="s-phonepe-mid" type="text" placeholder="Your PhonePe Merchant ID"></div>
-                  </div>
-
-                  <div class="promo-block" style="grid-column:1/-1;">
-                    <div class="block-label">Razorpay</div>
-                    <div class="settings-grid">
-                      <div>
-                        <div class="field" style="flex-direction:row;align-items:center;gap:.6rem;margin-bottom:.7rem;">
-                          <input type="checkbox" id="s-rzp-enabled" style="accent-color:var(--accent);width:16px;height:16px;">
-                          <label for="s-rzp-enabled" style="font-size:.88rem;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0;">Enable Razorpay Checkout</label>
-                        </div>
-                        <div class="field"><label>Razorpay Key ID (public)</label><input id="s-rzp-key" type="text" placeholder="rzp_test_..."></div>
-                      </div>
-                      <div style="display:flex;align-items:center;">
-                        <p style="font-size:.82rem;color:var(--muted);margin:0;">Live cards, UPI, net banking, and wallets via Razorpay. Get your Key ID from <strong>Razorpay Dashboard → Settings → API Keys</strong>. Use <code>rzp_test_</code> for test mode.</p>
-                      </div>
-                    </div>
+                  <div class="field">
+                    <label>Key Secret</label>
+                    <input type="text" value="Set RAZORPAY_KEY_SECRET in server .env" readonly>
+                    <p style="font-size:.82rem;color:var(--muted);margin:.45rem 0 0;">Never store the secret in the browser. Put it in the API <code>.env</code> so order payment signatures can be verified against MySQL.</p>
                   </div>
                 </div>
-              </div>
-
-              <div class="settings-card">
-                <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>Product Page Content</h3>
-                <p class="muted" style="margin-top:0;">Edit the short and detailed description shown on each product page. Changes save directly to your product catalog.</p>
-                <div id="product-content-list" class="product-content-list"></div>
+                <p style="font-size:.82rem;color:var(--muted);margin:.85rem 0 0;">Get keys from <strong>Razorpay Dashboard → Settings → API Keys</strong>. Use <code>rzp_test_</code> for test mode. Mark payments verified on the Orders page after checkout.</p>
               </div>
 
               <div class="save-row">
@@ -424,52 +327,7 @@
       return testimonials.length ? testimonials : DEFAULT_SETTINGS.testimonials;
     }
 
-    function renderProductContentEditor() {
-      const root = document.getElementById('product-content-list');
-      if (!root) return;
-      const products = loadProducts();
-      root.innerHTML = '';
-      products.forEach((product) => {
-        const card = document.createElement('article');
-        card.className = 'product-content-card';
-        card.dataset.productId = product.id;
-        card.innerHTML = `
-          <div class="product-content-head">
-            <div>
-              <strong>${escapeHtml(product.name || 'Product')}</strong>
-            </div>
-            <span class="product-chip">${escapeHtml(product.category || 'Coffee')}</span>
-          </div>
-          <div class="field">
-            <label>Short description</label>
-            <textarea rows="2" data-product-field="description">${escapeHtml(product.description || '')}</textarea>
-          </div>
-          <div class="field">
-            <label>Detailed product page description</label>
-            <textarea rows="5" data-product-field="longDescription">${escapeHtml(product.longDescription || '')}</textarea>
-          </div>
-        `;
-        root.appendChild(card);
-      });
-    }
 
-    function saveProductContentFromSettings() {
-      const cards = Array.from(document.querySelectorAll('#product-content-list .product-content-card'));
-      if (!cards.length) return;
-      const products = loadProducts();
-      const nextProducts = products.map((product) => {
-        const card = cards.find((item) => item.dataset.productId === String(product.id));
-        if (!card) return product;
-        const description = card.querySelector('[data-product-field="description"]')?.value?.trim() || '';
-        const longDescription = card.querySelector('[data-product-field="longDescription"]')?.value?.trim() || '';
-        return {
-          ...product,
-          description,
-          longDescription
-        };
-      });
-      saveProducts(nextProducts);
-    }
     function populateSettingsForm(s) {
       const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val ?? ''; };
       set('s-siteName', s.siteName); set('s-footerText', s.footerText);
@@ -487,28 +345,10 @@
       set('s-deal-ctaUrl', s.deal.ctaUrl); set('s-deal-imageUrl', s.deal.imageUrl);
       renderTestimonialsEditor(s.testimonials);
       s.promoStrip.forEach((p, i) => { set(`s-p${i}-title`, p.title); set(`s-p${i}-desc`, p.desc); });
-      // Payment settings
+      // Razorpay only
       const pay = s.payments || {};
       const chk = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
-      chk('s-cod-enabled', pay.codEnabled !== false);
-      set('s-cod-note', pay.codNote);
-      chk('s-upi-enabled', pay.upiEnabled !== false);
-      set('s-upi-id', pay.upiId);
-      set('s-upi-merchant', pay.upiMerchantName);
-      chk('s-upi-qr', pay.upiQrEnabled !== false);
-      chk('s-cards-enabled', pay.cardsEnabled !== false);
-      chk('s-netbanking-enabled', pay.netbankingEnabled !== false);
-      chk('s-wallets-enabled', pay.walletsEnabled !== false);
-      chk('s-wallet-paytm', pay.walletPaytm !== false);
-      chk('s-wallet-phonepe', pay.walletPhonepe !== false);
-      chk('s-wallet-amazonpay', pay.walletAmazonpay !== false);
-      chk('s-wallet-mobikwik', pay.walletMobikwik !== false);
-      chk('s-emi-enabled', !!pay.emiEnabled);
-      chk('s-paytm-enabled', !!pay.paytmGatewayEnabled);
-      set('s-paytm-mid', pay.paytmMerchantId);
-      chk('s-phonepe-enabled', !!pay.phonepeGatewayEnabled);
-      set('s-phonepe-mid', pay.phonepeMerchantId);
-      chk('s-rzp-enabled', !!pay.razorpayEnabled);
+      chk('s-rzp-enabled', pay.razorpayEnabled !== false);
       set('s-rzp-key', pay.razorpayKeyId);
 
       const cafe = s.cafe || {};
@@ -545,7 +385,6 @@
       set('s-news-subtext', newsletter.subtext);
       set('s-menu-categories', (s.menuCategories || []).join(', '));
 
-      renderProductContentEditor();
     }
 
     function collectSettingsFromForm() {
@@ -604,24 +443,7 @@
         },
         menuCategories: get('s-menu-categories').split(',').map((item) => item.trim()).filter(Boolean),
         payments: {
-          codEnabled: checked('s-cod-enabled'),
-          codNote: get('s-cod-note') || 'Pay in cash when your order arrives.',
-          upiEnabled: checked('s-upi-enabled'),
-          upiId: get('s-upi-id'),
-          upiMerchantName: get('s-upi-merchant') || 'Bean & Bloom',
-          upiQrEnabled: checked('s-upi-qr'),
-          cardsEnabled: checked('s-cards-enabled'),
-          netbankingEnabled: checked('s-netbanking-enabled'),
-          walletsEnabled: checked('s-wallets-enabled'),
-          walletPaytm: checked('s-wallet-paytm'),
-          walletPhonepe: checked('s-wallet-phonepe'),
-          walletAmazonpay: checked('s-wallet-amazonpay'),
-          walletMobikwik: checked('s-wallet-mobikwik'),
-          emiEnabled: checked('s-emi-enabled'),
-          paytmGatewayEnabled: checked('s-paytm-enabled'),
-          paytmMerchantId: get('s-paytm-mid'),
-          phonepeGatewayEnabled: checked('s-phonepe-enabled'),
-          phonepeMerchantId: get('s-phonepe-mid'),
+          currency: 'INR',
           razorpayEnabled: checked('s-rzp-enabled'),
           razorpayKeyId: get('s-rzp-key')
         }
@@ -647,7 +469,6 @@
       });
 
       document.getElementById('save-settings-btn')?.addEventListener('click', () => {
-        saveProductContentFromSettings();
         saveSettings(collectSettingsFromForm());
         const status = document.getElementById('save-status');
         status.classList.add('show');
