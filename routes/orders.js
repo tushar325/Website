@@ -2,6 +2,7 @@ module.exports = function ordersRouter(pool) {
   const express = require('express');
   const { requireAdmin, scrubSensitiveFields } = require('../middleware/auth');
   const { publishLivePurchase } = require('./live-purchases');
+  const { sendOrderConfirmedEmail } = require('../utils/mailer');
   const router = express.Router();
   let ordersTableCache = null;
 
@@ -170,6 +171,14 @@ module.exports = function ordersRouter(pool) {
          WHERE id = ?`,
         [verified ? 1 : 0, verified ? new Date() : null, verified ? 1 : 0, req.params.id]
       );
+
+      // Send confirmation email only when marking as verified
+      if (verified) {
+        const [orders] = await pool.execute(`SELECT * FROM ${ordersTable} WHERE id = ?`, [req.params.id]);
+        const [items]  = await pool.execute('SELECT * FROM order_items WHERE order_id = ?', [req.params.id]);
+        if (orders.length) sendOrderConfirmedEmail(orders[0], items).catch(() => {});
+      }
+
       res.json({ id: req.params.id, paymentVerified: verified });
     } catch (error) {
       res.status(500).json({ error: error.message });
